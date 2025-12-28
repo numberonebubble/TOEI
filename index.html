@@ -3,867 +3,514 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Odd Earth Institute — Lateral Thinking with Mature Technologies</title>
+  <title>Odd Earth Institute</title>
 
   <style>
     :root{
-      --bg:#05070b;
-      --fg:#d7e2ff;
-      --muted: rgba(215,226,255,.70);
-      --muted2: rgba(215,226,255,.52);
-      --glass: rgba(10,14,24,.58);
-      --line: rgba(124,255,201,.20);
-      --line2: rgba(255,138,61,.16);
-      --a:#7cffc9;   /* mint */
-      --b:#ff8a3d;   /* ember */
-      --c:#7aa6ff;   /* cold blue */
-      --warn:#ff4a4a;
-      --shadow: rgba(0,0,0,.55);
+      --bg:#070A10;
+      --fg:#E7EEFF;
+      --muted: rgba(231,238,255,.72);
+      --glass: rgba(12,16,28,.55);
+      --line: rgba(124,255,201,.16);
+      --a:#7cffc9;
+      --b:#ff8a3d;
     }
 
-    html, body { height:100%; margin:0; background:var(--bg); color:var(--fg);
+    html,body{height:100%; margin:0; background:var(--bg); color:var(--fg);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Inter, Roboto, Arial;
-      overflow-x:hidden; }
+      overflow-x:hidden;
+    }
 
-    /* Fullscreen canvas */
-    canvas#bg { position:fixed; inset:0; width:100vw; height:100vh; display:block; z-index:0; }
+    /* Canvas behind everything */
+    canvas#bg{
+      position:fixed; inset:0; width:100vw; height:100vh; display:block;
+      z-index:0;
+    }
 
-    /* CRT-ish overlay + dust + vignette */
-    .fx {
+    /* Elegant fallback background (used if WebGL fails) */
+    .fallback{
+      position:fixed; inset:0; z-index:0;
+      background:
+        radial-gradient(1200px 700px at 20% 20%, rgba(124,255,201,.12), transparent 60%),
+        radial-gradient(900px 600px at 80% 30%, rgba(255,138,61,.10), transparent 62%),
+        radial-gradient(900px 800px at 50% 90%, rgba(130,170,255,.10), transparent 60%),
+        linear-gradient(180deg, #05070b, #070A10 60%, #05070b);
+      opacity:0;
+      transition: opacity .35s ease;
+    }
+    .fallback.on{ opacity:1; }
+
+    /* Subtle atmospheric grain (not “unstable”) */
+    .air{
       pointer-events:none;
       position:fixed; inset:0; z-index:1;
       background:
-        radial-gradient(ellipse at 30% 20%, rgba(122,166,255,.08) 0%, rgba(0,0,0,0) 60%),
-        radial-gradient(ellipse at 70% 30%, rgba(255,138,61,.06) 0%, rgba(0,0,0,0) 62%),
-        radial-gradient(ellipse at center, rgba(0,0,0,0) 0%, rgba(0,0,0,.65) 70%),
-        repeating-linear-gradient(180deg,
-          rgba(255,255,255,.018) 0px,
-          rgba(255,255,255,.018) 1px,
-          rgba(0,0,0,0) 3px,
-          rgba(0,0,0,0) 7px);
-      opacity:.52;
-      mix-blend-mode: screen;
+        radial-gradient(ellipse at center, rgba(255,255,255,.05) 0%, rgba(255,255,255,0) 55%),
+        radial-gradient(ellipse at center, rgba(0,0,0,0) 0%, rgba(0,0,0,.55) 70%);
+      opacity:.55;
     }
 
-    /* Wrapper */
-    .wrap { position:relative; z-index:2; width:min(1120px, calc(100% - 40px)); margin:0 auto; }
+    .wrap{ position:relative; z-index:2; width:min(1100px, calc(100% - 40px)); margin:0 auto; }
 
-    /* Top instrument bar */
-    .topbar {
+    .topbar{
       position:fixed; top:14px; left:50%; transform:translateX(-50%);
-      width:min(1120px, calc(100% - 40px));
-      z-index:4;
+      width:min(1100px, calc(100% - 40px));
+      z-index:3;
       display:flex; align-items:center; justify-content:space-between;
       padding:10px 12px;
       border-radius:16px;
-      background: linear-gradient(180deg, rgba(10,14,24,.74), rgba(10,14,24,.34));
-      border:1px solid rgba(124,255,201,.20);
-      box-shadow: 0 18px 50px rgba(0,0,0,.35);
-      backdrop-filter: blur(10px);
-    }
-
-    .brand {
-      display:flex; flex-direction:column; gap:2px;
-      letter-spacing:.12em; text-transform:uppercase;
-      font-size:11px; color:rgba(215,226,255,.82);
-    }
-    .brand .row { display:flex; gap:10px; align-items:center; }
-    .sig {
-      display:inline-flex; align-items:center; gap:8px;
-      padding:6px 10px; border-radius:999px;
+      background: linear-gradient(180deg, rgba(12,16,28,.78), rgba(12,16,28,.38));
       border:1px solid rgba(124,255,201,.18);
-      background: rgba(10,14,24,.35);
-      color: rgba(215,226,255,.86);
-      font-weight:650;
-    }
-    .dot {
-      width:8px; height:8px; border-radius:50%;
-      background: var(--a);
-      box-shadow: 0 0 16px rgba(124,255,201,.55);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 18px 46px rgba(0,0,0,.35);
     }
 
-    .nav { display:flex; gap:10px; align-items:center; font-size:12px; }
-    .nav a {
-      color: rgba(215,226,255,.74);
+    .brand{
+      display:flex; gap:10px; align-items:center;
+      text-transform:uppercase;
+      letter-spacing:.14em;
+      font-size:11px;
+      color:rgba(231,238,255,.82);
+      font-weight:750;
+    }
+    .brand b{ color:var(--a); letter-spacing:.18em; }
+
+    .status{
+      display:flex; align-items:center; gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(124,255,201,.18);
+      background: rgba(12,16,28,.35);
+      font-size:11px;
+      letter-spacing:.08em;
+      color: rgba(231,238,255,.70);
+      text-transform:uppercase;
+      user-select:none;
+    }
+    .led{
+      width:8px; height:8px; border-radius:50%;
+      background: rgba(231,238,255,.25);
+      box-shadow:none;
+    }
+    .led.live{ background: var(--a); box-shadow: 0 0 16px rgba(124,255,201,.55); }
+    .led.fallback{ background: var(--b); box-shadow: 0 0 16px rgba(255,138,61,.45); }
+
+    .nav{ display:flex; gap:10px; align-items:center; font-size:12px; }
+    .nav a{
+      color: rgba(231,238,255,.70);
       text-decoration:none;
       padding:7px 10px;
       border-radius:12px;
       border:1px solid rgba(124,255,201,.12);
-      background: rgba(10,14,24,.30);
+      background: rgba(12,16,28,.25);
     }
-    .nav a:hover { border-color: rgba(124,255,201,.28); color: rgba(215,226,255,.92); }
+    .nav a:hover{ border-color: rgba(124,255,201,.26); color: rgba(231,238,255,.92); }
 
-    .meter {
-      display:flex; gap:8px; align-items:center;
-      font-size:11px; letter-spacing:.10em; text-transform:uppercase;
-      color: rgba(215,226,255,.62);
-    }
-    .bar {
-      width: 140px; height: 8px; border-radius:999px;
-      border:1px solid rgba(124,255,201,.18);
-      background: rgba(10,14,24,.38);
-      overflow:hidden;
-    }
-    .fill {
-      width: 0%;
-      height:100%;
-      background: linear-gradient(90deg, rgba(124,255,201,.95), rgba(255,138,61,.85));
-      box-shadow: 0 0 20px rgba(124,255,201,.35);
-      border-radius:999px;
-    }
-
-    /* Sections */
-    section {
+    section{
       min-height: 100vh;
       display:flex; align-items:center;
       padding: 108px 0 78px;
-      position:relative;
     }
 
-    /* Panels: asymmetric, “lateral” */
-    .panel {
+    .panel{
       width:min(760px, 100%);
-      padding: 26px 24px;
+      background: linear-gradient(180deg, rgba(12,16,28,.60), rgba(12,16,28,.36));
+      border:1px solid rgba(124,255,201,.16);
       border-radius: 22px;
-      background: linear-gradient(180deg, rgba(10,14,24,.62), rgba(10,14,24,.36));
-      border: 1px solid rgba(124,255,201,.18);
-      box-shadow: 0 30px 70px rgba(0,0,0,.46);
+      padding: 26px 24px;
+      box-shadow: 0 28px 60px rgba(0,0,0,.40);
       backdrop-filter: blur(12px);
-      position:relative;
-      overflow:hidden;
     }
 
-    .panel:before{
-      content:"";
-      position:absolute; inset:-2px;
-      background:
-        linear-gradient(135deg, rgba(124,255,201,.18) 0%, rgba(124,255,201,0) 42%),
-        linear-gradient(315deg, rgba(255,138,61,.14) 0%, rgba(255,138,61,0) 46%),
-        radial-gradient(600px 240px at 20% 10%, rgba(122,166,255,.10), rgba(0,0,0,0));
-      opacity:.75;
-      pointer-events:none;
-      mask:
-        radial-gradient(32px 32px at 18px 18px, transparent 70%, #000 71%) top left,
-        radial-gradient(42px 42px at calc(100% - 18px) calc(100% - 18px), transparent 70%, #000 71%) bottom right,
-        linear-gradient(#000,#000);
-      -webkit-mask:
-        radial-gradient(32px 32px at 18px 18px, transparent 70%, #000 71%) top left,
-        radial-gradient(42px 42px at calc(100% - 18px) calc(100% - 18px), transparent 70%, #000 71%) bottom right,
-        linear-gradient(#000,#000);
-      mask-composite:add;
-      -webkit-mask-composite: source-over;
-    }
-
-    .kicker {
-      color: var(--a);
-      font-weight:700;
+    .kicker{
+      color: rgba(124,255,201,.95);
       text-transform:uppercase;
       letter-spacing:.18em;
       font-size:11px;
-      opacity:.92;
+      font-weight:750;
       margin-bottom: 12px;
     }
 
-    h1 {
-      margin: 0 0 12px;
-      font-size: clamp(38px, 4.8vw, 62px);
-      line-height: 1.01;
-      letter-spacing: -0.02em;
-      text-shadow: 0 16px 44px rgba(0,0,0,.5);
-    }
-    h2 {
+    h1{
       margin:0 0 12px;
-      font-size: clamp(24px, 3.0vw, 36px);
-      letter-spacing: -0.01em;
+      font-size: clamp(38px, 4.6vw, 60px);
+      letter-spacing:-.02em;
+      line-height:1.04;
     }
-    p {
-      margin: 0 0 14px;
+    h2{
+      margin:0 0 10px;
+      font-size: clamp(24px, 3.0vw, 34px);
+      letter-spacing:-.01em;
+    }
+    p{
+      margin:0 0 14px;
       color: var(--muted);
       font-size: 15.6px;
-      line-height: 1.58;
+      line-height:1.58;
     }
-    .emph { color: rgba(215,226,255,.92); }
-    .rule {
+    .emph{ color: rgba(231,238,255,.92); }
+
+    .rule{
       height:1px;
-      background: linear-gradient(90deg, rgba(124,255,201,.55), rgba(124,255,201,0));
+      background: linear-gradient(90deg, rgba(124,255,201,.50), rgba(124,255,201,0));
       margin: 16px 0 18px;
     }
 
-    /* Relic chips grid */
-    .relicGrid {
-      display:flex; flex-wrap:wrap; gap:10px;
-      margin-top: 14px;
-    }
-    .relic {
-      user-select:none;
-      cursor:pointer;
-      font-size: 12px;
-      color: rgba(215,226,255,.82);
-      padding: 9px 12px;
-      border-radius: 999px;
-      border: 1px solid rgba(124,255,201,.18);
-      background: rgba(10,14,24,.35);
-      display:inline-flex; gap:8px; align-items:center;
-      transition: transform .12s ease, border-color .12s ease, filter .12s ease;
-    }
-    .relic:hover {
-      border-color: rgba(124,255,201,.34);
-      transform: translateY(-1px);
-      filter: brightness(1.04);
-    }
-    .relic .tag {
-      font-weight:700; letter-spacing:.08em; text-transform:uppercase;
-      font-size:10px;
-      color: rgba(255,138,61,.88);
-    }
-    .relic .icon {
-      width:18px; height:18px; display:grid; place-items:center;
-      border-radius: 6px;
-      border:1px solid rgba(124,255,201,.16);
-      background: rgba(10,14,24,.35);
-      color: rgba(215,226,255,.82);
+    .chips{ display:flex; flex-wrap:wrap; gap:10px; margin-top: 12px; }
+    .chip{
       font-size:12px;
-    }
-
-    /* Domain chips */
-    .chips { display:flex; flex-wrap:wrap; gap:10px; margin-top: 12px; }
-    .chip {
-      font-size:12px;
-      color: rgba(215,226,255,.80);
+      color: rgba(231,238,255,.78);
       padding:8px 10px;
       border-radius: 999px;
-      border: 1px solid rgba(122,166,255,.16);
-      background: rgba(10,14,24,.30);
+      border: 1px solid rgba(124,255,201,.14);
+      background: rgba(12,16,28,.25);
     }
 
-    /* CTA */
-    .ctaRow {
-      display:flex; gap:12px; flex-wrap:wrap; align-items:center;
-      margin-top: 16px;
-    }
-    .btn {
-      cursor:pointer;
-      border:none;
+    .ctaRow{ display:flex; gap:12px; flex-wrap:wrap; margin-top: 16px; align-items:center; }
+    .btn{
+      cursor:pointer; border:none;
       border-radius: 14px;
       padding: 11px 14px;
-      font-weight:750;
+      font-weight:800;
       letter-spacing:.10em;
       text-transform:uppercase;
       font-size:12px;
-      color: rgba(5,7,11,.95);
+      color: rgba(7,10,16,.95);
       background: linear-gradient(90deg, var(--a), rgba(124,255,201,.62));
-      box-shadow: 0 18px 44px rgba(0,0,0,.34);
+      box-shadow: 0 18px 40px rgba(0,0,0,.30);
     }
-    .btn:hover { filter: brightness(1.05); }
-    .ghost {
-      border:1px solid rgba(124,255,201,.26);
-      background: rgba(10,14,24,.25);
-      color: rgba(215,226,255,.86);
-    }
-
-    /* Side note panel (offset, “lateral”) */
-    .aside {
-      width:min(360px, 100%);
-      margin-top: 16px;
-      padding: 14px 14px;
-      border-radius: 18px;
-      border:1px dashed rgba(255,138,61,.26);
-      background: rgba(10,14,24,.30);
-      color: rgba(215,226,255,.74);
-      font-size: 13px;
-      line-height:1.5;
-      transform: rotate(-0.4deg);
+    .btn.ghost{
+      border:1px solid rgba(124,255,201,.22);
+      background: rgba(12,16,28,.22);
+      color: rgba(231,238,255,.86);
     }
 
-    .small { font-size:12px; color: rgba(215,226,255,.60); margin-top: 10px; }
-    .footer { padding-bottom: 140px; }
+    .small{ font-size:12px; color: rgba(231,238,255,.58); margin-top: 8px; }
+    .footer{ padding-bottom: 140px; }
 
-    /* Mobile */
     @media (max-width: 520px){
-      .nav, .meter { display:none; }
-      section { padding-top: 96px; }
-      .panel { padding: 22px 18px; border-radius: 18px; }
+      .nav{ display:none; }
+      section{ padding-top: 96px; }
+      .panel{ padding: 22px 18px; border-radius: 18px; }
     }
   </style>
 </head>
 
 <body>
   <canvas id="bg"></canvas>
-  <div class="fx"></div>
+  <div class="fallback" id="fallback"></div>
+  <div class="air"></div>
 
   <div class="topbar">
-    <div class="brand">
-      <div class="row">
-        <div class="sig"><span class="dot"></span> ODD EARTH INSTITUTE</div>
-        <div class="meter">
-          <span>morph</span>
-          <div class="bar"><div class="fill" id="morphFill"></div></div>
-        </div>
+    <div class="brand"><b>ODD</b> EARTH INSTITUTE</div>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <div class="status" id="statusPill"><span class="led" id="statusLed"></span> Field: <span id="statusText">booting</span></div>
+      <div class="nav">
+        <a href="#enter">Enter</a>
+        <a href="#philosophy">Philosophy</a>
+        <a href="#domains">Domains</a>
+        <a href="#signal">Signal</a>
       </div>
-      <div style="color:rgba(215,226,255,.56); font-size:10px; letter-spacing:.16em; text-transform:uppercase;">
-        lateral thinking • mature technologies • proof of concept
-      </div>
-    </div>
-
-    <div class="nav">
-      <a href="#enter">Enter</a>
-      <a href="#relics">Relics</a>
-      <a href="#domains">Domains</a>
-      <a href="#method">Method</a>
-      <a href="#signal">Signal</a>
     </div>
   </div>
 
   <div class="wrap">
-    <!-- Section 0 -->
     <section id="enter" data-shape="0">
       <div class="panel">
-        <div class="kicker">progress moves sideways</div>
-        <h1>Infinite potential is hiding in old tools.</h1>
+        <div class="kicker">lateral thinking • mature technologies • proof of concept</div>
+        <h1>Progress moves sideways.</h1>
         <p class="emph">
-          Odd Earth is an institute for proof-of-concept alternatives — built by recombining mature technologies
-          in unexpected contexts across biomedicine, biotechnology, forensics, and climate resilience.
+          Odd Earth Institute explores proof-of-concept alternatives in biomedicine, biotechnology,
+          forensics, and climate resilience — by re-applying mature technologies in unexpected contexts.
         </p>
         <p>
-          Not another “clean” dashboard. Not another expensive tube. Not another closed ecosystem.
-          We take what already exists — even what looks obsolete — and ask:
-          <span class="emph">what else could this become?</span>
+          We build prototypes that feel obvious in retrospect:
+          practical, measurable, and deployable — without requiring billion-dollar infrastructure.
         </p>
-
         <div class="rule"></div>
-
-        <p>
-          Scroll to watch a single substrate reconfigure into different meanings.
-          The field isn’t decoration — it’s the model.
-        </p>
-
+        <p class="small">Scroll to see the field morph. If your browser can’t render WebGL, you’ll see a clean fallback instead.</p>
         <div class="ctaRow">
-          <button class="btn" onclick="document.querySelector('#relics').scrollIntoView({behavior:'smooth'})">Open the box</button>
+          <button class="btn" onclick="document.querySelector('#philosophy').scrollIntoView({behavior:'smooth'})">Enter</button>
           <button class="btn ghost" onclick="document.querySelector('#signal').scrollIntoView({behavior:'smooth'})">Register interest</button>
         </div>
-
-        <div class="aside">
-          <b style="color:rgba(255,138,61,.92)">Design premise:</b>
-          The same component can be a toy, a sensor, a diagnostic, a forensic instrument — depending on context.
-          That’s the whole point.
-        </div>
-
-        <div class="small">Tip: Hover relics later to “bias” the morph without changing scroll position.</div>
       </div>
     </section>
 
-    <!-- Section 1 -->
-    <section id="relics" data-shape="1">
+    <section id="philosophy" data-shape="1">
       <div class="panel">
         <div class="kicker">gunpei yokoi</div>
         <h2>Lateral thinking with mature technologies.</h2>
         <p>
-          The most disruptive advances are often not new inventions —
-          they’re old parts used “incorrectly” until they work.
+          The institute is built around a simple principle:
+          innovation is often not invention — it’s <span class="emph">reframing</span>.
         </p>
         <p class="emph">
-          A calculator becomes a videogame. A camera becomes a vital-sign sensor.
-          A forgotten method becomes a missing rung of a ladder.
+          A calculator becomes a game console. A camera becomes a biosensor. A “dead” component becomes a new instrument.
         </p>
-
-        <div class="rule"></div>
-
-        <p>Relics (hover to preview what they can become):</p>
-        <div class="relicGrid">
-          <div class="relic" data-preview="1"><span class="icon">▦</span><span class="tag">calc</span> calculator logic</div>
-          <div class="relic" data-preview="2"><span class="icon">⟲</span><span class="tag">bio</span> helical biology</div>
-          <div class="relic" data-preview="3"><span class="icon">⟡</span><span class="tag">id</span> forensic signal</div>
-          <div class="relic" data-preview="4"><span class="icon">≈</span><span class="tag">sys</span> climate fields</div>
-          <div class="relic" data-preview="5"><span class="icon">∞</span><span class="tag">meta</span> infinite reuse</div>
-          <div class="relic" data-preview="0"><span class="icon">⋯</span><span class="tag">raw</span> unshaped possibility</div>
-        </div>
-
-        <div class="small">
-          This is the institute’s operating principle: <span class="emph">reframing beats refinement</span>.
-        </div>
       </div>
     </section>
 
-    <!-- Section 2 -->
     <section id="domains" data-shape="2">
       <div class="panel">
         <div class="kicker">where sideways matters most</div>
-        <h2>Applied across the hardest domains.</h2>
+        <h2>Domains</h2>
         <p>
-          Lateral solutions matter where mainstream approaches become expensive, slow, centralised,
-          or fragile — especially when lives depend on it.
+          Mature technologies unlock disproportionate impact where mainstream approaches are expensive, slow, or centralised.
         </p>
-
         <div class="chips">
           <div class="chip">biomedical sensing</div>
-          <div class="chip">precision biotech</div>
+          <div class="chip">biotechnology</div>
           <div class="chip">forensics & public safety</div>
-          <div class="chip">first-response resilience</div>
-          <div class="chip">climate & health intersections</div>
+          <div class="chip">first response</div>
+          <div class="chip">climate & resilience</div>
           <div class="chip">low-resource diagnostics</div>
         </div>
-
-        <div class="rule"></div>
-
-        <p class="emph">
-          One substrate. Endless reconfiguration. That’s the core metaphor —
-          and the core method.
-        </p>
       </div>
     </section>
 
-    <!-- Section 3 -->
-    <section id="method" data-shape="3">
+    <section id="signal" class="footer" data-shape="3">
       <div class="panel">
-        <div class="kicker">how the institute builds</div>
-        <h2>Proof of concept first. Scale later.</h2>
+        <div class="kicker">signal</div>
+        <h2>Early supporters & collaborators</h2>
         <p>
-          Odd Earth is a workshop for prototypes: minimal, testable, and strange at first glance —
-          until they’re obvious in retrospect.
+          This is the beginning. If you want first access to prototypes, partnerships, and releases,
+          connect this button to your mailing list / form.
         </p>
-
-        <div class="rule"></div>
-
-        <p class="emph">
-          We don’t start by asking “What’s standard?”<br/>
-          We start by asking “What’s possible with what already exists?”
-        </p>
-        <p>
-          And we treat the result as an instrument: measure, iterate, refine — without losing the sideways leap.
-        </p>
-      </div>
-    </section>
-
-    <!-- Section 4 -->
-    <section id="signal" class="footer" data-shape="5">
-      <div class="panel">
-        <div class="kicker">signal • collaborators • early supporters</div>
-        <h2>Odd Earth is assembling.</h2>
-        <p>
-          This page is the beginning: a living surface for a future portfolio of proof-of-concepts.
-          If you want first access to builds, collaborations, and releases —
-          wire this button to your Typeform/Wix/ConvertKit list.
-        </p>
-
         <div class="ctaRow">
-          <button class="btn" onclick="alert('Hook this to your mailing list / Typeform embed.');">Register interest</button>
+          <button class="btn" onclick="alert('Hook this to Typeform/Wix/ConvertKit.');">Register interest</button>
           <button class="btn ghost" onclick="window.scrollTo({top:0, behavior:'smooth'})">Back to top</button>
         </div>
-
-        <div class="small">
-          © <span id="year"></span> Odd Earth Institute • Lateral thinking with mature technologies
-        </div>
+        <div class="small">© <span id="year"></span> Odd Earth Institute</div>
       </div>
     </section>
   </div>
 
-  <!-- Three.js CDN (single-file deployable) -->
-  <script src="https://unpkg.com/three@0.161.0/build/three.min.js"></script>
+  <!-- Use a very stable CDN for three.js -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.min.js"></script>
 
   <script>
-    // ============================================================
-    // Odd Earth Institute — Morph Field
-    // Scroll snaps to section archetypes; hover previews bias morph.
-    // ============================================================
+    // ---------- status helpers ----------
+    const fallback = document.getElementById('fallback');
+    const led = document.getElementById('statusLed');
+    const text = document.getElementById('statusText');
+    const setLive = () => { led.className = 'led live'; text.textContent = 'live'; fallback.classList.remove('on'); };
+    const setFallback = (msg) => { led.className = 'led fallback'; text.textContent = msg || 'fallback'; fallback.classList.add('on'); };
 
     document.getElementById('year').textContent = new Date().getFullYear();
 
-    const canvas = document.getElementById('bg');
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.7));
-    renderer.setSize(window.innerWidth, window.innerHeight, false);
-    renderer.setClearColor(0x000000, 0);
-
-    const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x05070b, 0.0115);
-
-    const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 2000);
-    camera.position.set(0, 0, 165);
-
-    scene.add(new THREE.AmbientLight(0xffffff, 0.75));
-    const d = new THREE.DirectionalLight(0xffffff, 0.70);
-    d.position.set(2.2, 3.0, 4.5);
-    scene.add(d);
-
-    const isSmall = Math.min(window.innerWidth, window.innerHeight) < 720;
-    const N = isSmall ? 7000 : 13500;
-
-    const geo = new THREE.BufferGeometry();
-    const geo2 = new THREE.BufferGeometry();
-
-    const pos = new Float32Array(N * 3);
-    const pos2 = new Float32Array(N * 3);
-
-    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    geo2.setAttribute('position', new THREE.BufferAttribute(pos2, 3));
-
-    // Point materials (two layers: primary + echo)
-    const mat = new THREE.PointsMaterial({
-      color: 0x7cffc9,
-      size: isSmall ? 1.25 : 1.02,
-      transparent: true,
-      opacity: 0.88,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending
-    });
-
-    const matEcho = new THREE.PointsMaterial({
-      color: 0xff8a3d,
-      size: isSmall ? 0.98 : 0.78,
-      transparent: true,
-      opacity: 0.20,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending
-    });
-
-    const points = new THREE.Points(geo, mat);
-    const echo = new THREE.Points(geo2, matEcho);
-    echo.position.z = -12;
-
-    scene.add(points);
-    scene.add(echo);
-
-    // ---------- Helpers ----------
-    const rand = (a,b) => a + Math.random()*(b-a);
-    const clamp01 = x => Math.max(0, Math.min(1, x));
-    const smoothstep = t => t*t*(3-2*t);
-    const lerp = (a,b,t) => a + (b-a)*t;
-
-    // ---------- Target shapes ----------
-    const targets = [];
-
-    // 0) raw possibility cloud
-    function makeChaos(){
-      const t = new Float32Array(N*3);
-      for(let i=0;i<N;i++){
-        const r = Math.pow(Math.random(), 0.62) * 80;
-        const th = Math.random() * Math.PI * 2;
-        const ph = Math.acos(rand(-1,1));
-        t[i*3+0] = r * Math.sin(ph) * Math.cos(th);
-        t[i*3+1] = r * Math.sin(ph) * Math.sin(th);
-        t[i*3+2] = r * Math.cos(ph);
-      }
-      return t;
+    // ---------- WebGL availability ----------
+    function webglOK(){
+      try{
+        const c = document.createElement('canvas');
+        return !!(window.WebGLRenderingContext && (c.getContext('webgl') || c.getContext('experimental-webgl')));
+      }catch(e){ return false; }
     }
 
-    // 1) calculator slab (Gunpei Yokoi)
-    function makeCalculator(){
-      const t = new Float32Array(N*3);
-      const w = 132, h = 74, skew = 0.30;
-      for(let i=0;i<N;i++){
-        const u = Math.random();
-        const v = Math.random();
+    window.addEventListener('load', () => {
+      try{
+        if(!webglOK()){ setFallback('no webgl'); return; }
+        if(typeof THREE === 'undefined'){ setFallback('three.js failed'); return; }
 
-        let x = (u-0.5)*w;
-        let y = (v-0.5)*h;
-        x += y * skew;
+        // ---------- three.js scene ----------
+        const canvas = document.getElementById('bg');
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6));
+        renderer.setSize(window.innerWidth, window.innerHeight, false);
+        renderer.setClearColor(0x000000, 0);
 
-        // screen region
-        if(Math.random() < 0.18){
-          const su = rand(0.10, 0.56);
-          const sv = rand(0.58, 0.90);
-          x = (su-0.5)*w + ((sv-0.5)*h)*skew;
-          y = (sv-0.5)*h;
-        } else {
-          // keys grid quantization
-          const cols = 10, rows = 5;
-          const ku = Math.floor(u*cols)/cols + rand(-0.02,0.02);
-          const kv = Math.floor(v*rows)/rows + rand(-0.02,0.02);
-          x = (ku-0.5)*w + ((kv-0.5)*h)*skew;
-          y = (kv-0.5)*h;
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x070A10, 0.012);
+
+        const camera = new THREE.PerspectiveCamera(55, window.innerWidth/window.innerHeight, 0.1, 2000);
+        camera.position.set(0,0,165);
+
+        scene.add(new THREE.AmbientLight(0xffffff, 0.75));
+        const d = new THREE.DirectionalLight(0xffffff, 0.65);
+        d.position.set(2.2, 3.0, 4.5);
+        scene.add(d);
+
+        const isSmall = Math.min(window.innerWidth, window.innerHeight) < 720;
+        const N = isSmall ? 6500 : 12000;
+
+        const geo = new THREE.BufferGeometry();
+        const pos = new Float32Array(N*3);
+        geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+
+        const mat = new THREE.PointsMaterial({
+          color: 0x7cffc9,
+          size: isSmall ? 1.18 : 0.98,
+          transparent:true,
+          opacity:0.72,
+          depthWrite:false,
+          blending: THREE.AdditiveBlending
+        });
+
+        const points = new THREE.Points(geo, mat);
+        scene.add(points);
+
+        // ---------- shapes (centered, calm) ----------
+        const rand = (a,b)=>a+Math.random()*(b-a);
+        const lerp = (a,b,t)=>a+(b-a)*t;
+        const clamp01 = x=>Math.max(0,Math.min(1,x));
+        const smoothstep = t=>t*t*(3-2*t);
+
+        function makeCloud(){
+          const t = new Float32Array(N*3);
+          for(let i=0;i<N;i++){
+            const r = Math.pow(Math.random(),0.65)*78;
+            const th = Math.random()*Math.PI*2;
+            const ph = Math.acos(rand(-1,1));
+            t[i*3+0]=r*Math.sin(ph)*Math.cos(th);
+            t[i*3+1]=r*Math.sin(ph)*Math.sin(th);
+            t[i*3+2]=r*Math.cos(ph);
+          }
+          return t;
         }
 
-        const z = rand(-8, 8);
-        t[i*3+0]=x; t[i*3+1]=y; t[i*3+2]=z;
+        function makeSlab(){
+          const t = new Float32Array(N*3);
+          const w=132,h=74,skew=0.22;
+          for(let i=0;i<N;i++){
+            const u=Math.random(), v=Math.random();
+            let x=(u-0.5)*w, y=(v-0.5)*h;
+            x += y*skew;
+            // light quantization (subtle, not “glitch”)
+            const cols=11, rows=6;
+            const ku=Math.floor(u*cols)/cols + rand(-0.012,0.012);
+            const kv=Math.floor(v*rows)/rows + rand(-0.012,0.012);
+            x=(ku-0.5)*w + ((kv-0.5)*h)*skew;
+            y=(kv-0.5)*h;
+            t[i*3+0]=x; t[i*3+1]=y; t[i*3+2]=rand(-7,7);
+          }
+          return t;
+        }
+
+        function makeHelix(){
+          const t = new Float32Array(N*3);
+          const turns=9.5;
+          for(let i=0;i<N;i++){
+            const p=i/(N-1);
+            const y=lerp(-75,75,p);
+            const a=p*Math.PI*2*turns;
+            const r=22+4*Math.sin(p*6.0);
+            let x=Math.cos(a)*r, z=Math.sin(a)*r;
+            const strand=(i%2===0)?1:-1;
+            x += strand*6.0;
+            z += strand*-6.0;
+            if(i%9===0){ x*=0.28; z*=0.28; }
+            t[i*3+0]=x; t[i*3+1]=y; t[i*3+2]=z;
+          }
+          return t;
+        }
+
+        function makeInfinity(){
+          const t = new Float32Array(N*3);
+          for(let i=0;i<N;i++){
+            const p=i/(N-1);
+            const a=p*Math.PI*2;
+            const scale=56;
+            const denom=1+Math.sin(a)*Math.sin(a);
+            let x=(Math.cos(a)/denom)*scale;
+            let y=(Math.sin(a)*Math.cos(a)/denom)*scale;
+            // thickness
+            const th=rand(-1,1), nx=-Math.sin(a), ny=Math.cos(a);
+            x += nx*th*7.5;
+            y += ny*th*7.5;
+            const z=Math.sin(a*2)*12 + rand(-2,2);
+            t[i*3+0]=x; t[i*3+1]=y; t[i*3+2]=z;
+          }
+          return t;
+        }
+
+        const targets = [makeCloud(), makeSlab(), makeHelix(), makeInfinity()];
+
+        // init
+        pos.set(targets[0]);
+        geo.attributes.position.needsUpdate = true;
+
+        // section snap
+        const sections = [...document.querySelectorAll('section[data-shape]')];
+        let targetShape = 0, fromShape = 0, toShape = 0, morphT = 1;
+
+        const io = new IntersectionObserver((entries)=>{
+          let best=null;
+          for(const e of entries){
+            if(!e.isIntersecting) continue;
+            if(!best || e.intersectionRatio>best.intersectionRatio) best=e;
+          }
+          if(best){
+            targetShape = Number(best.target.getAttribute('data-shape')||0);
+            if(targetShape !== toShape){
+              fromShape = toShape;
+              toShape = targetShape;
+              morphT = 0;
+            }
+          }
+        }, { threshold:[0.25,0.4,0.55,0.7] });
+        sections.forEach(s=>io.observe(s));
+
+        // calm motion
+        let mx=0,my=0;
+        window.addEventListener('pointermove',(e)=>{
+          mx=(e.clientX/window.innerWidth)*2-1;
+          my=(e.clientY/window.innerHeight)*2-1;
+        }, {passive:true});
+
+        function resize(){
+          renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6));
+          renderer.setSize(window.innerWidth, window.innerHeight, false);
+          camera.aspect=window.innerWidth/window.innerHeight;
+          camera.updateProjectionMatrix();
+        }
+        window.addEventListener('resize', resize);
+
+        setLive();
+
+        let t0 = performance.now();
+        function tick(now){
+          const dt = Math.min(34, now-t0); t0=now;
+
+          morphT = clamp01(morphT + dt*0.0022);
+          const tS = smoothstep(morphT);
+
+          const A = targets[fromShape];
+          const B = targets[toShape];
+
+          // very gentle parallax
+          camera.position.x = mx*2.2 + Math.sin(now*0.00022)*0.7;
+          camera.position.y = -my*2.2 + Math.cos(now*0.00018)*0.6;
+          camera.lookAt(0,0,0);
+
+          // subtle drift so it feels alive, not chaotic
+          const driftAmp = (toShape===1 || toShape===2) ? 0.55 : 0.95;
+
+          const arr = geo.attributes.position.array;
+          for(let i=0;i<N;i++){
+            const i3=i*3;
+
+            let x=lerp(A[i3+0], B[i3+0], tS);
+            let y=lerp(A[i3+1], B[i3+1], tS);
+            let z=lerp(A[i3+2], B[i3+2], tS);
+
+            const seed=i*0.017;
+            x += Math.sin(now*0.0030 + seed)*driftAmp;
+            y += Math.cos(now*0.0027 + seed*1.3)*(driftAmp*0.8);
+            z += Math.sin(now*0.0032 + seed*0.7)*(driftAmp*0.6);
+
+            arr[i3+0]=x; arr[i3+1]=y; arr[i3+2]=z;
+          }
+          geo.attributes.position.needsUpdate = true;
+
+          renderer.render(scene, camera);
+          requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+
+      }catch(err){
+        console.error(err);
+        setFallback('error');
       }
-      return t;
-    }
-
-    // 2) DNA helix
-    function makeDNA(){
-      const t = new Float32Array(N*3);
-      const turns = 10.2;
-      for(let i=0;i<N;i++){
-        const p = i/(N-1);
-        const y = lerp(-75, 75, p);
-        const a = p * Math.PI * 2 * turns;
-        const strand = (i%2===0) ? 1 : -1;
-
-        const radius = 22 + 5*Math.sin(p*6.2);
-        let x = Math.cos(a) * radius;
-        let z = Math.sin(a) * radius;
-
-        x += strand * 6.2;
-        z += strand * -6.2;
-
-        // occasional rungs
-        if(i % 9 === 0){ x *= 0.26; z *= 0.26; }
-
-        t[i*3+0]=x; t[i*3+1]=y; t[i*3+2]=z;
-      }
-      return t;
-    }
-
-    // 3) forensic fingerprint spiral (identity)
-    function makeFingerprint(){
-      const t = new Float32Array(N*3);
-      for(let i=0;i<N;i++){
-        const p = i/(N-1);
-        const rings = 30;
-        const a = p * Math.PI * 2 * rings;
-        const r = 10 + p*62 + 7*Math.sin(a*0.55) + 3.8*Math.sin(p*32);
-
-        let x = Math.cos(a) * r;
-        let y = Math.sin(a) * r;
-
-        const pinch = 1 - Math.exp(-p*6.5);
-        x *= (0.78 + 0.22*pinch);
-        y *= (0.88 + 0.12*pinch);
-
-        const z = Math.sin(a*0.92) * 8 * (1 - p*0.35);
-
-        // rotate whole print to feel “askew”
-        const rot = -0.38;
-        const xr = x*Math.cos(rot) - y*Math.sin(rot);
-        const yr = x*Math.sin(rot) + y*Math.cos(rot);
-
-        t[i*3+0]=xr; t[i*3+1]=yr; t[i*3+2]=z;
-      }
-      return t;
-    }
-
-    // 4) climate field (systems)
-    function makeField(){
-      const t = new Float32Array(N*3);
-      const w = 150, h = 96;
-      for(let i=0;i<N;i++){
-        const u = Math.random();
-        const v = Math.random();
-        const x = (u-0.5)*w + rand(-2.2,2.2);
-        const y = (v-0.5)*h + rand(-2.2,2.2);
-
-        const z =
-          14*Math.sin((x*0.045)+(y*0.022)) +
-           9*Math.sin((x*0.018)-(y*0.050)) +
-           5*Math.sin((x*0.070)+(y*0.065));
-
-        const bend = 0.0021;
-        const zb = z + bend*(x*x - 0.60*y*y);
-
-        t[i*3+0]=x; t[i*3+1]=y; t[i*3+2]=zb;
-      }
-      return t;
-    }
-
-    // 5) infinity / unbounded reuse
-    function makeInfinity(){
-      const t = new Float32Array(N*3);
-      for(let i=0;i<N;i++){
-        const p = i/(N-1);
-        const a = p * Math.PI * 2;
-        const scale = 56;
-
-        const denom = 1 + Math.sin(a)*Math.sin(a);
-        let x = (Math.cos(a) / denom) * scale;
-        let y = (Math.sin(a)*Math.cos(a) / denom) * scale;
-
-        const th = rand(-1,1);
-        const nx = -Math.sin(a);
-        const ny =  Math.cos(a);
-
-        x += nx * th * 8.5;
-        y += ny * th * 8.5;
-
-        const z = Math.sin(a*2) * 14 + rand(-2,2);
-
-        const rot = 0.24;
-        const xr = x*Math.cos(rot) - y*Math.sin(rot);
-        const yr = x*Math.sin(rot) + y*Math.cos(rot);
-
-        t[i*3+0]=xr; t[i*3+1]=yr; t[i*3+2]=z;
-      }
-      return t;
-    }
-
-    targets.push(makeChaos());
-    targets.push(makeCalculator());
-    targets.push(makeDNA());
-    targets.push(makeFingerprint());
-    targets.push(makeField());
-    targets.push(makeInfinity());
-
-    // init at chaos
-    pos.set(targets[0]);
-    pos2.set(targets[0]);
-    geo.attributes.position.needsUpdate = true;
-    geo2.attributes.position.needsUpdate = true;
-
-    // ---------- Scroll snapping via IntersectionObserver ----------
-    const sections = [...document.querySelectorAll('section[data-shape]')];
-    let activeShape = 0;
-    let targetShape = 0;
-
-    const io = new IntersectionObserver((entries)=>{
-      // pick the entry with highest intersection ratio
-      let best = null;
-      for(const e of entries){
-        if(!e.isIntersecting) continue;
-        if(!best || e.intersectionRatio > best.intersectionRatio) best = e;
-      }
-      if(best){
-        const s = Number(best.target.getAttribute('data-shape') || 0);
-        targetShape = s;
-      }
-    }, { threshold: [0.22, 0.35, 0.5, 0.65, 0.78] });
-
-    sections.forEach(s => io.observe(s));
-
-    // Hover previews: biases target temporarily
-    let previewShape = null;
-    let previewStrength = 0; // 0..1
-
-    const relics = [...document.querySelectorAll('.relic[data-preview]')];
-    relics.forEach(el=>{
-      el.addEventListener('pointerenter', ()=>{
-        previewShape = Number(el.getAttribute('data-preview'));
-      }, {passive:true});
-      el.addEventListener('pointerleave', ()=>{
-        previewShape = null;
-      }, {passive:true});
     });
-
-    // top morph bar
-    const fill = document.getElementById('morphFill');
-
-    // subtle parallax
-    let mx=0, my=0;
-    window.addEventListener('pointermove', (e)=>{
-      mx = (e.clientX / window.innerWidth) * 2 - 1;
-      my = (e.clientY / window.innerHeight) * 2 - 1;
-    }, { passive:true });
-
-    function resize(){
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.7));
-      renderer.setSize(window.innerWidth, window.innerHeight, false);
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-    }
-    window.addEventListener('resize', resize);
-
-    // motion preferences
-    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    // drift personality: “alive, not polished”
-    const drift = {
-      amp: reduce ? 0.35 : 1.95,
-      zAmp: reduce ? 0.20 : 1.20,
-      freq: reduce ? 0.0020 : 0.0030
-    };
-
-    // animation state
-    let morphT = 0;          // 0..1 in transition
-    let fromShape = 0;
-    let toShape = 0;
-    let now0 = performance.now();
-
-    function startMorph(next){
-      if(next === toShape) return;
-      fromShape = activeShape;
-      toShape = next;
-      morphT = 0;
-    }
-
-    function tick(now){
-      const dt = Math.min(34, now - now0);
-      now0 = now;
-
-      // apply preview bias
-      const wantPreview = (previewShape !== null);
-      const psTarget = wantPreview ? 1 : 0;
-      previewStrength += (psTarget - previewStrength) * (reduce ? 0.10 : 0.14);
-
-      // decide desired target shape
-      const desired = (previewStrength > 0.02 && previewShape !== null) ? previewShape : targetShape;
-
-      if(desired !== toShape && morphT >= 0.98){
-        // finish old morph then snap start
-        activeShape = toShape;
-        startMorph(desired);
-      } else if(desired !== toShape && morphT < 0.98){
-        // if mid-morph and the user scrolls quickly, allow redirect softly
-        // but don't thrash: only redirect if far enough in the new target
-        if(Math.random() < 0.08) startMorph(desired);
-      }
-
-      // morph progress
-      const speed = reduce ? 0.0018 : 0.0026;
-      morphT = clamp01(morphT + dt * speed);
-
-      const tSmooth = smoothstep(morphT);
-
-      const A = targets[fromShape];
-      const B = targets[toShape];
-
-      // morph fill bar
-      const pct = (toShape / (targets.length-1)) * 100;
-      fill.style.width = `${pct.toFixed(0)}%`;
-
-      // camera wobble (lateral, not linear)
-      camera.position.x = mx * 5.0 + Math.sin(now*0.00025)*1.3;
-      camera.position.y = -my * 5.0 + Math.cos(now*0.00019)*1.1;
-      camera.lookAt(0,0,0);
-
-      // material breathing + preview tint
-      mat.opacity = 0.82 + 0.08*Math.sin(now*0.0009);
-      matEcho.opacity = 0.14 + 0.12*(1 - tSmooth) + 0.10*previewStrength;
-
-      // drift crispness: keep certain shapes legible
-      const crisp = (toShape === 1 || toShape === 2) ? 0.55 : 1.0;
-      const crispFrom = (fromShape === 1 || fromShape === 2) ? 0.55 : 1.0;
-      const driftScale = lerp(crispFrom, crisp, tSmooth);
-
-      const arr = geo.attributes.position.array;
-      const arrE = geo2.attributes.position.array;
-
-      // update particle field
-      for(let i=0;i<N;i++){
-        const i3 = i*3;
-
-        const ax = A[i3+0], ay = A[i3+1], az = A[i3+2];
-        const bx = B[i3+0], by = B[i3+1], bz = B[i3+2];
-
-        let x = lerp(ax, bx, tSmooth);
-        let y = lerp(ay, by, tSmooth);
-        let z = lerp(az, bz, tSmooth);
-
-        // deterministic per-particle drift = “infinite reconfiguration”
-        const seed = i * 0.017;
-        const dx = Math.sin((now*drift.freq) + seed) * drift.amp;
-        const dy = Math.cos((now*drift.freq*0.93) + seed*1.3) * (drift.amp*0.82);
-        const dz = Math.sin((now*drift.freq*1.15) + seed*0.7) * drift.zAmp;
-
-        x += dx * driftScale;
-        y += dy * driftScale;
-        z += dz * driftScale;
-
-        arr[i3+0]=x; arr[i3+1]=y; arr[i3+2]=z;
-
-        // echo layer: “parallel meanings”
-        arrE[i3+0]=x*0.985 + dy*0.65;
-        arrE[i3+1]=y*0.985 + dx*0.65;
-        arrE[i3+2]=z*0.985 - dz*1.25;
-      }
-
-      geo.attributes.position.needsUpdate = true;
-      geo2.attributes.position.needsUpdate = true;
-
-      renderer.render(scene, camera);
-      requestAnimationFrame(tick);
-    }
-
-    // start initial morph target from first visible section
-    startMorph(targetShape);
-    requestAnimationFrame(tick);
   </script>
 </body>
 </html>
