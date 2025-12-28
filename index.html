@@ -3,29 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Odd Earth Institute</title>
+    <title>The Odd Earth Institute | Lateral Solutions</title>
     <style>
-        /* --- ECO-FUTURIST / BLUEPRINT CSS --- */
+        /* --- GARAGE WORKSHOP / BLUEPRINT AESTHETIC --- */
         :root {
-            --bg-color: #051020; /* Deep Blueprint Blue */
-            --primary: #00ffcc;  /* Eco-Cyan */
-            --secondary: #ffce00; /* Warning Yellow (Industrial) */
-            --text-dim: #8892b0;
-            --grid-line: rgba(0, 255, 204, 0.1);
+            --bg: #0b1015; /* Carbon Dark */
+            --tech-blue: #4a90e2; /* Medical/Tech Blue */
+            --organic-green: #d4ff00; /* Radiation/Organic Green */
+            --alert: #ff3333;
+            --grid: rgba(74, 144, 226, 0.1);
         }
 
         body, html {
             margin: 0;
             padding: 0;
-            width: 100%;
-            height: 100%;
-            background-color: var(--bg-color);
-            color: white;
-            font-family: 'Courier New', Courier, monospace; /* Monospace for blueprint feel */
+            background-color: var(--bg);
+            color: #eee;
+            font-family: 'Consolas', 'Monaco', monospace;
             overflow-x: hidden;
+            height: 100%;
         }
 
-        /* The Canvas */
         #canvas-container {
             position: fixed;
             top: 0;
@@ -35,366 +33,540 @@
             z-index: 1;
         }
 
-        /* Blueprint Grid Overlay */
-        .overlay {
+        /* CRT / Blueprint Overlay Effects */
+        .scanlines {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
             z-index: 2;
-            background-image: 
-                linear-gradient(var(--grid-line) 1px, transparent 1px),
-                linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-            background-size: 50px 50px;
-            pointer-events: none; /* Let clicks pass through */
         }
 
-        /* UI Elements */
-        .hud-corner {
+        .hud {
             position: fixed;
             padding: 20px;
             z-index: 3;
-            font-size: 12px;
-            letter-spacing: 2px;
-            color: var(--primary);
+            font-size: 11px;
+            color: var(--tech-blue);
             pointer-events: none;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
-        .top-left { top: 0; left: 0; border-right: 1px solid var(--primary); border-bottom: 1px solid var(--primary); }
-        .bottom-right { bottom: 0; right: 0; border-left: 1px solid var(--primary); border-top: 1px solid var(--primary); }
+        .top-left { top: 0; left: 0; border-left: 2px solid var(--organic-green); padding-left: 10px; }
+        .btm-right { bottom: 0; right: 0; text-align: right; border-right: 2px solid var(--organic-green); padding-right: 10px; }
 
-        /* Scroll Content */
+        /* SCROLL CONTENT */
         main {
             position: relative;
-            z-index: 4;
+            z-index: 5;
+            padding-bottom: 20vh; /* Space at end */
         }
 
-        section {
-            height: 100vh;
+        .section-spacer {
+            height: 50vh; /* Gap between text blocks */
+        }
+
+        .story-block {
+            min-height: 80vh;
             display: flex;
-            align-items: center;
-            justify-content: flex-start; /* Left align for workshop feel */
-            padding-left: 10%;
-            padding-right: 10%;
-            box-sizing: border-box;
-            opacity: 0;
-            transition: opacity 1s ease;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0 10%;
+            position: relative;
         }
 
-        section.visible {
-            opacity: 1;
-        }
-
-        .content-box {
-            background: rgba(5, 16, 32, 0.85);
-            border: 1px solid var(--primary);
+        .story-card {
+            background: rgba(11, 16, 21, 0.85);
+            border: 1px solid var(--tech-blue);
             padding: 2rem;
-            max-width: 500px;
-            backdrop-filter: blur(5px);
-            box-shadow: 0 0 20px rgba(0, 255, 204, 0.1);
+            max-width: 450px;
+            backdrop-filter: blur(8px);
+            transition: transform 0.3s ease, border-color 0.3s ease;
         }
 
-        h1 {
-            font-size: 3rem;
-            margin-bottom: 0.5rem;
-            text-transform: uppercase;
-            color: var(--white);
+        /* Left align for "Problem" (Old Tech) */
+        .problem {
+            align-self: flex-start;
+            border-left: 4px solid var(--tech-blue);
         }
+
+        /* Right align for "Solution" (Odd Earth) */
+        .solution {
+            align-self: flex-end;
+            border: 1px solid var(--organic-green);
+            border-right: 4px solid var(--organic-green);
+            text-align: right;
+        }
+        .solution h2 { color: var(--organic-green); }
 
         h2 {
-            font-size: 1.5rem;
-            color: var(--secondary);
+            font-size: 1.8rem;
+            margin: 0 0 10px 0;
+            color: var(--tech-blue);
+        }
+
+        h3 {
+            font-size: 0.8rem;
+            color: #888;
             margin-bottom: 1rem;
+            text-transform: uppercase;
         }
 
         p {
             line-height: 1.6;
-            color: var(--text-dim);
+            font-size: 1rem;
+            color: #ccc;
         }
 
-        .tagline {
-            color: var(--primary);
-            font-weight: bold;
-            border-bottom: 1px dashed var(--primary);
+        .blueprint-label {
             display: inline-block;
-            margin-bottom: 20px;
+            background: var(--bg);
+            border: 1px solid #555;
+            padding: 2px 5px;
+            font-size: 10px;
+            margin-bottom: 10px;
+            color: #fff;
         }
 
-        /* Scroll indicator */
-        .scroll-indicator {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            animation: bounce 2s infinite;
-        }
-
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% {transform: translateY(0) translateX(-50%);}
-            40% {transform: translateY(-10px) translateX(-50%);}
-            60% {transform: translateY(-5px) translateX(-50%);}
-        }
     </style>
 </head>
 <body>
 
     <div id="canvas-container"></div>
-
-    <div class="overlay"></div>
-    <div class="hud-corner top-left">ODD EARTH INST.<br>SYS.STATUS: ONLINE</div>
-    <div class="hud-corner bottom-right">LATERAL THINKING<br>WITHERED TECH</div>
+    <div class="scanlines"></div>
+    
+    <div class="hud top-left">
+        ODD EARTH INSTITUTE<br>
+        LATERAL_THINKING_MODULE_V4.2
+    </div>
+    <div class="hud btm-right">
+        RENDER: GPU_ACCELERATED<br>
+        STATUS: CRYSTALLIZING
+    </div>
 
     <main>
-        <section id="s1" class="visible">
-            <div class="content-box">
-                <span class="tagline">The Garage Workshop</span>
-                <h1>Odd Earth</h1>
-                <p>We don't need new physics to save the world. We just need to use what we already have, differently.</p>
-                <div class="scroll-indicator">▼</div>
-            </div>
-        </section>
+        <div class="section-spacer"></div>
 
-        <section id="s2">
-            <div class="content-box" style="margin-left: auto;"> <span class="tagline">Philosophy</span>
-                <h2>The Yokoi Method</h2>
-                <p>Inspired by the creator of the Game Boy. We utilize "Withered Technology"—cheap, mature, and well-understood tech—to engineer radical solutions.</p>
+        <div class="story-block">
+            <div class="story-card problem">
+                <span class="blueprint-label">MANIFESTO</span>
+                <h2>The Complexity Trap</h2>
+                <p>We are addicted to "High Tech." We build million-dollar machines to solve ten-cent problems. At the Odd Earth Institute, we look backwards to move forwards.</p>
             </div>
-        </section>
+        </div>
 
-        <section id="s3">
-            <div class="content-box">
-                <span class="tagline">Methodology</span>
-                <h2>MacGyver Engineering</h2>
-                <p>A paperclip and a microcontroller. High impact, low resource intensity. We build modular, repairable systems designed for the real world, not a lab.</p>
+        <div class="story-block">
+            <div class="story-card problem">
+                <h3>Current Standard</h3>
+                <h2>The Heavy Machine</h2>
+                <p>Massive CT scanners. claustrophobic waiting rooms. Radiation. The cost of diagnostics is weight, energy, and fear.</p>
             </div>
-        </section>
+        </div>
+        <div class="story-block">
+            <div class="story-card solution">
+                <h3>Odd Earth Lateral Shift</h3>
+                <h2>The Single Dot</h2>
+                <p>We replaced the machine with a single thermochromatic dot on the forehead. It monitors vitals instantly. No power. No waiting. Just physics.</p>
+            </div>
+        </div>
 
-        <section id="s4">
-            <div class="content-box" style="margin-left: auto; text-align: center;">
-                <span class="tagline">Target</span>
-                <h2>Global Scale</h2>
-                <p>Crystallizing chaotic data into actionable climate solutions. The future isn't shiny chrome; it's green, patched together, and it works.</p>
+        <div class="story-block">
+            <div class="story-card problem">
+                <h3>Current Standard</h3>
+                <h2>The Sequencing Lab</h2>
+                <p>A tangle of reagents, electricity, and supercomputers running purely to decode biological noise.</p>
             </div>
-        </section>
+        </div>
+        <div class="story-block">
+            <div class="story-card solution">
+                <h3>Odd Earth Lateral Shift</h3>
+                <h2>Crystals in a Dish</h2>
+                <p>Why compute when matter organizes itself? We use basic salt crystallization to visually map reaction outcomes. The geometry is the data.</p>
+            </div>
+        </div>
+
+        <div class="story-block">
+            <div class="story-card problem">
+                <h3>Current Standard</h3>
+                <h2>The Silicon Anxiety</h2>
+                <p>Smart devices tethered to wrists, requiring lithium mining and constant charging to tell us we are alive.</p>
+            </div>
+        </div>
+        <div class="story-block">
+            <div class="story-card solution">
+                <h3>Odd Earth Lateral Shift</h3>
+                <h2>The Reactive Plant</h2>
+                <p>Bio-modification of common house plants to change color based on air quality and occupant stress pheromones. It grows. It knows.</p>
+            </div>
+        </div>
+
+        <div class="story-block">
+            <div class="story-card problem">
+                <h3>Current Standard</h3>
+                <h2>Forensic Overkill</h2>
+                <p>Weeks of backlog. Sterile labs. High error rates in handling microscopic evidence.</p>
+            </div>
+        </div>
+        <div class="story-block">
+            <div class="story-card solution">
+                <h3>Odd Earth Lateral Shift</h3>
+                <h2>The K9 Nose</h2>
+                <p>The most advanced olfactory sensor on earth is already here. We map scent data using trained dogs and simple flagging. 99.9% accuracy. Powered by kibble.</p>
+            </div>
+        </div>
+        
+        <div class="section-spacer"></div>
     </main>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
+    <script type="x-shader/x-vertex" id="vertexshader">
+        uniform float uTime;
+        uniform float uMorph; // 0.0 to 1.0 (Interpolation factor)
+        uniform float uSize;
+        
+        // We pass TWO positions to the shader: Start and End
+        attribute vec3 positionA;
+        attribute vec3 positionB;
+        attribute float aRandom;
+        
+        varying vec3 vColor;
+        varying float vAlpha;
+
+        // Easing function for smoother morphs
+        float easeInOutCubic(float t) {
+            return t < 0.5 ? 4.0 * t * t * t : 1.0 - pow(-2.0 * t + 2.0, 3.0) / 2.0;
+        }
+
+        void main() {
+            float t = easeInOutCubic(uMorph);
+
+            // Interpolate position
+            vec3 pos = mix(positionA, positionB, t);
+
+            // NOISE & VIBRATION LOGIC
+            // "Tech" (Start) vibrates with high frequency anxiety
+            float techNoise = sin(uTime * 10.0 + aRandom * 20.0) * 0.05 * (1.0 - t);
+            
+            // "Organic" (End) breathes slowly
+            float organicNoiseX = sin(uTime * 1.0 + pos.y * 0.5) * 0.1 * t;
+            float organicNoiseY = cos(uTime * 0.8 + pos.x * 0.5) * 0.1 * t;
+
+            pos.x += techNoise + organicNoiseX;
+            pos.y += techNoise + organicNoiseY;
+            pos.z += techNoise;
+
+            // COLOR LOGIC
+            // Blue/Cold for Start -> Green/Gold for End
+            vec3 colorTech = vec3(0.2, 0.6, 1.0); // Blue
+            vec3 colorOrg = vec3(0.8, 1.0, 0.0);  // Green/Yellow
+            vColor = mix(colorTech, colorOrg, t);
+
+            // Size calculation
+            vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+            gl_PointSize = (uSize * (1.0 + aRandom)) * (10.0 / -mvPosition.z);
+            gl_Position = projectionMatrix * mvPosition;
+        }
+    </script>
+
+    <script type="x-shader/x-fragment" id="fragmentshader">
+        varying vec3 vColor;
+        
+        void main() {
+            // Circular particle
+            float r = distance(gl_PointCoord, vec2(0.5));
+            if (r > 0.5) discard;
+
+            // Glow effect
+            float glow = 1.0 - (r * 2.0);
+            glow = pow(glow, 1.5);
+
+            gl_FragColor = vec4(vColor, glow * 0.8);
+        }
+    </script>
+
     <script>
         // --- CONFIGURATION ---
-        const PARTICLE_COUNT = 8000;
-        const PARTICLE_SIZE = 0.08;
-        const MORPH_SPEED = 0.05;
+        const COUNT = 40000;
+        const SIZE = 4.0;
 
-        // --- SETUP THREE.JS ---
+        // --- SETUP ---
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
-        // Fog to blend particles into the deep blue background
-        scene.fog = new THREE.FogExp2(0x051020, 0.03);
-
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.z = 30;
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.z = 25;
 
         const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         container.appendChild(renderer.domElement);
 
-        // --- PARTICLE SYSTEM ---
+        // --- GEOMETRY GENERATORS ---
+        // We generate coordinate arrays for every shape
         
-        // We need arrays to store positions for different shapes
-        // 0: Chaos, 1: GameBoy (Yokoi), 2: Gear (MacGyver), 3: Globe (Earth)
-        const shapes = {
-            chaos: [],
-            gameboy: [],
-            gear: [],
-            globe: []
-        };
-
-        // Helper to generate random coordinates
         const rand = (min, max) => Math.random() * (max - min) + min;
 
-        // 1. GENERATE CHAOS (Random Field)
-        for (let i = 0; i < PARTICLE_COUNT; i++) {
-            shapes.chaos.push(rand(-40, 40), rand(-40, 40), rand(-30, 30));
-        }
+        // 0. CHAOS (Initial State)
+        const shapeChaos = [];
+        for(let i=0; i<COUNT; i++) shapeChaos.push(rand(-30,30), rand(-30,30), rand(-20,20));
 
-        // 2. GENERATE GAMEBOY (Rectangle with cutout)
-        for (let i = 0; i < PARTICLE_COUNT; i++) {
-            let x, y, z;
-            // Simple logic: weighted distribution to form a box shape
-            if (i < PARTICLE_COUNT * 0.8) {
-                // Body
-                x = rand(-6, 6);
-                y = rand(-9, 9);
-                z = rand(-1, 1);
-            } else {
-                // Screen area (denser)
-                x = rand(-4, 4);
-                y = rand(1, 6);
-                z = rand(1.5, 2.5); // Pop out slightly
-            }
-            shapes.gameboy.push(x, y, z);
-        }
-
-        // 3. GENERATE GEAR (Torus/Ring)
-        for (let i = 0; i < PARTICLE_COUNT; i++) {
+        // 1. CT SCANNER (Large Cylinder Ring)
+        const shapeScanner = [];
+        for(let i=0; i<COUNT; i++) {
             const angle = Math.random() * Math.PI * 2;
-            // Radius varies to create thickness + teeth
-            let radius = 7 + Math.random() * 2; 
+            const r = rand(8, 12); // Thick ring
+            shapeScanner.push(Math.cos(angle)*r, Math.sin(angle)*r, rand(-4,4)); // Cylinder
+        }
+
+        // 2. THE DOT (Tiny dense sphere)
+        const shapeDot = [];
+        for(let i=0; i<COUNT; i++) {
+            // rejection sampling for sphere
+            let x,y,z;
+            do {
+                x = rand(-1,1); y = rand(-1,1); z = rand(-1,1);
+            } while(x*x+y*y+z*z > 1);
+            shapeDot.push(x*2, y*2, z*2); // Small sphere size 2
+        }
+
+        // 3. GENE SEQUENCING (Double Helix)
+        const shapeHelix = [];
+        for(let i=0; i<COUNT; i++) {
+            const t = rand(-10, 10);
+            const strand = Math.random() > 0.5 ? 0 : Math.PI; // Two strands
+            const r = 4;
+            const x = Math.cos(t * 2 + strand) * r;
+            const z = Math.sin(t * 2 + strand) * r;
+            const y = t * 1.5;
+            // Add some "noise" particles around the helix
+            const noise = 0.5;
+            shapeHelix.push(x+rand(-noise,noise), y, z+rand(-noise,noise));
+        }
+
+        // 4. CRYSTALS (Sharp Cubes)
+        const shapeCrystal = [];
+        for(let i=0; i<COUNT; i++) {
+            // Create 3 clusters
+            const cluster = Math.floor(Math.random() * 3);
+            let cx = 0, cy = 0;
+            if(cluster === 1) { cx = 6; cy = 4; }
+            if(cluster === 2) { cx = -6; cy = -2; }
             
-            // Add teeth every 45 degrees
-            const teeth = 8;
-            const toothAngle = (Math.PI * 2) / teeth;
-            if (Math.abs(angle % toothAngle) < 0.2) {
-                radius += 2.5; // Tooth extension
+            // Cube shape
+            const s = rand(0, 3);
+            shapeCrystal.push(
+                cx + rand(-s,s), 
+                cy + rand(-s,s), 
+                rand(-s,s)
+            );
+        }
+
+        // 5. SMART WATCH (Torus + Strap)
+        const shapeWatch = [];
+        for(let i=0; i<COUNT; i++) {
+            if(i < COUNT * 0.6) {
+                // Screen/Face (Box)
+                shapeWatch.push(rand(-3,3), rand(-3,3), rand(0,1));
+            } else {
+                // Strap (Cylinder segment)
+                const t = rand(-10, 10);
+                if (Math.abs(t) > 3) {
+                    shapeWatch.push(rand(-2,2), t, rand(-2,-3));
+                } else {
+                    shapeWatch.push(0,0,0); // Hide excess inside
+                }
             }
-
-            const x = Math.cos(angle) * radius;
-            const y = Math.sin(angle) * radius;
-            const z = rand(-1, 1);
-            shapes.gear.push(x, y, z);
         }
 
-        // 4. GENERATE GLOBE (Sphere)
-        for (let i = 0; i < PARTICLE_COUNT; i++) {
-            const phi = Math.acos(-1 + (2 * i) / PARTICLE_COUNT);
-            const theta = Math.sqrt(PARTICLE_COUNT * Math.PI) * phi;
-            const r = 9;
-
-            const x = r * Math.cos(theta) * Math.sin(phi);
-            const y = r * Math.sin(theta) * Math.sin(phi);
-            const z = r * Math.cos(phi);
-            shapes.globe.push(x, y, z);
+        // 6. PLANT (Fractal-ish branching)
+        const shapePlant = [];
+        for(let i=0; i<COUNT; i++) {
+            // Main stem
+            const h = rand(-10, 10);
+            const w = (10 - h) * 0.1; // Taper
+            
+            // Leaves
+            if (Math.random() > 0.1) {
+                // Stem
+                shapePlant.push(rand(-w,w), h, rand(-w,w));
+            } else {
+                // Leaf bursts
+                const leafH = rand(-5, 10);
+                const angle = rand(0, Math.PI*2);
+                const lr = rand(0, 4);
+                shapePlant.push(Math.cos(angle)*lr, leafH, Math.sin(angle)*lr);
+            }
         }
 
-        // --- INITIALIZE GEOMETRY ---
+        // 7. DNA LAB (Matrix Grid)
+        const shapeGrid = [];
+        for(let i=0; i<COUNT; i++) {
+            shapeGrid.push(rand(-10,10), rand(-10,10), 0);
+        }
+
+        // 8. DOG (Voxel-style approximation)
+        const shapeDog = [];
+        for(let i=0; i<COUNT; i++) {
+            const r = Math.random();
+            let x,y,z;
+            
+            if (r < 0.4) { // Body
+                x = rand(-4, 4); y = rand(-2, 2); z = rand(-1.5, 1.5);
+            } else if (r < 0.6) { // Head
+                x = rand(4, 6); y = rand(1, 4); z = rand(-1, 1);
+            } else if (r < 0.9) { // Legs
+                const lx = rand(-4, 4); 
+                // snap to 4 legs
+                const legX = lx > 0 ? 3 : -3;
+                const lz = rand(-1, 1) > 0 ? 1 : -1;
+                x = legX + rand(-0.5, 0.5);
+                y = rand(-6, -2);
+                z = lz + rand(-0.5, 0.5);
+            } else { // Tail
+                x = rand(-6, -4); y = rand(0, 3); z = 0;
+            }
+            shapeDog.push(x, y, z);
+        }
+
+        // --- BUFFER GEOMETRY SETUP ---
         const geometry = new THREE.BufferGeometry();
-        const currentPositions = new Float32Array(shapes.chaos); // Start with chaos
         
-        // We use a "target" attribute to know where particles want to go
-        const targetPositions = new Float32Array(shapes.chaos);
+        // Attributes
+        // We will update 'positionA' and 'positionB' dynamically based on scroll section
+        const posA = new Float32Array(COUNT * 3); 
+        const posB = new Float32Array(COUNT * 3);
+        const randomArray = new Float32Array(COUNT);
 
-        geometry.setAttribute('position', new THREE.BufferAttribute(currentPositions, 3));
-        
-        // Create Material - Eco Cyan/Green Color
-        const material = new THREE.PointsMaterial({
-            color: 0x00ffcc,
-            size: PARTICLE_SIZE,
+        // Fill initial (Chaos to Chaos)
+        for(let i=0; i<COUNT*3; i++) {
+            posA[i] = shapeChaos[i];
+            posB[i] = shapeChaos[i];
+        }
+        for(let i=0; i<COUNT; i++) randomArray[i] = Math.random();
+
+        geometry.setAttribute('positionA', new THREE.BufferAttribute(posA, 3));
+        geometry.setAttribute('positionB', new THREE.BufferAttribute(posB, 3));
+        geometry.setAttribute('aRandom', new THREE.BufferAttribute(randomArray, 1));
+
+        // Uniforms
+        const uniforms = {
+            uTime: { value: 0 },
+            uMorph: { value: 0 },
+            uSize: { value: SIZE }
+        };
+
+        // Material
+        const material = new THREE.ShaderMaterial({
+            vertexShader: document.getElementById('vertexshader').textContent,
+            fragmentShader: document.getElementById('fragmentshader').textContent,
+            uniforms: uniforms,
             transparent: true,
-            opacity: 0.8,
+            depthWrite: false,
             blending: THREE.AdditiveBlending
         });
 
-        const particleSystem = new THREE.Points(geometry, material);
-        scene.add(particleSystem);
+        const points = new THREE.Points(geometry, material);
+        scene.add(points);
 
-        // --- SCROLL & MORPH LOGIC ---
-
-        // Sections trigger shape changes
-        const sections = document.querySelectorAll('section');
-        let currentShapeIndex = 0;
-
-        function updateTargetShape(index) {
-            let targetArray;
-            switch(index) {
-                case 0: targetArray = shapes.chaos; break;
-                case 1: targetArray = shapes.gameboy; break;
-                case 2: targetArray = shapes.gear; break;
-                case 3: targetArray = shapes.globe; break;
-                default: targetArray = shapes.chaos;
+        // --- SCROLL LOGIC ---
+        
+        // Define the shape transitions
+        // 0: Intro (Chaos)
+        // 1: CT (Scanner) -> Dot
+        // 2: Bio (Helix) -> Crystal
+        // 3: Watch -> Plant
+        // 4: Grid -> Dog
+        
+        // We need to manage the buffers. 
+        // When we enter a "story block", we set Position A to the "Problem" shape and Position B to the "Solution" shape.
+        // Then we map scroll percentage within that block to uMorph.
+        
+        const storyBlocks = document.querySelectorAll('.story-block');
+        // Pair up blocks? No, let's look at the flow.
+        // Index 0: Intro (Chaos)
+        // Index 1: Problem 1 (Scanner)
+        // Index 2: Solution 1 (Dot)
+        // ...
+        
+        // Helper to update buffers
+        function setMorphTargets(shapeA, shapeB) {
+            const attrA = geometry.attributes.positionA.array;
+            const attrB = geometry.attributes.positionB.array;
+            
+            // We only update if necessary to save CPU, but for simplicity here we do it when section changes
+            for(let i=0; i<COUNT*3; i++) {
+                attrA[i] = shapeA[i] || 0;
+                attrB[i] = shapeB[i] || 0;
             }
-
-            // Update the array that particles are trying to reach
-            for (let i = 0; i < targetArray.length; i++) {
-                targetPositions[i] = targetArray[i];
-            }
+            geometry.attributes.positionA.needsUpdate = true;
+            geometry.attributes.positionB.needsUpdate = true;
         }
 
-        // Scroll Handler
+        let currentStage = -1;
+
         window.addEventListener('scroll', () => {
             const scrollY = window.scrollY;
-            const windowH = window.innerHeight;
+            const winH = window.innerHeight;
             
-            // Determine active section
-            const newIndex = Math.round(scrollY / windowH);
+            // Determine which pair of problem/solution we are in
+            // This is a simplified logic mapping scroll position to pairs
             
-            if (newIndex !== currentShapeIndex && newIndex < 4) {
-                currentShapeIndex = newIndex;
-                updateTargetShape(currentShapeIndex);
+            // Define scroll zones (approximate)
+            const zoneSize = winH * 1.5; // Height of problem+solution combo
+            const stage = Math.floor(scrollY / zoneSize);
+            
+            // Calculate progress within the stage (0.0 to 1.0)
+            const stageProgress = (scrollY % zoneSize) / zoneSize;
+            
+            // Map stage to shapes
+            // Stage 0: Intro -> Scanner
+            // Stage 1: Scanner -> Dot
+            // Stage 2: Helix -> Crystal
+            // Stage 3: Watch -> Plant
+            // Stage 4: Grid -> Dog
+            
+            if (stage !== currentStage) {
+                currentStage = stage;
+                
+                if(stage === 0) setMorphTargets(shapeChaos, shapeScanner); // Intro to CT
+                else if(stage === 1) setMorphTargets(shapeScanner, shapeDot); // CT to Dot
+                else if(stage === 2) setMorphTargets(shapeHelix, shapeCrystal); // Bio to Crystal
+                else if(stage === 3) setMorphTargets(shapeWatch, shapePlant); // Watch to Plant
+                else if(stage === 4) setMorphTargets(shapeGrid, shapeDog); // Grid to Dog
             }
 
-            // Fade in/out text sections
-            sections.forEach((sec, idx) => {
-                const rect = sec.getBoundingClientRect();
-                if (rect.top < windowH * 0.75 && rect.bottom > windowH * 0.25) {
-                    sec.classList.add('visible');
-                } else {
-                    sec.classList.remove('visible');
-                }
-            });
+            // Update uniform
+            // We want the morph to happen specifically when scrolling from Problem Card to Solution Card
+            // The visual morph should trigger as we scroll down the specific section
+            
+            // We'll smooth the transition so it doesn't snap
+            // For this logic, we just map 0-1 linearly based on scroll in that section
+            uniforms.uMorph.value = stageProgress;
         });
 
         // --- ANIMATION LOOP ---
-        
-        // Mouse interaction for subtle parallax
-        let mouseX = 0;
-        let mouseY = 0;
-        document.addEventListener('mousemove', (e) => {
-            mouseX = (e.clientX - window.innerWidth / 2) * 0.001;
-            mouseY = (e.clientY - window.innerHeight / 2) * 0.001;
-        });
-
         const clock = new THREE.Clock();
-
+        
         function animate() {
             requestAnimationFrame(animate);
+            uniforms.uTime.value = clock.getElapsedTime();
             
-            const time = clock.getElapsedTime();
-            const positions = particleSystem.geometry.attributes.position.array;
-
-            // Loop through particles
-            for (let i = 0; i < PARTICLE_COUNT; i++) {
-                const i3 = i * 3;
-
-                // 1. Interpolation Logic (Morphing)
-                // Move current position towards target position
-                positions[i3]     += (targetPositions[i3]     - positions[i3])     * MORPH_SPEED;
-                positions[i3 + 1] += (targetPositions[i3 + 1] - positions[i3 + 1]) * MORPH_SPEED;
-                positions[i3 + 2] += (targetPositions[i3 + 2] - positions[i3 + 2]) * MORPH_SPEED;
-
-                // 2. Fluidity / Noise
-                // Add a sine wave drift so particles are never truly still (The "Living" Field)
-                // We use the index 'i' to make the movement uneven across the field
-                if (currentShapeIndex === 0) {
-                     // Chaos state moves more
-                    positions[i3]     += Math.sin(time + i) * 0.02;
-                    positions[i3 + 1] += Math.cos(time + i * 0.5) * 0.02;
-                } else {
-                    // Crystallized states vibrate slightly (Energy)
-                    positions[i3]     += Math.sin(time * 3 + i) * 0.005;
-                    positions[i3 + 1] += Math.cos(time * 2 + i) * 0.005;
-                }
-            }
-
-            particleSystem.geometry.attributes.position.needsUpdate = true;
-
-            // 3. Scene Rotation (Parallax)
-            particleSystem.rotation.y += 0.002; // Constant slow spin
-            particleSystem.rotation.x += (mouseY - particleSystem.rotation.x) * 0.05;
-            particleSystem.rotation.y += (mouseX - particleSystem.rotation.y) * 0.05;
+            // Slow rotation for cinematic feel
+            points.rotation.y = uniforms.uTime.value * 0.05;
+            points.rotation.z = uniforms.uTime.value * 0.02;
 
             renderer.render(scene, camera);
         }
 
-        // Handle Resize
+        animate();
+
+        // Resize
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
-
-        animate();
 
     </script>
 </body>
