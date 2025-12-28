@@ -1,508 +1,401 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Odd Earth Institute</title>
-
-  <style>
-    :root{
-      --bg:#070A10;
-      --fg:#E7EEFF;
-      --muted: rgba(231,238,255,.72);
-      --glass: rgba(12,16,28,.56);
-      --line: rgba(124,255,201,.16);
-      --a:#7cffc9;
-      --b:#ff8a3d;
-    }
-
-    html,body{
-      height:100%;
-      margin:0;
-      background:var(--bg);
-      color:var(--fg);
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Inter, Roboto, Arial;
-      overflow-x:hidden;
-    }
-
-    canvas#bg{
-      position:fixed; inset:0;
-      width:100vw; height:100vh;
-      display:block;
-      z-index:0;
-    }
-
-    .air{
-      pointer-events:none;
-      position:fixed; inset:0; z-index:1;
-      background:
-        radial-gradient(1200px 700px at 20% 20%, rgba(124,255,201,.10), transparent 60%),
-        radial-gradient(900px 600px at 80% 30%, rgba(255,138,61,.08), transparent 62%),
-        radial-gradient(900px 800px at 50% 90%, rgba(130,170,255,.08), transparent 60%),
-        radial-gradient(ellipse at center, rgba(0,0,0,0) 0%, rgba(0,0,0,.55) 72%);
-      opacity:.9;
-    }
-
-    .wrap{ position:relative; z-index:2; width:min(1100px, calc(100% - 40px)); margin:0 auto; }
-
-    .topbar{
-      position:fixed; top:14px; left:50%; transform:translateX(-50%);
-      width:min(1100px, calc(100% - 40px));
-      z-index:3;
-      display:flex; align-items:center; justify-content:space-between;
-      padding:10px 12px;
-      border-radius:16px;
-      background: linear-gradient(180deg, rgba(12,16,28,.80), rgba(12,16,28,.42));
-      border:1px solid rgba(124,255,201,.18);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 18px 46px rgba(0,0,0,.35);
-    }
-
-    .brand{
-      display:flex; gap:10px; align-items:center;
-      text-transform:uppercase;
-      letter-spacing:.14em;
-      font-size:11px;
-      color:rgba(231,238,255,.82);
-      font-weight:800;
-    }
-    .brand b{ color:var(--a); letter-spacing:.18em; }
-
-    .status{
-      display:flex; align-items:center; gap:8px;
-      padding:6px 10px;
-      border-radius:999px;
-      border:1px solid rgba(124,255,201,.18);
-      background: rgba(12,16,28,.35);
-      font-size:11px;
-      letter-spacing:.08em;
-      color: rgba(231,238,255,.70);
-      text-transform:uppercase;
-      user-select:none;
-      white-space:nowrap;
-    }
-    .led{
-      width:8px; height:8px; border-radius:50%;
-      background: rgba(231,238,255,.25);
-      box-shadow:none;
-    }
-    .led.live{ background: var(--a); box-shadow: 0 0 16px rgba(124,255,201,.55); }
-
-    .nav{ display:flex; gap:10px; align-items:center; font-size:12px; }
-    .nav a{
-      color: rgba(231,238,255,.70);
-      text-decoration:none;
-      padding:7px 10px;
-      border-radius:12px;
-      border:1px solid rgba(124,255,201,.12);
-      background: rgba(12,16,28,.25);
-    }
-    .nav a:hover{ border-color: rgba(124,255,201,.26); color: rgba(231,238,255,.92); }
-
-    section{
-      min-height: 100vh;
-      display:flex; align-items:center;
-      padding: 108px 0 78px;
-    }
-
-    .panel{
-      width:min(760px, 100%);
-      background: linear-gradient(180deg, rgba(12,16,28,.62), rgba(12,16,28,.38));
-      border:1px solid rgba(124,255,201,.16);
-      border-radius: 22px;
-      padding: 26px 24px;
-      box-shadow: 0 28px 60px rgba(0,0,0,.40);
-      backdrop-filter: blur(12px);
-    }
-
-    .kicker{
-      color: rgba(124,255,201,.95);
-      text-transform:uppercase;
-      letter-spacing:.18em;
-      font-size:11px;
-      font-weight:850;
-      margin-bottom: 12px;
-    }
-
-    h1{
-      margin:0 0 12px;
-      font-size: clamp(38px, 4.6vw, 60px);
-      letter-spacing:-.02em;
-      line-height:1.04;
-    }
-    h2{
-      margin:0 0 10px;
-      font-size: clamp(24px, 3.0vw, 34px);
-      letter-spacing:-.01em;
-    }
-    p{
-      margin:0 0 14px;
-      color: var(--muted);
-      font-size: 15.6px;
-      line-height:1.58;
-    }
-    .emph{ color: rgba(231,238,255,.92); }
-
-    .rule{
-      height:1px;
-      background: linear-gradient(90deg, rgba(124,255,201,.50), rgba(124,255,201,0));
-      margin: 16px 0 18px;
-    }
-
-    .chips{ display:flex; flex-wrap:wrap; gap:10px; margin-top: 12px; }
-    .chip{
-      font-size:12px;
-      color: rgba(231,238,255,.78);
-      padding:8px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(124,255,201,.14);
-      background: rgba(12,16,28,.25);
-    }
-
-    .ctaRow{ display:flex; gap:12px; flex-wrap:wrap; margin-top: 16px; align-items:center; }
-    .btn{
-      cursor:pointer; border:none;
-      border-radius: 14px;
-      padding: 11px 14px;
-      font-weight:850;
-      letter-spacing:.10em;
-      text-transform:uppercase;
-      font-size:12px;
-      color: rgba(7,10,16,.95);
-      background: linear-gradient(90deg, var(--a), rgba(124,255,201,.62));
-      box-shadow: 0 18px 40px rgba(0,0,0,.30);
-    }
-    .btn.ghost{
-      border:1px solid rgba(124,255,201,.22);
-      background: rgba(12,16,28,.22);
-      color: rgba(231,238,255,.86);
-    }
-
-    .small{ font-size:12px; color: rgba(231,238,255,.58); margin-top: 8px; }
-    .footer{ padding-bottom: 140px; }
-
-    @media (max-width: 520px){
-      .nav{ display:none; }
-      section{ padding-top: 96px; }
-      .panel{ padding: 22px 18px; border-radius: 18px; }
-    }
-  </style>
-</head>
-
-<body>
-  <canvas id="bg"></canvas>
-  <div class="air"></div>
-
-  <div class="topbar">
-    <div class="brand"><b>ODD</b> EARTH INSTITUTE</div>
-    <div style="display:flex; gap:10px; align-items:center;">
-      <div class="status"><span class="led live" id="led"></span> Field: <span id="statusText">live</span></div>
-      <div class="nav">
-        <a href="#enter">Enter</a>
-        <a href="#philosophy">Philosophy</a>
-        <a href="#domains">Domains</a>
-        <a href="#signal">Signal</a>
-      </div>
-    </div>
-  </div>
-
-  <div class="wrap">
-    <section id="enter" data-shape="0">
-      <div class="panel">
-        <div class="kicker">lateral thinking • mature technologies • proof of concept</div>
-        <h1>Progress moves sideways.</h1>
-        <p class="emph">
-          Odd Earth Institute explores proof-of-concept alternatives in biomedicine, biotechnology,
-          forensics, and climate resilience — by re-applying mature technologies in unexpected contexts.
-        </p>
-        <p>
-          We build prototypes that feel obvious in retrospect: practical, measurable, and deployable —
-          without requiring billion-dollar infrastructure.
-        </p>
-        <div class="rule"></div>
-        <p class="small">Scroll to see the field morph. This version uses plain canvas (no WebGL), so it works reliably on GitHub Pages.</p>
-        <div class="ctaRow">
-          <button class="btn" onclick="document.querySelector('#philosophy').scrollIntoView({behavior:'smooth'})">Enter</button>
-          <button class="btn ghost" onclick="document.querySelector('#signal').scrollIntoView({behavior:'smooth'})">Register interest</button>
-        </div>
-      </div>
-    </section>
-
-    <section id="philosophy" data-shape="1">
-      <div class="panel">
-        <div class="kicker">gunpei yokoi</div>
-        <h2>Lateral thinking with mature technologies.</h2>
-        <p>
-          The institute is built around a simple principle:
-          innovation is often not invention — it’s <span class="emph">reframing</span>.
-        </p>
-        <p class="emph">
-          A calculator becomes a game console. A camera becomes a biosensor. A “dead” component becomes a new instrument.
-        </p>
-      </div>
-    </section>
-
-    <section id="domains" data-shape="2">
-      <div class="panel">
-        <div class="kicker">where sideways matters most</div>
-        <h2>Domains</h2>
-        <p>
-          Mature technologies unlock disproportionate impact where mainstream approaches are expensive, slow, or centralised.
-        </p>
-        <div class="chips">
-          <div class="chip">biomedical sensing</div>
-          <div class="chip">biotechnology</div>
-          <div class="chip">forensics & public safety</div>
-          <div class="chip">first response</div>
-          <div class="chip">climate & resilience</div>
-          <div class="chip">low-resource diagnostics</div>
-        </div>
-      </div>
-    </section>
-
-    <section id="signal" class="footer" data-shape="3">
-      <div class="panel">
-        <div class="kicker">signal</div>
-        <h2>Early supporters & collaborators</h2>
-        <p>
-          This is the beginning. If you want first access to prototypes, partnerships, and releases,
-          connect this button to your mailing list / form.
-        </p>
-        <div class="ctaRow">
-          <button class="btn" onclick="alert('Hook this to Typeform/Wix/ConvertKit.');">Register interest</button>
-          <button class="btn ghost" onclick="window.scrollTo({top:0, behavior:'smooth'})">Back to top</button>
-        </div>
-        <div class="small">© <span id="year"></span> Odd Earth Institute</div>
-      </div>
-    </section>
-  </div>
-
-  <script>
-    // ======= Dependency-free morph field (Canvas 2D) =======
-    document.getElementById('year').textContent = new Date().getFullYear();
-
-    const canvas = document.getElementById('bg');
-    const ctx = canvas.getContext('2d', { alpha: true });
-
-    function resize(){
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.floor(window.innerWidth * dpr);
-      canvas.height = Math.floor(window.innerHeight * dpr);
-      canvas.style.width = window.innerWidth + 'px';
-      canvas.style.height = window.innerHeight + 'px';
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-    window.addEventListener('resize', resize);
-    resize();
-
-    const isSmall = Math.min(window.innerWidth, window.innerHeight) < 720;
-    const N = isSmall ? 2200 : 4200;
-
-    const pts = new Float32Array(N * 4); // x,y,vx,vy
-    const A = new Float32Array(N * 2);
-    const B = new Float32Array(N * 2);
-
-    const rand = (a,b)=>a+Math.random()*(b-a);
-    const lerp = (a,b,t)=>a+(b-a)*t;
-    const clamp01 = x=>Math.max(0, Math.min(1, x));
-    const smoothstep = t=>t*t*(3-2*t);
-
-    // Shapes generate target positions in screen space, centered.
-    function genCloud(out){
-      for(let i=0;i<N;i++){
-        const r = Math.pow(Math.random(), 0.66) * 240;
-        const th = Math.random() * Math.PI * 2;
-        out[i*2+0] = Math.cos(th) * r;
-        out[i*2+1] = Math.sin(th) * r;
-      }
-    }
-
-    function genSlab(out){
-      const w = 520, h = 300;
-      for(let i=0;i<N;i++){
-        const u = Math.random(), v = Math.random();
-        // mild quantization, clean/credible
-        const cols = 12, rows = 7;
-        const ku = Math.floor(u*cols)/cols + rand(-0.015, 0.015);
-        const kv = Math.floor(v*rows)/rows + rand(-0.015, 0.015);
-        const x = (ku - 0.5) * w;
-        const y = (kv - 0.5) * h;
-        out[i*2+0] = x + y*0.12;
-        out[i*2+1] = y;
-      }
-    }
-
-    function genHelix(out){
-      const turns = 8.8;
-      const height = 520;
-      for(let i=0;i<N;i++){
-        const p = i/(N-1);
-        const y = lerp(-height/2, height/2, p);
-        const a = p * Math.PI * 2 * turns;
-        const r = 90 + 18*Math.sin(p*6.0);
-        const strand = (i%2===0) ? 1 : -1;
-        let x = Math.cos(a)*r + strand*26;
-        out[i*2+0] = x;
-        out[i*2+1] = y + Math.sin(a*0.5)*8;
-      }
-    }
-
-    function genInfinity(out){
-      const scale = 220;
-      for(let i=0;i<N;i++){
-        const p = i/(N-1);
-        const a = p * Math.PI * 2;
-        const denom = 1 + Math.sin(a)*Math.sin(a);
-        let x = (Math.cos(a)/denom) * scale;
-        let y = (Math.sin(a)*Math.cos(a)/denom) * scale * 0.95;
-
-        // thickness
-        const th = rand(-1,1);
-        const nx = -Math.sin(a);
-        const ny =  Math.cos(a);
-        x += nx * th * 26;
-        y += ny * th * 26;
-
-        out[i*2+0] = x;
-        out[i*2+1] = y;
-      }
-    }
-
-    const shapes = [genCloud, genSlab, genHelix, genInfinity];
-
-    function setTargets(shapeIdx){
-      // current becomes A; next becomes B
-      for(let i=0;i<N;i++){
-        A[i*2+0] = B[i*2+0];
-        A[i*2+1] = B[i*2+1];
-      }
-      shapes[shapeIdx](B);
-      morphT = 0;
-      fromShape = toShape;
-      toShape = shapeIdx;
-    }
-
-    // init particles at cloud
-    genCloud(B);
-    for(let i=0;i<N;i++){
-      const x = B[i*2+0], y = B[i*2+1];
-      pts[i*4+0] = x; pts[i*4+1] = y;
-      pts[i*4+2] = rand(-0.2,0.2); pts[i*4+3] = rand(-0.2,0.2);
-      A[i*2+0] = x; A[i*2+1] = y;
-    }
-
-    // Scroll-based snapping
-    const sections = [...document.querySelectorAll('section[data-shape]')];
-    let targetShape = 0;
-    let fromShape = 0;
-    let toShape = 0;
-    let morphT = 1;
-
-    const io = new IntersectionObserver((entries)=>{
-      let best=null;
-      for(const e of entries){
-        if(!e.isIntersecting) continue;
-        if(!best || e.intersectionRatio > best.intersectionRatio) best = e;
-      }
-      if(best){
-        const s = Number(best.target.getAttribute('data-shape')||0);
-        if(s !== toShape){
-          targetShape = s;
-          setTargets(s);
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Odd Earth Institute</title>
+    <style>
+        /* --- ECO-FUTURIST / BLUEPRINT CSS --- */
+        :root {
+            --bg-color: #051020; /* Deep Blueprint Blue */
+            --primary: #00ffcc;  /* Eco-Cyan */
+            --secondary: #ffce00; /* Warning Yellow (Industrial) */
+            --text-dim: #8892b0;
+            --grid-line: rgba(0, 255, 204, 0.1);
         }
-      }
-    }, { threshold:[0.25,0.4,0.55,0.7] });
-    sections.forEach(s=>io.observe(s));
 
-    // Mild parallax
-    let mx=0,my=0;
-    window.addEventListener('pointermove', (e)=>{
-      mx = (e.clientX / window.innerWidth) * 2 - 1;
-      my = (e.clientY / window.innerHeight) * 2 - 1;
-    }, {passive:true});
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            color: white;
+            font-family: 'Courier New', Courier, monospace; /* Monospace for blueprint feel */
+            overflow-x: hidden;
+        }
 
-    // Render loop
-    let last = performance.now();
-    function tick(now){
-      const dt = Math.min(34, now - last); last = now;
+        /* The Canvas */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
 
-      morphT = clamp01(morphT + dt * 0.0022);
-      const tS = smoothstep(morphT);
+        /* Blueprint Grid Overlay */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            background-image: 
+                linear-gradient(var(--grid-line) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none; /* Let clicks pass through */
+        }
 
-      // Clear
-      ctx.clearRect(0,0,window.innerWidth, window.innerHeight);
+        /* UI Elements */
+        .hud-corner {
+            position: fixed;
+            padding: 20px;
+            z-index: 3;
+            font-size: 12px;
+            letter-spacing: 2px;
+            color: var(--primary);
+            pointer-events: none;
+        }
+        .top-left { top: 0; left: 0; border-right: 1px solid var(--primary); border-bottom: 1px solid var(--primary); }
+        .bottom-right { bottom: 0; right: 0; border-left: 1px solid var(--primary); border-top: 1px solid var(--primary); }
 
-      // Center + subtle parallax (investor-safe)
-      const cx = window.innerWidth/2 + mx*12;
-      const cy = window.innerHeight/2 - my*12;
+        /* Scroll Content */
+        main {
+            position: relative;
+            z-index: 4;
+        }
 
-      // Draw particles
-      // Clean look: small points with slight glow via shadowBlur
-      ctx.save();
-      ctx.translate(cx, cy);
+        section {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start; /* Left align for workshop feel */
+            padding-left: 10%;
+            padding-right: 10%;
+            box-sizing: border-box;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
 
-      // glow
-      ctx.shadowColor = 'rgba(124,255,201,.18)';
-      ctx.shadowBlur = 10;
+        section.visible {
+            opacity: 1;
+        }
 
-      // drift alive but calm
-      const drift = (toShape===1 || toShape===2) ? 0.55 : 0.85;
+        .content-box {
+            background: rgba(5, 16, 32, 0.85);
+            border: 1px solid var(--primary);
+            padding: 2rem;
+            max-width: 500px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.1);
+        }
 
-      ctx.fillStyle = 'rgba(124,255,201,.62)';
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            color: var(--white);
+        }
 
-      for(let i=0;i<N;i++){
-        const i2 = i*2;
-        const i4 = i*4;
+        h2 {
+            font-size: 1.5rem;
+            color: var(--secondary);
+            margin-bottom: 1rem;
+        }
 
-        const tx = lerp(A[i2+0], B[i2+0], tS);
-        const ty = lerp(A[i2+1], B[i2+1], tS);
+        p {
+            line-height: 1.6;
+            color: var(--text-dim);
+        }
 
-        // spring toward target
-        let x = pts[i4+0], y = pts[i4+1];
-        let vx = pts[i4+2], vy = pts[i4+3];
+        .tagline {
+            color: var(--primary);
+            font-weight: bold;
+            border-bottom: 1px dashed var(--primary);
+            display: inline-block;
+            margin-bottom: 20px;
+        }
 
-        const ax = (tx - x) * 0.018;
-        const ay = (ty - y) * 0.018;
+        /* Scroll indicator */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: bounce 2s infinite;
+        }
 
-        vx = (vx + ax) * 0.88;
-        vy = (vy + ay) * 0.88;
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0) translateX(-50%);}
+            40% {transform: translateY(-10px) translateX(-50%);}
+            60% {transform: translateY(-5px) translateX(-50%);}
+        }
+    </style>
+</head>
+<body>
 
-        // gentle deterministic drift
-        const seed = i * 0.017;
-        vx += Math.sin(now*0.0026 + seed) * drift * 0.02;
-        vy += Math.cos(now*0.0023 + seed*1.3) * drift * 0.02;
+    <div id="canvas-container"></div>
 
-        x += vx;
-        y += vy;
+    <div class="overlay"></div>
+    <div class="hud-corner top-left">ODD EARTH INST.<br>SYS.STATUS: ONLINE</div>
+    <div class="hud-corner bottom-right">LATERAL THINKING<br>WITHERED TECH</div>
 
-        pts[i4+0]=x; pts[i4+1]=y; pts[i4+2]=vx; pts[i4+3]=vy;
+    <main>
+        <section id="s1" class="visible">
+            <div class="content-box">
+                <span class="tagline">The Garage Workshop</span>
+                <h1>Odd Earth</h1>
+                <p>We don't need new physics to save the world. We just need to use what we already have, differently.</p>
+                <div class="scroll-indicator">▼</div>
+            </div>
+        </section>
 
-        // draw
-        ctx.beginPath();
-        ctx.arc(x, y, isSmall ? 1.1 : 0.95, 0, Math.PI*2);
-        ctx.fill();
-      }
+        <section id="s2">
+            <div class="content-box" style="margin-left: auto;"> <span class="tagline">Philosophy</span>
+                <h2>The Yokoi Method</h2>
+                <p>Inspired by the creator of the Game Boy. We utilize "Withered Technology"—cheap, mature, and well-understood tech—to engineer radical solutions.</p>
+            </div>
+        </section>
 
-      ctx.restore();
+        <section id="s3">
+            <div class="content-box">
+                <span class="tagline">Methodology</span>
+                <h2>MacGyver Engineering</h2>
+                <p>A paperclip and a microcontroller. High impact, low resource intensity. We build modular, repairable systems designed for the real world, not a lab.</p>
+            </div>
+        </section>
 
-      // Subtle accent “embers” (very light)
-      ctx.save();
-      ctx.globalAlpha = 0.10;
-      ctx.fillStyle = 'rgba(255,138,61,.65)';
-      for(let k=0;k<18;k++){
-        const a = (now*0.00035) + k;
-        const r = 240 + 30*Math.sin(a*1.7);
-        const x = window.innerWidth/2 + Math.cos(a)*r;
-        const y = window.innerHeight/2 + Math.sin(a*1.1)*r*0.65;
-        ctx.beginPath();
-        ctx.arc(x, y, 1.5, 0, Math.PI*2);
-        ctx.fill();
-      }
-      ctx.restore();
+        <section id="s4">
+            <div class="content-box" style="margin-left: auto; text-align: center;">
+                <span class="tagline">Target</span>
+                <h2>Global Scale</h2>
+                <p>Crystallizing chaotic data into actionable climate solutions. The future isn't shiny chrome; it's green, patched together, and it works.</p>
+            </div>
+        </section>
+    </main>
 
-      requestAnimationFrame(tick);
-    }
-    requestAnimationFrame(tick);
-  </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // --- CONFIGURATION ---
+        const PARTICLE_COUNT = 8000;
+        const PARTICLE_SIZE = 0.08;
+        const MORPH_SPEED = 0.05;
+
+        // --- SETUP THREE.JS ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        // Fog to blend particles into the deep blue background
+        scene.fog = new THREE.FogExp2(0x051020, 0.03);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 30;
+
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(renderer.domElement);
+
+        // --- PARTICLE SYSTEM ---
+        
+        // We need arrays to store positions for different shapes
+        // 0: Chaos, 1: GameBoy (Yokoi), 2: Gear (MacGyver), 3: Globe (Earth)
+        const shapes = {
+            chaos: [],
+            gameboy: [],
+            gear: [],
+            globe: []
+        };
+
+        // Helper to generate random coordinates
+        const rand = (min, max) => Math.random() * (max - min) + min;
+
+        // 1. GENERATE CHAOS (Random Field)
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+            shapes.chaos.push(rand(-40, 40), rand(-40, 40), rand(-30, 30));
+        }
+
+        // 2. GENERATE GAMEBOY (Rectangle with cutout)
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+            let x, y, z;
+            // Simple logic: weighted distribution to form a box shape
+            if (i < PARTICLE_COUNT * 0.8) {
+                // Body
+                x = rand(-6, 6);
+                y = rand(-9, 9);
+                z = rand(-1, 1);
+            } else {
+                // Screen area (denser)
+                x = rand(-4, 4);
+                y = rand(1, 6);
+                z = rand(1.5, 2.5); // Pop out slightly
+            }
+            shapes.gameboy.push(x, y, z);
+        }
+
+        // 3. GENERATE GEAR (Torus/Ring)
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            // Radius varies to create thickness + teeth
+            let radius = 7 + Math.random() * 2; 
+            
+            // Add teeth every 45 degrees
+            const teeth = 8;
+            const toothAngle = (Math.PI * 2) / teeth;
+            if (Math.abs(angle % toothAngle) < 0.2) {
+                radius += 2.5; // Tooth extension
+            }
+
+            const x = Math.cos(angle) * radius;
+            const y = Math.sin(angle) * radius;
+            const z = rand(-1, 1);
+            shapes.gear.push(x, y, z);
+        }
+
+        // 4. GENERATE GLOBE (Sphere)
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+            const phi = Math.acos(-1 + (2 * i) / PARTICLE_COUNT);
+            const theta = Math.sqrt(PARTICLE_COUNT * Math.PI) * phi;
+            const r = 9;
+
+            const x = r * Math.cos(theta) * Math.sin(phi);
+            const y = r * Math.sin(theta) * Math.sin(phi);
+            const z = r * Math.cos(phi);
+            shapes.globe.push(x, y, z);
+        }
+
+        // --- INITIALIZE GEOMETRY ---
+        const geometry = new THREE.BufferGeometry();
+        const currentPositions = new Float32Array(shapes.chaos); // Start with chaos
+        
+        // We use a "target" attribute to know where particles want to go
+        const targetPositions = new Float32Array(shapes.chaos);
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(currentPositions, 3));
+        
+        // Create Material - Eco Cyan/Green Color
+        const material = new THREE.PointsMaterial({
+            color: 0x00ffcc,
+            size: PARTICLE_SIZE,
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending
+        });
+
+        const particleSystem = new THREE.Points(geometry, material);
+        scene.add(particleSystem);
+
+        // --- SCROLL & MORPH LOGIC ---
+
+        // Sections trigger shape changes
+        const sections = document.querySelectorAll('section');
+        let currentShapeIndex = 0;
+
+        function updateTargetShape(index) {
+            let targetArray;
+            switch(index) {
+                case 0: targetArray = shapes.chaos; break;
+                case 1: targetArray = shapes.gameboy; break;
+                case 2: targetArray = shapes.gear; break;
+                case 3: targetArray = shapes.globe; break;
+                default: targetArray = shapes.chaos;
+            }
+
+            // Update the array that particles are trying to reach
+            for (let i = 0; i < targetArray.length; i++) {
+                targetPositions[i] = targetArray[i];
+            }
+        }
+
+        // Scroll Handler
+        window.addEventListener('scroll', () => {
+            const scrollY = window.scrollY;
+            const windowH = window.innerHeight;
+            
+            // Determine active section
+            const newIndex = Math.round(scrollY / windowH);
+            
+            if (newIndex !== currentShapeIndex && newIndex < 4) {
+                currentShapeIndex = newIndex;
+                updateTargetShape(currentShapeIndex);
+            }
+
+            // Fade in/out text sections
+            sections.forEach((sec, idx) => {
+                const rect = sec.getBoundingClientRect();
+                if (rect.top < windowH * 0.75 && rect.bottom > windowH * 0.25) {
+                    sec.classList.add('visible');
+                } else {
+                    sec.classList.remove('visible');
+                }
+            });
+        });
+
+        // --- ANIMATION LOOP ---
+        
+        // Mouse interaction for subtle parallax
+        let mouseX = 0;
+        let mouseY = 0;
+        document.addEventListener('mousemove', (e) => {
+            mouseX = (e.clientX - window.innerWidth / 2) * 0.001;
+            mouseY = (e.clientY - window.innerHeight / 2) * 0.001;
+        });
+
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const time = clock.getElapsedTime();
+            const positions = particleSystem.geometry.attributes.position.array;
+
+            // Loop through particles
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                const i3 = i * 3;
+
+                // 1. Interpolation Logic (Morphing)
+                // Move current position towards target position
+                positions[i3]     += (targetPositions[i3]     - positions[i3])     * MORPH_SPEED;
+                positions[i3 + 1] += (targetPositions[i3 + 1] - positions[i3 + 1]) * MORPH_SPEED;
+                positions[i3 + 2] += (targetPositions[i3 + 2] - positions[i3 + 2]) * MORPH_SPEED;
+
+                // 2. Fluidity / Noise
+                // Add a sine wave drift so particles are never truly still (The "Living" Field)
+                // We use the index 'i' to make the movement uneven across the field
+                if (currentShapeIndex === 0) {
+                     // Chaos state moves more
+                    positions[i3]     += Math.sin(time + i) * 0.02;
+                    positions[i3 + 1] += Math.cos(time + i * 0.5) * 0.02;
+                } else {
+                    // Crystallized states vibrate slightly (Energy)
+                    positions[i3]     += Math.sin(time * 3 + i) * 0.005;
+                    positions[i3 + 1] += Math.cos(time * 2 + i) * 0.005;
+                }
+            }
+
+            particleSystem.geometry.attributes.position.needsUpdate = true;
+
+            // 3. Scene Rotation (Parallax)
+            particleSystem.rotation.y += 0.002; // Constant slow spin
+            particleSystem.rotation.x += (mouseY - particleSystem.rotation.x) * 0.05;
+            particleSystem.rotation.y += (mouseX - particleSystem.rotation.y) * 0.05;
+
+            renderer.render(scene, camera);
+        }
+
+        // Handle Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+
+    </script>
 </body>
 </html>
