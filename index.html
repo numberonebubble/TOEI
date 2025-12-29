@@ -10,6 +10,7 @@
             --bg: #050a10;
             --blue: #4a90e2;
             --green: #00ff88;
+            --gold: #ffcc00;
             --dim: #445566;
         }
 
@@ -74,6 +75,7 @@
         main {
             position: relative;
             z-index: 10;
+            padding-bottom: 100px;
         }
 
         section {
@@ -89,8 +91,8 @@
         .card {
             background: rgba(5, 10, 16, 0.9);
             border: 1px solid var(--blue);
-            padding: 3rem; /* Increased padding */
-            max-width: 700px; /* Increased width for single line titles */
+            padding: 3rem;
+            max-width: 700px;
             width: 100%;
             box-shadow: 0 0 30px rgba(0,0,0,0.5);
             backdrop-filter: blur(5px);
@@ -99,17 +101,21 @@
 
         .card.problem { border-left: 5px solid var(--blue); margin-right: auto; margin-left: 5%; }
         .card.solution { border-right: 5px solid var(--green); margin-left: auto; margin-right: 5%; text-align: right; }
+        .card.connect { border: 1px solid var(--gold); text-align: center; margin: auto; }
         
         .card.solution h2 { color: var(--green); }
         .card.solution .label { color: var(--green); border-color: var(--green); }
+        
+        .card.connect h2 { color: var(--gold); }
+        .card.connect .label { color: var(--gold); border-color: var(--gold); }
 
-        /* Typography Adjustments */
+        /* Typography */
         h2 { 
             margin: 0 0 1.5rem 0; 
             font-size: 2.2rem; 
             text-transform: uppercase; 
             color: var(--blue); 
-            white-space: nowrap; /* Forces single line */
+            white-space: nowrap; 
             overflow: hidden;
             text-overflow: ellipsis;
         }
@@ -126,8 +132,28 @@
             letter-spacing: 2px;
             font-weight: bold;
         }
-        
-        /* Mobile adjustment to prevent breakage */
+
+        /* Buttons */
+        .btn-linkedin {
+            display: inline-block;
+            margin-top: 2rem;
+            padding: 1rem 2rem;
+            background: transparent;
+            color: var(--gold);
+            border: 1px solid var(--gold);
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+        .btn-linkedin:hover {
+            background: var(--gold);
+            color: var(--bg);
+            box-shadow: 0 0 20px rgba(255, 204, 0, 0.4);
+        }
+
+        /* Mobile */
         @media (max-width: 768px) {
             h2 { white-space: normal; font-size: 1.5rem; }
             .card { padding: 1.5rem; }
@@ -215,6 +241,15 @@
                 <p>Nature's most advanced sensor. We map scent data matching humans to environments they've been in using trained dogs. Powered by kibble.</p>
             </div>
         </section>
+
+        <section>
+            <div class="card connect">
+                <span class="label">JOIN THE MISSION</span>
+                <h2>Connect with Odd Earth</h2>
+                <p>We are building a network of lateral thinkers. Engineers, biologists, and garage tinkerers.</p>
+                <a href="https://linkedin.com" target="_blank" class="btn-linkedin">Connect via LinkedIn</a>
+            </div>
+        </section>
     </main>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -242,9 +277,6 @@
 
         // --- SHAPE GENERATION HELPER ---
         const rand = (min, max) => Math.random() * (max - min) + min;
-
-        // We now store colors per shape!
-        // Structure: { positions: [x,y,z...], colors: [r,g,b...] }
         const createShapeData = () => ({ positions: [], colors: [] });
         
         const shapes = {
@@ -256,7 +288,8 @@
             watch: createShapeData(),   // Wearable
             plant: createShapeData(),   // Plants
             grid: createShapeData(),    // Forensics Wall
-            dog: createShapeData()      // K9
+            dog: createShapeData(),     // K9
+            network: createShapeData()  // Earth + Network
         };
 
         // --- 1. CHAOS ---
@@ -265,62 +298,52 @@
             shapes.chaos.colors.push(0.5, 0.5, 0.5);
         }
 
-        // --- 2. CT SCANNER (Ring + Patient) ---
+        // --- 2. CT SCANNER ---
         for(let i=0; i<PARTICLE_COUNT; i++) {
             if(i < PARTICLE_COUNT * 0.7) {
-                // The Machine (Ring)
                 const angle = Math.random() * Math.PI * 2;
                 const r = rand(9, 12);
                 shapes.scanner.positions.push(Math.cos(angle)*r, Math.sin(angle)*r, rand(-4,4));
-                shapes.scanner.colors.push(0.2, 0.6, 1.0); // Blue machine
+                shapes.scanner.colors.push(0.2, 0.6, 1.0);
             } else {
-                // The Patient (Cylinder in middle)
                 const angle = Math.random() * Math.PI * 2;
                 const r = rand(0, 2.5);
                 shapes.scanner.positions.push(Math.cos(angle)*r, Math.sin(angle)*r - 2, rand(-12,12));
-                shapes.scanner.colors.push(0.8, 0.8, 0.8); // White/Ghostly patient
+                shapes.scanner.colors.push(0.8, 0.8, 0.8);
             }
         }
 
-        // --- 3. THE DOT (Face Mask + Red Dot) ---
+        // --- 3. THE DOT ---
         for(let i=0; i<PARTICLE_COUNT; i++) {
             if (i < 500) {
-                // The Dot (Dense, Red, on Forehead)
-                // Forehead approx position: y=3, z=3 (popping out)
                 const r = rand(0, 0.5);
                 const theta = rand(0, Math.PI*2);
                 const phi = rand(0, Math.PI);
                 shapes.dot.positions.push(
                     Math.sin(phi)*Math.cos(theta)*r, 
-                    Math.sin(phi)*Math.sin(theta)*r + 4, // Up
-                    Math.cos(phi)*r + 4 // Forward
+                    Math.sin(phi)*Math.sin(theta)*r + 4, 
+                    Math.cos(phi)*r + 4 
                 );
-                shapes.dot.colors.push(1.0, 0.2, 0.2); // RED DOT
+                shapes.dot.colors.push(1.0, 0.2, 0.2);
             } else {
-                // The Face (Ellipsoid shell)
-                // x^2 + y^2 + z^2...
                 const u = Math.random();
                 const v = Math.random();
                 const theta = 2 * Math.PI * u;
                 const phi = Math.acos(2 * v - 1);
-                
-                // Only front of face roughly
-                const zMult = (Math.cos(phi) > 0) ? 4 : 2; // deeper face, flatter back
-                
+                const zMult = (Math.cos(phi) > 0) ? 4 : 2;
                 shapes.dot.positions.push(
-                    6 * Math.sin(phi) * Math.cos(theta), // Width
-                    8 * Math.sin(phi) * Math.sin(theta), // Height
-                    zMult * Math.cos(phi) // Depth
+                    6 * Math.sin(phi) * Math.cos(theta),
+                    8 * Math.sin(phi) * Math.sin(theta),
+                    zMult * Math.cos(phi)
                 );
-                shapes.dot.colors.push(0.0, 1.0, 0.5); // Green-ish wireframe face
+                shapes.dot.colors.push(0.0, 1.0, 0.5);
             }
         }
 
-        // --- 4. GENOMICS (Helix) ---
+        // --- 4. GENOMICS ---
         for(let i=0; i<PARTICLE_COUNT; i++) {
-            const t = rand(-12, 12); // Height
+            const t = rand(-12, 12);
             const isStrand = Math.random() > 0.2;
-            
             if (isStrand) {
                 const strand = Math.random() > 0.5 ? 0 : Math.PI;
                 shapes.helix.positions.push(
@@ -328,50 +351,41 @@
                     t*1.5,
                     Math.sin(t*1.5 + strand)*5 + rand(-0.2,0.2)
                 );
-                shapes.helix.colors.push(0.5, 0.0, 0.8); // Purple strands
+                shapes.helix.colors.push(0.5, 0.0, 0.8);
             } else {
-                // Rungs (Base pairs connecting strands)
-                const r = rand(-5, 5); // position along diameter
-                // We basically fill the cylinder sparsely
-                shapes.helix.positions.push(
-                    Math.cos(t*1.5)*r,
-                    t*1.5,
-                    Math.sin(t*1.5)*r
-                );
-                shapes.helix.colors.push(0.3, 0.3, 0.3); // Dim rungs
+                const r = rand(-5, 5);
+                shapes.helix.positions.push(Math.cos(t*1.5)*r, t*1.5, Math.sin(t*1.5)*r);
+                shapes.helix.colors.push(0.3, 0.3, 0.3);
             }
         }
 
-        // --- 5. CRYSTALS (In Petri Dish) ---
+        // --- 5. CRYSTALS ---
         for(let i=0; i<PARTICLE_COUNT; i++) {
             if (i < PARTICLE_COUNT * 0.2) {
-                // Petri Dish (Ring at bottom)
                 const angle = rand(0, Math.PI*2);
                 const r = rand(9, 9.5);
                 shapes.crystal.positions.push(Math.cos(angle)*r, -6, Math.sin(angle)*r);
-                shapes.crystal.colors.push(0.5, 0.5, 0.5); // Glass
+                shapes.crystal.colors.push(0.5, 0.5, 0.5);
             } else {
-                // Crystals (Cubes inside)
                 const cluster = Math.floor(Math.random()*3);
-                let cx=0, cy=-4; // Sitting on bottom
-                if(cluster===1) cx=4;
-                if(cluster===2) cx=-4;
+                let cx=0, cy=-4; 
+                if(cluster===1) cx=4; if(cluster===2) cx=-4;
                 const s = rand(0, 3);
                 shapes.crystal.positions.push(cx + rand(-s,s), cy + rand(0, s*2), rand(-s,s));
-                shapes.crystal.colors.push(0.0, 1.0, 1.0); // Cyan Crystals
+                shapes.crystal.colors.push(0.0, 1.0, 1.0);
             }
         }
 
-        // --- 6. WATCH (Torus) ---
+        // --- 6. WATCH ---
         for(let i=0; i<PARTICLE_COUNT; i++) {
             const angle = Math.random() * Math.PI * 2;
             const r = rand(3, 4.5);
             if(i < PARTICLE_COUNT * 0.3) {
                 shapes.watch.positions.push(rand(-2,2), rand(-2,2), 5); 
-                shapes.watch.colors.push(0.1, 0.1, 0.1); // Dark screen
+                shapes.watch.colors.push(0.1, 0.1, 0.1);
             } else {
                 shapes.watch.positions.push(Math.cos(angle)*r, Math.sin(angle)*r, rand(-1,1));
-                shapes.watch.colors.push(1.0, 0.5, 0.0); // Orange strap
+                shapes.watch.colors.push(1.0, 0.5, 0.0);
             }
         }
 
@@ -381,75 +395,120 @@
                 const y = rand(-10, 8);
                 const w = (10-y)*0.05;
                 shapes.plant.positions.push(rand(-w,w), y, rand(-w,w));
-                shapes.plant.colors.push(0.4, 0.2, 0.0); // Brown Stem
+                shapes.plant.colors.push(0.4, 0.2, 0.0);
             } else {
                 const r = rand(2, 6);
                 const a = rand(0, Math.PI*2);
                 const y = rand(-5, 8);
                 shapes.plant.positions.push(Math.cos(a)*r, y, Math.sin(a)*r);
-                shapes.plant.colors.push(0.0, 1.0, 0.2); // Bright Green Leaves
+                shapes.plant.colors.push(0.0, 1.0, 0.2);
             }
         }
 
-        // --- 8. FORENSICS (DNA Gel Wall) ---
+        // --- 8. FORENSICS ---
         for(let i=0; i<PARTICLE_COUNT; i++) {
             const x = rand(-8, 8);
             const y = rand(-10, 10);
-            const z = rand(-0.5, 0.5); // Thin slab
-            
+            const z = rand(-0.5, 0.5);
             shapes.grid.positions.push(x, y, z);
-
-            // Bands logic: specific Y heights have different colors
-            // Band 1
-            if (y > 4 && y < 5) shapes.grid.colors.push(1.0, 0.0, 1.0); // Magenta
-            else if (y > 1 && y < 2) shapes.grid.colors.push(0.0, 1.0, 0.0); // Green
-            else if (y > -3 && y < -2) shapes.grid.colors.push(0.0, 1.0, 1.0); // Cyan
-            else if (y > -6 && y < -5.5) shapes.grid.colors.push(1.0, 1.0, 0.0); // Yellow
-            else shapes.grid.colors.push(0.1, 0.1, 0.3); // Dark blue gel background
+            if (y > 4 && y < 5) shapes.grid.colors.push(1.0, 0.0, 1.0);
+            else if (y > 1 && y < 2) shapes.grid.colors.push(0.0, 1.0, 0.0);
+            else if (y > -3 && y < -2) shapes.grid.colors.push(0.0, 1.0, 1.0);
+            else if (y > -6 && y < -5.5) shapes.grid.colors.push(1.0, 1.0, 0.0);
+            else shapes.grid.colors.push(0.1, 0.1, 0.3);
         }
 
-        // --- 9. DOG (K9 with Ears & Tail) ---
+        // --- 9. DOG ---
         for(let i=0; i<PARTICLE_COUNT; i++) {
              const r = Math.random();
              let x,y,z;
-             let col = [0.8, 0.5, 0.2]; // Brown dog
-
-             if(r < 0.4) { 
-                 // Body
-                 x=rand(-4,4); y=rand(-2,2); z=rand(-1.5,1.5); 
-             } else if(r < 0.6) { 
-                 // Head
-                 x=rand(4,6.5); y=rand(1,3.5); z=rand(-1.2,1.2); 
-             } else if(r < 0.7) {
-                 // Ears (Triangles on top of head)
-                 const ear = Math.random() > 0.5 ? 1 : -1; // Left or Right
-                 x = rand(4.5, 5.5);
-                 y = rand(3.5, 5); // Stick up
-                 z = rand(0.5, 1) * ear;
-                 col = [0.2, 0.1, 0.0]; // Dark ears
+             let col = [0.8, 0.5, 0.2];
+             if(r < 0.4) { x=rand(-4,4); y=rand(-2,2); z=rand(-1.5,1.5); } 
+             else if(r < 0.6) { x=rand(4,6.5); y=rand(1,3.5); z=rand(-1.2,1.2); } 
+             else if(r < 0.7) {
+                 const ear = Math.random() > 0.5 ? 1 : -1;
+                 x = rand(4.5, 5.5); y = rand(3.5, 5); z = rand(0.5, 1) * ear;
+                 col = [0.2, 0.1, 0.0];
              } else if(r < 0.9) { 
-                 // Legs
                  const lx = rand(-4, 4); 
                  const legX = lx > 0 ? 3 : -3;
                  const lz = rand(-1, 1) > 0 ? 1 : -1;
-                 x = legX + rand(-0.5, 0.5);
-                 y = rand(-6, -2);
-                 z = lz + rand(-0.5, 0.5);
-             } else { 
-                 // Tail
-                 x=rand(-7,-4); y=rand(0,3); z=0; 
-             }
-             
+                 x = legX + rand(-0.5, 0.5); y = rand(-6, -2); z = lz + rand(-0.5, 0.5);
+             } else { x=rand(-7,-4); y=rand(0,3); z=0; }
              shapes.dog.positions.push(x,y,z);
              shapes.dog.colors.push(...col);
         }
+
+        // --- 10. NETWORK (Earth + Connections) ---
+        for(let i=0; i<PARTICLE_COUNT; i++) {
+            // Earth Sphere (70% of particles)
+            if (i < PARTICLE_COUNT * 0.7) {
+                const u = Math.random();
+                const v = Math.random();
+                const theta = 2 * Math.PI * u;
+                const phi = Math.acos(2 * v - 1);
+                const r = 8.5; 
+                
+                const x = r * Math.sin(phi) * Math.cos(theta);
+                const y = r * Math.sin(phi) * Math.sin(theta);
+                const z = r * Math.cos(phi);
+                
+                shapes.network.positions.push(x, y, z);
+                
+                // Color mapping (Simple Tech Earth)
+                // Dark Blue base, with some Green patches
+                if (Math.abs(y) < 3 && Math.random() > 0.6) shapes.network.colors.push(0.0, 0.8, 0.5); // Tropics/Land
+                else shapes.network.colors.push(0.0, 0.1, 0.4); // Ocean
+            } 
+            // The People / Nodes (15%)
+            else if (i < PARTICLE_COUNT * 0.85) {
+                const u = Math.random();
+                const v = Math.random();
+                const theta = 2 * Math.PI * u;
+                const phi = Math.acos(2 * v - 1);
+                const r = 9.0; // Slightly above surface
+                
+                const x = r * Math.sin(phi) * Math.cos(theta);
+                const y = r * Math.sin(phi) * Math.sin(theta);
+                const z = r * Math.cos(phi);
+
+                shapes.network.positions.push(x, y, z);
+                shapes.network.colors.push(1.0, 0.8, 0.0); // Gold "People"
+            }
+            // The Network Lines / Orbitals (15%)
+            else {
+                // Create ring bands
+                const band = Math.floor(Math.random() * 3); // 3 orbital rings
+                let angle = Math.random() * Math.PI * 2;
+                let r = 11 + Math.random();
+                
+                let x,y,z;
+                if(band === 0) { // Equatorial Ring
+                    x = Math.cos(angle) * r;
+                    z = Math.sin(angle) * r;
+                    y = rand(-1, 1);
+                } else if (band === 1) { // Polar Orbit
+                    y = Math.cos(angle) * r;
+                    z = Math.sin(angle) * r;
+                    x = rand(-1, 1);
+                } else { // 45 degree
+                     const base = Math.cos(angle) * r;
+                     x = base;
+                     y = base;
+                     z = Math.sin(angle) * r;
+                }
+                
+                shapes.network.positions.push(x, y, z);
+                shapes.network.colors.push(1.0, 1.0, 1.0); // White data streams
+            }
+        }
+
 
         // --- PARTICLE SYSTEM INIT ---
         const geometry = new THREE.BufferGeometry();
         const positions = new Float32Array(PARTICLE_COUNT * 3);
         const colors = new Float32Array(PARTICLE_COUNT * 3);
 
-        // Fill initial arrays
         for(let i=0; i<PARTICLE_COUNT * 3; i++) {
             positions[i] = shapes.chaos.positions[i];
             colors[i] = shapes.chaos.colors[i];
@@ -473,15 +532,17 @@
         setTimeout(() => loader.style.display = 'none', 500);
 
         // --- ANIMATION STATE ---
-        // Now targeting ARRAYS, not single values
         let currentPosTarget = shapes.chaos.positions;
         let currentColTarget = shapes.chaos.colors;
+        let isNetworkScene = false;
         
         // Scroll Logic
         window.addEventListener('scroll', () => {
             const scrollY = window.scrollY;
             const h = window.innerHeight;
             const sectionIndex = Math.round(scrollY / h);
+            
+            isNetworkScene = false;
 
             let targetKey = 'chaos';
             if(sectionIndex === 1) targetKey = 'scanner';
@@ -492,6 +553,7 @@
             else if(sectionIndex === 6) targetKey = 'plant';
             else if(sectionIndex === 7) targetKey = 'grid';
             else if(sectionIndex === 8) targetKey = 'dog';
+            else if(sectionIndex === 9) { targetKey = 'network'; isNetworkScene = true; }
 
             currentPosTarget = shapes[targetKey].positions;
             currentColTarget = shapes[targetKey].colors;
@@ -509,36 +571,37 @@
             const p = posAttr.array;
             const c = colAttr.array;
             
-            const speed = 0.05; // Lerp speed
+            const speed = 0.05;
 
             for(let i=0; i<PARTICLE_COUNT; i++) {
                 const ix = i * 3;
                 const iy = i * 3 + 1;
                 const iz = i * 3 + 2;
 
-                // Position Interpolation
+                // Interpolation
                 p[ix] += (currentPosTarget[ix] - p[ix]) * speed;
                 p[iy] += (currentPosTarget[iy] - p[iy]) * speed;
                 p[iz] += (currentPosTarget[iz] - p[iz]) * speed;
 
-                // Color Interpolation (Per particle!)
                 c[ix] += (currentColTarget[ix] - c[ix]) * speed;
                 c[iy] += (currentColTarget[iy] - c[iy]) * speed;
                 c[iz] += (currentColTarget[iz] - c[iz]) * speed;
-
-                // Subtle Breathing (No global rotation)
-                // We add a tiny offset based on time, but do not accumulate it
-                // Actually, standard lerp overrides this, so we add noise to the TARGET effectively visually
-                // But to keep it simple and stable:
-                // We just let the particles settle. The noise in the previous version caused jitter.
-                // Let's add very slight wave motion to settled particles
                 
+                // Noise
                 const noise = Math.sin(time + p[iy]) * 0.005; 
                 p[ix] += noise;
             }
 
             posAttr.needsUpdate = true;
             colAttr.needsUpdate = true;
+            
+            // Only rotate if we are in the network scene
+            if(isNetworkScene) {
+                points.rotation.y += 0.001;
+            } else {
+                // Return to 0 slowly
+                points.rotation.y += (0 - points.rotation.y) * 0.05;
+            }
             
             renderer.render(scene, camera);
         }
