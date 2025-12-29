@@ -11,6 +11,7 @@
             --blue: #4a90e2;
             --green: #00ff88;
             --gold: #ffcc00;
+            --purple: #bf00ff; /* New color for "Potential" */
             --dim: #445566;
         }
 
@@ -103,6 +104,17 @@
         .card.solution { border-right: 5px solid var(--green); margin-left: auto; margin-right: 5%; text-align: right; }
         .card.connect { border: 1px solid var(--gold); text-align: center; margin: auto; }
         
+        /* New Style for Donor Section */
+        .card.potential { 
+            border: 1px solid var(--purple); 
+            text-align: center; 
+            margin: auto;
+            border-left: 5px solid var(--purple);
+            border-right: 5px solid var(--purple);
+        }
+        .card.potential h2 { color: var(--purple); }
+        .card.potential .label { color: var(--purple); border-color: var(--purple); }
+
         .card.solution h2 { color: var(--green); }
         .card.solution .label { color: var(--green); border-color: var(--green); }
         
@@ -243,6 +255,16 @@
         </section>
 
         <section>
+            <div class="card potential">
+                <span class="label">THE UNKNOWN</span>
+                <h2>Imagine what's next.</h2>
+                <p>Every piece of withered technology holds infinite potential. We have the questions. We need the resources to build the answers.</p>
+                <br>
+                <small>DONATE TO THE INSTITUTE</small>
+            </div>
+        </section>
+
+        <section>
             <div class="card connect">
                 <span class="label">JOIN THE MISSION</span>
                 <h2>Connect with Odd Earth</h2>
@@ -285,10 +307,11 @@
             dot: createShapeData(),     // Face
             helix: createShapeData(),   // Genomics
             crystal: createShapeData(), // Petri Dish
-            watch: createShapeData(),   // Wearable
+            watch: createShapeData(),   // Smartwatch + Pulse
             plant: createShapeData(),   // Plants
             grid: createShapeData(),    // Forensics Wall
             dog: createShapeData(),     // K9
+            potential: createShapeData(), // Question Mark / Infinite
             network: createShapeData()  // Earth + Network
         };
 
@@ -376,16 +399,49 @@
             }
         }
 
-        // --- 6. WATCH ---
+        // --- 6. SMARTWATCH (Updated) ---
         for(let i=0; i<PARTICLE_COUNT; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const r = rand(3, 4.5);
-            if(i < PARTICLE_COUNT * 0.3) {
-                shapes.watch.positions.push(rand(-2,2), rand(-2,2), 5); 
-                shapes.watch.colors.push(0.1, 0.1, 0.1);
-            } else {
-                shapes.watch.positions.push(Math.cos(angle)*r, Math.sin(angle)*r, rand(-1,1));
-                shapes.watch.colors.push(1.0, 0.5, 0.0);
+            const r = Math.random();
+            // Strap (Cylinder wrap)
+            if(r < 0.3) {
+                const angle = rand(0, Math.PI*2);
+                const rad = 6;
+                const width = rand(-1.5, 1.5);
+                // Gap for the watch face
+                if (Math.abs(angle) > 0.5) {
+                    shapes.watch.positions.push(Math.sin(angle)*rad, Math.cos(angle)*rad, width);
+                    shapes.watch.colors.push(0.2, 0.2, 0.2); // Dark grey strap
+                } else {
+                    // Hide unused strap particles inside
+                     shapes.watch.positions.push(0, 0, 0);
+                     shapes.watch.colors.push(0,0,0);
+                }
+            } 
+            // Watch Face (Box)
+            else if (r < 0.9) {
+                const w = rand(-2.5, 2.5); // Width
+                const h = rand(-3, 3);     // Height
+                const d = rand(5.5, 6.5);  // Depth (on top of strap)
+                shapes.watch.positions.push(w, d, h);
+                shapes.watch.colors.push(0.1, 0.1, 0.1); // Black screen
+            } 
+            // Heartbeat Pulse (EKG Line)
+            else {
+                const x = rand(-2, 2); // Across screen
+                let y = 6.6; // Slightly above screen surface
+                let z = 0; // Center of screen vertically
+                
+                // Pulse Logic
+                // Flat line generally, spike in middle
+                if (Math.abs(x) < 0.5) {
+                    // Create the spike
+                    z = Math.sin(x * 20) * 1.5; 
+                } else {
+                    z = rand(-0.1, 0.1); // noisy flat line
+                }
+
+                shapes.watch.positions.push(x, y, z);
+                shapes.watch.colors.push(1.0, 0.0, 0.2); // Bright RED pulse
             }
         }
 
@@ -439,7 +495,56 @@
              shapes.dog.colors.push(...col);
         }
 
-        // --- 10. NETWORK (Earth + Connections) ---
+        // --- 10. POTENTIAL / DONOR (Question Mark) ---
+        for(let i=0; i<PARTICLE_COUNT; i++) {
+            if (i < PARTICLE_COUNT * 0.8) {
+                // The Question Mark Shape
+                // Dot
+                if (i < PARTICLE_COUNT * 0.1) {
+                    shapes.potential.positions.push(rand(-1,1), -5 + rand(-1,1), rand(-1,1));
+                    shapes.potential.colors.push(1.0, 0.0, 1.0); // Purple glow
+                } 
+                // Stem
+                else if (i < PARTICLE_COUNT * 0.3) {
+                    shapes.potential.positions.push(rand(-0.8,0.8), rand(-3, 0), rand(-0.8,0.8));
+                    shapes.potential.colors.push(0.8, 0.0, 0.8);
+                }
+                // The Curve (Hook)
+                else {
+                    const angle = rand(0, Math.PI * 1.5); // 3/4 circle
+                    const r = 3;
+                    const tubeR = 0.8;
+                    // Parametric torus segment logic
+                    const tubeAngle = rand(0, Math.PI*2);
+                    
+                    // Main curve center
+                    const cx = Math.cos(angle) * r;
+                    const cy = Math.sin(angle) * r + 3; // Shift up
+                    
+                    const px = cx + Math.cos(tubeAngle)*tubeR;
+                    const py = cy + Math.sin(tubeAngle)*tubeR;
+                    const pz = Math.sin(tubeAngle)*tubeR; // tube thickness
+
+                    shapes.potential.positions.push(px, py, pz);
+                    shapes.potential.colors.push(0.6, 0.0, 1.0); // Deep Purple
+                }
+            } else {
+                // Orbiting Ideas (Sparks)
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos(Math.random() * 2 - 1);
+                const r = rand(6, 10);
+                
+                shapes.potential.positions.push(
+                    r * Math.sin(phi) * Math.cos(theta),
+                    r * Math.sin(phi) * Math.sin(theta),
+                    r * Math.cos(phi)
+                );
+                shapes.potential.colors.push(1.0, 0.8, 0.0); // Gold sparks
+            }
+        }
+
+
+        // --- 11. NETWORK (Earth + Connections) ---
         for(let i=0; i<PARTICLE_COUNT; i++) {
             // Earth Sphere (70% of particles)
             if (i < PARTICLE_COUNT * 0.7) {
@@ -455,8 +560,7 @@
                 
                 shapes.network.positions.push(x, y, z);
                 
-                // Color mapping (Simple Tech Earth)
-                // Dark Blue base, with some Green patches
+                // Color mapping
                 if (Math.abs(y) < 3 && Math.random() > 0.6) shapes.network.colors.push(0.0, 0.8, 0.5); // Tropics/Land
                 else shapes.network.colors.push(0.0, 0.1, 0.4); // Ocean
             } 
@@ -466,40 +570,26 @@
                 const v = Math.random();
                 const theta = 2 * Math.PI * u;
                 const phi = Math.acos(2 * v - 1);
-                const r = 9.0; // Slightly above surface
-                
-                const x = r * Math.sin(phi) * Math.cos(theta);
-                const y = r * Math.sin(phi) * Math.sin(theta);
-                const z = r * Math.cos(phi);
-
-                shapes.network.positions.push(x, y, z);
-                shapes.network.colors.push(1.0, 0.8, 0.0); // Gold "People"
+                const r = 9.0; 
+                shapes.network.positions.push(
+                    r * Math.sin(phi) * Math.cos(theta),
+                    r * Math.sin(phi) * Math.sin(theta),
+                    r * Math.cos(phi)
+                );
+                shapes.network.colors.push(1.0, 0.8, 0.0); // Gold
             }
-            // The Network Lines / Orbitals (15%)
+            // The Network Lines (15%)
             else {
-                // Create ring bands
-                const band = Math.floor(Math.random() * 3); // 3 orbital rings
+                const band = Math.floor(Math.random() * 3); 
                 let angle = Math.random() * Math.PI * 2;
                 let r = 11 + Math.random();
-                
                 let x,y,z;
-                if(band === 0) { // Equatorial Ring
-                    x = Math.cos(angle) * r;
-                    z = Math.sin(angle) * r;
-                    y = rand(-1, 1);
-                } else if (band === 1) { // Polar Orbit
-                    y = Math.cos(angle) * r;
-                    z = Math.sin(angle) * r;
-                    x = rand(-1, 1);
-                } else { // 45 degree
-                     const base = Math.cos(angle) * r;
-                     x = base;
-                     y = base;
-                     z = Math.sin(angle) * r;
-                }
+                if(band === 0) { x = Math.cos(angle)*r; z = Math.sin(angle)*r; y = rand(-1, 1); }
+                else if (band === 1) { y = Math.cos(angle)*r; z = Math.sin(angle)*r; x = rand(-1, 1); }
+                else { const base = Math.cos(angle)*r; x = base; y = base; z = Math.sin(angle)*r; }
                 
                 shapes.network.positions.push(x, y, z);
-                shapes.network.colors.push(1.0, 1.0, 1.0); // White data streams
+                shapes.network.colors.push(1.0, 1.0, 1.0); 
             }
         }
 
@@ -535,6 +625,7 @@
         let currentPosTarget = shapes.chaos.positions;
         let currentColTarget = shapes.chaos.colors;
         let isNetworkScene = false;
+        let isPotentialScene = false;
         
         // Scroll Logic
         window.addEventListener('scroll', () => {
@@ -543,6 +634,7 @@
             const sectionIndex = Math.round(scrollY / h);
             
             isNetworkScene = false;
+            isPotentialScene = false;
 
             let targetKey = 'chaos';
             if(sectionIndex === 1) targetKey = 'scanner';
@@ -553,7 +645,8 @@
             else if(sectionIndex === 6) targetKey = 'plant';
             else if(sectionIndex === 7) targetKey = 'grid';
             else if(sectionIndex === 8) targetKey = 'dog';
-            else if(sectionIndex === 9) { targetKey = 'network'; isNetworkScene = true; }
+            else if(sectionIndex === 9) { targetKey = 'potential'; isPotentialScene = true; }
+            else if(sectionIndex === 10) { targetKey = 'network'; isNetworkScene = true; }
 
             currentPosTarget = shapes[targetKey].positions;
             currentColTarget = shapes[targetKey].colors;
@@ -595,12 +688,13 @@
             posAttr.needsUpdate = true;
             colAttr.needsUpdate = true;
             
-            // Only rotate if we are in the network scene
+            // Special Scene Rotations
             if(isNetworkScene) {
-                points.rotation.y += 0.001;
+                points.rotation.y += 0.001; // Earth Spin
+            } else if (isPotentialScene) {
+                points.rotation.y = Math.sin(time * 0.5) * 0.2; // Gentle swaying for question mark
             } else {
-                // Return to 0 slowly
-                points.rotation.y += (0 - points.rotation.y) * 0.05;
+                points.rotation.y += (0 - points.rotation.y) * 0.05; // Reset
             }
             
             renderer.render(scene, camera);
