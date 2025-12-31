@@ -11,8 +11,10 @@
             --blue: #4a90e2;
             --green: #00ff88;
             --gold: #ffcc00;
-            --purple: #bf00ff; /* New color for "Potential" */
+            --purple: #bf00ff;
+            --alert: #ff3333;
             --dim: #445566;
+            --panel-bg: rgba(5, 10, 16, 0.9);
         }
 
         body, html {
@@ -21,62 +23,93 @@
             background-color: var(--bg);
             color: #eee;
             font-family: 'Courier New', Courier, monospace;
-            overflow-x: hidden;
             width: 100%;
+            height: 100%;
+            overflow-x: hidden;
         }
 
-        /* Loading Screen */
-        #loader {
+        /* --- UI ELEMENTS --- */
+        
+        /* Navigation / HUD */
+        .hud-bar {
             position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg);
-            z-index: 999;
+            top: 0; left: 0; width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
             display: flex;
-            justify-content: center;
-            align-items: center;
+            justify-content: space-between;
+            z-index: 100;
+            pointer-events: none; /* Let clicks pass through to canvas */
+        }
+        
+        .logo {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            pointer-events: auto;
+            cursor: pointer;
+            border: 1px solid transparent;
+            padding: 5px 10px;
+            transition: 0.3s;
+        }
+        .logo:hover { border-color: var(--gold); background: rgba(255, 204, 0, 0.1); }
+
+        .status {
+            text-align: right;
+            font-size: 0.8rem;
             color: var(--blue);
-            transition: opacity 0.5s;
         }
 
-        /* Canvas & Overlay */
+        /* Back Button (Hidden on Home) */
+        #back-btn {
+            position: fixed;
+            bottom: 30px; left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 30px;
+            background: var(--bg);
+            border: 1px solid var(--dim);
+            color: var(--dim);
+            text-transform: uppercase;
+            cursor: pointer;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: 0.3s;
+            letter-spacing: 2px;
+        }
+        #back-btn.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        #back-btn:hover { color: var(--gold); border-color: var(--gold); }
+
+        /* --- 3D CANVAS --- */
         #canvas-container {
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
             z-index: 1;
         }
-
-        .overlay {
+        
+        .scanlines {
             position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: 2;
-            background: 
-                linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
-                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
             background-size: 100% 2px, 3px 100%;
             pointer-events: none;
+            z-index: 2;
         }
 
-        /* UI */
-        .hud {
-            position: fixed;
-            padding: 20px;
-            z-index: 3;
-            font-size: 12px;
-            color: var(--blue);
-            pointer-events: none;
-            border: 1px solid var(--dim);
-            background: rgba(5, 10, 16, 0.8);
-        }
-        .top-left { top: 20px; left: 20px; }
-        .btm-right { bottom: 20px; right: 20px; text-align: right; }
-
-        /* SCROLL CONTENT */
-        main {
+        /* --- CONTENT CONTAINERS --- */
+        
+        /* 1. HOME CONTAINER */
+        #home-container {
             position: relative;
             z-index: 10;
-            padding-bottom: 100px;
+            transition: opacity 0.5s;
         }
 
         section {
@@ -86,617 +119,524 @@
             justify-content: center;
             padding: 2rem;
             box-sizing: border-box;
-            position: relative;
         }
 
+        /* Text Cards */
         .card {
-            background: rgba(5, 10, 16, 0.9);
-            border: 1px solid var(--blue);
+            background: var(--panel-bg);
+            border: 1px solid var(--dim);
             padding: 3rem;
             max-width: 700px;
             width: 100%;
-            box-shadow: 0 0 30px rgba(0,0,0,0.5);
-            backdrop-filter: blur(5px);
-            transition: transform 0.3s;
-        }
-
-        .card.problem { border-left: 5px solid var(--blue); margin-right: auto; margin-left: 5%; }
-        .card.solution { border-right: 5px solid var(--green); margin-left: auto; margin-right: 5%; text-align: right; }
-        .card.connect { border: 1px solid var(--gold); text-align: center; margin: auto; }
-        
-        /* New Style for Donor Section */
-        .card.potential { 
-            border: 1px solid var(--purple); 
-            text-align: center; 
-            margin: auto;
-            border-left: 5px solid var(--purple);
-            border-right: 5px solid var(--purple);
-        }
-        .card.potential h2 { color: var(--purple); }
-        .card.potential .label { color: var(--purple); border-color: var(--purple); }
-
-        .card.solution h2 { color: var(--green); }
-        .card.solution .label { color: var(--green); border-color: var(--green); }
-        
-        .card.connect h2 { color: var(--gold); }
-        .card.connect .label { color: var(--gold); border-color: var(--gold); }
-
-        /* Typography */
-        h2 { 
-            margin: 0 0 1.5rem 0; 
-            font-size: 2.2rem; 
-            text-transform: uppercase; 
-            color: var(--blue); 
-            white-space: nowrap; 
-            overflow: hidden;
-            text-overflow: ellipsis;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
         }
         
-        p { line-height: 1.8; color: #aaa; margin: 0; font-size: 1.1rem; }
+        .card.manifesto { border-top: 4px solid var(--gold); text-align: center; }
+        .card.rebellion { border-left: 4px solid var(--alert); }
+        .card.method { border-right: 4px solid var(--blue); text-align: right; }
+
+        h1 { font-size: 3rem; margin: 0 0 1rem; color: #fff; text-transform: uppercase; line-height: 1; }
+        h2 { font-size: 2rem; margin: 0 0 1rem; color: var(--blue); text-transform: uppercase; }
+        p { font-size: 1.1rem; line-height: 1.6; color: #aaa; margin-bottom: 1rem; }
+        .highlight { color: #fff; font-weight: bold; }
+
+        /* Project Grid (Bottom of Home) */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        .grid-item {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--dim);
+            padding: 20px;
+            cursor: pointer;
+            transition: 0.3s;
+            text-align: left;
+        }
+        .grid-item:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: var(--green);
+            transform: translateY(-5px);
+        }
+        .grid-item h3 { margin: 0 0 5px; color: var(--green); font-size: 0.9rem; text-transform: uppercase; }
+        .grid-item span { color: #888; font-size: 0.8rem; }
+
+        /* 2. PROJECT DETAIL CONTAINER (Initially Hidden) */
+        #project-container {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 20;
+            pointer-events: none; /* Allow click through when hidden */
+            opacity: 0;
+            transition: opacity 0.5s;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start; /* Align text to side */
+            padding: 5% 10%;
+            box-sizing: border-box;
+            background: rgba(5, 10, 16, 0.4); /* Slight tint */
+        }
         
-        .label {
-            display: inline-block;
-            font-size: 0.8rem;
-            padding: 4px 8px;
-            border: 1px solid var(--blue);
-            margin-bottom: 15px;
-            color: var(--blue);
-            letter-spacing: 2px;
-            font-weight: bold;
+        #project-container.active {
+            opacity: 1;
+            pointer-events: auto;
         }
 
-        /* Buttons */
-        .btn-linkedin {
-            display: inline-block;
-            margin-top: 2rem;
-            padding: 1rem 2rem;
-            background: transparent;
-            color: var(--gold);
-            border: 1px solid var(--gold);
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 1.2rem;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
+        .project-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--green);
+            padding: 40px;
+            max-width: 500px;
+            transform: translateX(-50px);
+            transition: transform 0.5s ease-out;
         }
-        .btn-linkedin:hover {
-            background: var(--gold);
-            color: var(--bg);
-            box-shadow: 0 0 20px rgba(255, 204, 0, 0.4);
+        
+        #project-container.active .project-card {
+            transform: translateX(0);
         }
 
-        /* Mobile */
-        @media (max-width: 768px) {
-            h2 { white-space: normal; font-size: 1.5rem; }
-            .card { padding: 1.5rem; }
+        .project-label { color: var(--green); font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase; display: block; margin-bottom: 15px; }
+        .project-title { color: #fff; font-size: 2.5rem; text-transform: uppercase; margin: 0 0 20px; line-height: 1; }
+        .project-body { color: #ccc; font-size: 1rem; line-height: 1.6; }
+        
+        .stat-box {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px dashed var(--dim);
+            display: flex;
+            justify-content: space-between;
         }
+        .stat { text-align: center; }
+        .stat .val { display: block; color: var(--blue); font-size: 1.5rem; font-weight: bold; }
+        .stat .lbl { display: block; color: #666; font-size: 0.7rem; text-transform: uppercase; }
 
     </style>
 </head>
 <body>
 
-    <div id="loader">INITIALIZING PARTICLE MATRIX...</div>
+    <div class="hud-bar">
+        <div class="logo" onclick="goHome()">ODD EARTH INSTITUTE</div>
+        <div class="status">
+            LATERAL THINKING<br>
+            WITHERED TECH
+        </div>
+    </div>
 
     <div id="canvas-container"></div>
-    <div class="overlay"></div>
+    <div class="scanlines"></div>
 
-    <div class="hud top-left">ODD EARTH INSTITUTE<br>SYS.STATUS: ONLINE</div>
-    <div class="hud btm-right">LATERAL THINKING<br>WITHERED TECH</div>
-
-    <main>
-        <section>
-            <div class="card problem" style="text-align: center; margin: auto; border: 1px solid var(--blue);">
-                <span class="label">MANIFESTO</span>
-                <h2>The world we live in is odd.</h2>
-                <p>We're using that to solve planetary scale problems with garage-scale tech.</p>
-                <br>
-                <small>SCROLL TO SEE WHAT WE'RE WORKING ON</small>
-            </div>
-        </section>
-
-        <section>
-            <div class="card problem">
-                <span class="label">THE PROBLEM</span>
-                <h2>Million dollar machines for ten dollar problems</h2>
-                <p>CT Scanners. Massive, expensive, and terrifying. They require heavy infrastructure and specialized power grids. That's if your lucky enough to live near one.</p>
-            </div>
-        </section>
-        <section>
-            <div class="card solution">
-                <span class="label">ODD EARTH SOLUTION</span>
-                <h2>Tapping and a mic to record it.</h2>
-                <p>A single percussion sticker on the forehead. It changes color to indicate vitals. It broadcasts soundwaves and listens to changes inside the skull. Deployable anywhere.</p>
-            </div>
-        </section>
-
-        <section>
-            <div class="card problem">
-                <span class="label">THE PROBLEM</span>
-                <h2>Genomics for cancer diagnostics</h2>
-                <p>Complex sequencing labs running supercomputers to decode biological noise and make a diagnosis in a matter of weeks for hundreds or thousands of dollars.</p>
-            </div>
-        </section>
-        <section>
-            <div class="card solution">
-                <span class="label">ODD EARTH SOLUTION</span>
-                <h2>Salt Crystals from the 1930s</h2>
-                <p>We use basic salt crystallization in a petri dish. The geometric patterns reveal the chemical data visually and can screen over 50 cancers for less than a dollar.</p>
-            </div>
-        </section>
-
-         <section>
-            <div class="card problem">
-                <span class="label">THE PROBLEM</span>
-                <h2>Wearables. Just... Ugh.</h2>
-                <p>We have a Garmin for Golf but our first responders are burnt out and don't know when they need to recover.</p>
-            </div>
-        </section>
-        <section>
-            <div class="card solution">
-                <span class="label">ODD EARTH SOLUTION</span>
-                <h2>Home environment companion plants</h2>
-                <p>Nature knows best. Monitoring plants in the home as a reflection of the overall state of their caretakers puts the sensors off-body and eliminates data-fatigue.</p>
-            </div>
-        </section>
+    <div id="home-container">
         
         <section>
-            <div class="card problem">
-                <span class="label">THE PROBLEM</span>
-                <h2>Forensics. Slow and unreliable.</h2>
-                <p>Sterile labs, weeks of backlog, and high error rates.</p>
-            </div>
-        </section>
-        <section>
-            <div class="card solution">
-                <span class="label">ODD EARTH SOLUTION</span>
-                <h2>Man's best friend. Loves justice.</h2>
-                <p>Nature's most advanced sensor. We map scent data matching humans to environments they've been in using trained dogs. Powered by kibble.</p>
-            </div>
-        </section>
-
-        <section>
-            <div class="card potential">
-                <span class="label">THE UNKNOWN</span>
-                <h2>Imagine what's next.</h2>
-                <p>Every piece of withered technology holds infinite potential. We have the questions. We need the resources to build the answers.</p>
+            <div class="card manifesto">
+                <h2>The Odd Earth Institute</h2>
+                <p>We are a think tank for the left-behind.</p>
+                <p>We use lateral thinking with withered technologies to solve real-world problems for real people.</p>
                 <br>
-                <small>DONATE TO THE INSTITUTE</small>
+                <span style="font-size: 0.8rem; color: var(--gold);">SCROLL TO EXPLORE</span>
             </div>
         </section>
 
         <section>
-            <div class="card connect">
-                <span class="label">JOIN THE MISSION</span>
-                <h2>Connect with Odd Earth</h2>
-                <p>We are building a network of lateral thinkers. Engineers, biologists, and garage tinkerers.</p>
-                <a href="https://substack.com/@eugeneduvenage?utm_campaign=profile&utm_medium=profile-page" target="_blank" class="btn-linkedin">Connect to our Substack</a>
+            <div class="card rebellion">
+                <h2>Profit & Policy Have Failed</h2>
+                <p>Governments are slow. The Private Sector is greedy. They have failed to move the needle on the things that actually matter.</p>
+                <p>We act as a force for good with no regard for bureaucracy. We don't ask for permission. We just build solutions that work.</p>
             </div>
         </section>
-    </main>
+
+        <section>
+            <div class="card method">
+                <h2>The Garage Method</h2>
+                <p>We don't need million-dollar labs. We need a garage, a soldering iron, and a fresh perspective.</p>
+                <p>Inspired by <strong>Gunpei Yokoi</strong>, we repurpose mature, cheap technology to do things they were never designed to do.</p>
+            </div>
+        </section>
+
+        <section style="flex-direction: column;">
+            <h2 style="color: #fff; margin-bottom: 30px;">Active Initiatives</h2>
+            <div class="grid-container">
+                <div class="grid-item" onclick="openProject(0)">
+                    <h3>The Medical Paradox</h3>
+                    <span>CT Scanners vs. Access</span>
+                </div>
+                <div class="grid-item" onclick="openProject(1)">
+                    <h3>Trauma Response</h3>
+                    <span>First Responders vs. Tech</span>
+                </div>
+                <div class="grid-item" onclick="openProject(2)">
+                    <h3>Forensics</h3>
+                    <span>The 8% Conviction Rate</span>
+                </div>
+                <div class="grid-item" onclick="openProject(3)">
+                    <h3>Genomics</h3>
+                    <span>$1000 Tests vs. Physics</span>
+                </div>
+                <div class="grid-item" onclick="openProject(4)">
+                    <h3>Diagnostics</h3>
+                    <span>Invasive vs. Video Games</span>
+                </div>
+                <div class="grid-item" onclick="openProject(5)">
+                    <h3>The Network</h3>
+                    <span>Join the Institute</span>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div id="project-container">
+        <div class="project-card">
+            <span class="project-label" id="p-label">INITIATIVE 01</span>
+            <h1 class="project-title" id="p-title">Title Here</h1>
+            <div class="project-body" id="p-body">
+                Body text goes here.
+            </div>
+            <div class="stat-box" id="p-stats">
+                </div>
+        </div>
+    </div>
+
+    <button id="back-btn" onclick="goHome()">Return to Grid</button>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
-        // --- CONFIG ---
-        const PARTICLE_COUNT = 15000;
-        const PARTICLE_SIZE = 0.15;
+        // --- DATA: PROJECT CONTENT ---
+        const projects = [
+            {
+                // CT
+                label: "THE MEDICAL PARADOX",
+                title: "The Accessible Scanner",
+                body: "It’s odd that we have CT scanners that can see inside brains, yet rural populations die because they live too far away. We reject big, expensive tubes. We are building localized, simplified scanning arrays using repurposed industrial sensors.",
+                stats: `<div class="stat"><span class="val">90%</span><span class="lbl">Cheaper</span></div><div class="stat"><span class="val">100%</span><span class="lbl">Portable</span></div>`,
+                shape: 'scanner'
+            },
+            {
+                // Trauma
+                label: "FIRST RESPONDER GAP",
+                title: "Bio-Telemetry",
+                body: "Trauma is the #1 killer of the working age. Responders are flying blind. We aren't building a Garmin for Golf. We are building rugged, passive bio-monitors that alert teams to stress and fatigue before mistakes happen.",
+                stats: `<div class="stat"><span class="val">20%</span><span class="lbl">Deaths Preventable</span></div><div class="stat"><span class="val">24/7</span><span class="lbl">Monitoring</span></div>`,
+                shape: 'watch'
+            },
+            {
+                // Forensics
+                label: "FORENSIC BLINDSPOTS",
+                title: "K9 Olfactory Data",
+                body: "Dogs can identify human targets with 90% accuracy. Why stick to an 8% conviction rate for violent crimes? We are digitizing and mapping K9 scent tracking to create admissible, irrefutable forensic data.",
+                stats: `<div class="stat"><span class="val">90%</span><span class="lbl">Accuracy</span></div><div class="stat"><span class="val">Zero</span><span class="lbl">Lab Time</span></div>`,
+                shape: 'dog'
+            },
+            {
+                // Genomics
+                label: "PRECISION MEDICINE",
+                title: "Optical Sequencing",
+                body: "We abandoned Feynman’s idea of looking at DNA with microscopes. We're bringing it back. By using physics instead of chemistry, we drop the cost of cancer screening from $1000 to $50, with results in one hour.",
+                stats: `<div class="stat"><span class="val">$50</span><span class="lbl">Cost</span></div><div class="stat"><span class="val">1 Hr</span><span class="lbl">Time</span></div>`,
+                shape: 'helix'
+            },
+            {
+                // Diagnostics
+                label: "LATERAL DIAGNOSTICS",
+                title: "The Game Controller",
+                body: "Why bleed into a test tube? We use modified game controllers to measure micro-tremors and reaction times, diagnosing neurological conditions through gameplay. Non-invasive, fun, and accurate.",
+                stats: `<div class="stat"><span class="val">0</span><span class="lbl">Needles</span></div><div class="stat"><span class="val">High</span><span class="lbl">Engagement</span></div>`,
+                shape: 'controller'
+            },
+            {
+                // Network
+                label: "THE ASK",
+                title: "Infinite Potential",
+                body: "The world deserves odd solutions. Every piece of old tech holds a new answer. We have the questions. We need the resources. Join us as a donor or an engineer.",
+                stats: `<div class="stat"><span class="val">∞</span><span class="lbl">Possibilities</span></div>`,
+                shape: 'earth' // Or Potential
+            }
+        ];
 
-        // --- SETUP ---
+        // --- 3D ENGINE SETUP ---
+        const PARTICLE_COUNT = 18000;
         const container = document.getElementById('canvas-container');
-        const loader = document.getElementById('loader');
-        
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x050a10);
-        scene.fog = new THREE.Fog(0x050a10, 10, 50);
+        scene.fog = new THREE.Fog(0x050a10, 15, 60);
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
-        camera.position.z = 22;
+        camera.position.z = 25;
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         container.appendChild(renderer.domElement);
 
-        // --- SHAPE GENERATION HELPER ---
+        // --- SHAPE GENERATORS ---
         const rand = (min, max) => Math.random() * (max - min) + min;
         const createShapeData = () => ({ positions: [], colors: [] });
         
         const shapes = {
-            chaos: createShapeData(),
-            scanner: createShapeData(), // CT
-            dot: createShapeData(),     // Face
-            helix: createShapeData(),   // Genomics
-            crystal: createShapeData(), // Petri Dish
-            watch: createShapeData(),   // Smartwatch + Pulse
-            plant: createShapeData(),   // Plants
-            grid: createShapeData(),    // Forensics Wall
-            dog: createShapeData(),     // K9
-            potential: createShapeData(), // Question Mark / Infinite
-            network: createShapeData()  // Earth + Network
+            chaos: createShapeData(),     // Intro
+            globe: createShapeData(),     // Institute/Home
+            barrier: createShapeData(),   // "Rebellion" (Wall)
+            workshop: createShapeData(),  // "Method" (Gameboy/Tech)
+            
+            // Projects
+            scanner: createShapeData(),
+            watch: createShapeData(),
+            dog: createShapeData(),
+            helix: createShapeData(),
+            controller: createShapeData(),
+            earth: createShapeData()      // Network/End
         };
 
-        // --- 1. CHAOS ---
+        // 1. CHAOS
         for(let i=0; i<PARTICLE_COUNT; i++) {
             shapes.chaos.positions.push(rand(-30,30), rand(-30,30), rand(-20,20));
-            shapes.chaos.colors.push(0.5, 0.5, 0.5);
+            shapes.chaos.colors.push(0.2, 0.2, 0.3);
         }
 
-        // --- 2. CT SCANNER ---
+        // 2. GLOBE (Odd Earth Logo)
         for(let i=0; i<PARTICLE_COUNT; i++) {
-            if(i < PARTICLE_COUNT * 0.7) {
-                const angle = Math.random() * Math.PI * 2;
-                const r = rand(9, 12);
-                shapes.scanner.positions.push(Math.cos(angle)*r, Math.sin(angle)*r, rand(-4,4));
-                shapes.scanner.colors.push(0.2, 0.6, 1.0);
+            const u = Math.random(); const v = Math.random();
+            const theta = 2 * Math.PI * u; const phi = Math.acos(2 * v - 1);
+            const r = 9;
+            shapes.globe.positions.push(r*Math.sin(phi)*Math.cos(theta), r*Math.sin(phi)*Math.sin(theta), r*Math.cos(phi));
+            shapes.globe.colors.push(1, 0.8, 0); // Gold Globe
+        }
+
+        // 3. BARRIER (Grid Wall)
+        for(let i=0; i<PARTICLE_COUNT; i++) {
+            shapes.barrier.positions.push(rand(-15,15), rand(-10,10), rand(-1,1)); // Flat wall
+            if(Math.random()>0.9) shapes.barrier.colors.push(1, 0.2, 0.2); // Red Glitch
+            else shapes.barrier.colors.push(0.4, 0.4, 0.5); // Grey Wall
+        }
+
+        // 4. WORKSHOP (Gameboy/Tech shape)
+        for(let i=0; i<PARTICLE_COUNT; i++) {
+             const x = rand(-5, 5); const y = rand(-7, 7); const z = rand(-2, 2);
+             shapes.workshop.positions.push(x, y, z);
+             // Screen
+             if(Math.abs(x)<4 && y>1 && y<5) shapes.workshop.colors.push(0, 1, 0.5); 
+             else shapes.workshop.colors.push(0.3, 0.3, 0.4);
+        }
+
+        // 5. SCANNER (CT)
+        for(let i=0; i<PARTICLE_COUNT; i++) {
+            if(i < PARTICLE_COUNT*0.7) {
+                const a = rand(0, Math.PI*2); const r = rand(9,11);
+                shapes.scanner.positions.push(Math.cos(a)*r, Math.sin(a)*r, rand(-4,4));
+                shapes.scanner.colors.push(0.2, 0.6, 1);
             } else {
-                const angle = Math.random() * Math.PI * 2;
-                const r = rand(0, 2.5);
-                shapes.scanner.positions.push(Math.cos(angle)*r, Math.sin(angle)*r - 2, rand(-12,12));
-                shapes.scanner.colors.push(0.8, 0.8, 0.8);
+                shapes.scanner.positions.push(rand(-3,3), rand(-3,-2), rand(-10,10));
+                shapes.scanner.colors.push(1,1,1);
             }
         }
 
-        // --- 3. THE DOT ---
-        for(let i=0; i<PARTICLE_COUNT; i++) {
-            if (i < 500) {
-                const r = rand(0, 0.5);
-                const theta = rand(0, Math.PI*2);
-                const phi = rand(0, Math.PI);
-                shapes.dot.positions.push(
-                    Math.sin(phi)*Math.cos(theta)*r, 
-                    Math.sin(phi)*Math.sin(theta)*r + 4, 
-                    Math.cos(phi)*r + 4 
-                );
-                shapes.dot.colors.push(1.0, 0.2, 0.2);
-            } else {
-                const u = Math.random();
-                const v = Math.random();
-                const theta = 2 * Math.PI * u;
-                const phi = Math.acos(2 * v - 1);
-                const zMult = (Math.cos(phi) > 0) ? 4 : 2;
-                shapes.dot.positions.push(
-                    6 * Math.sin(phi) * Math.cos(theta),
-                    8 * Math.sin(phi) * Math.sin(theta),
-                    zMult * Math.cos(phi)
-                );
-                shapes.dot.colors.push(0.0, 1.0, 0.5);
-            }
-        }
-
-        // --- 4. GENOMICS ---
-        for(let i=0; i<PARTICLE_COUNT; i++) {
-            const t = rand(-12, 12);
-            const isStrand = Math.random() > 0.2;
-            if (isStrand) {
-                const strand = Math.random() > 0.5 ? 0 : Math.PI;
-                shapes.helix.positions.push(
-                    Math.cos(t*1.5 + strand)*5 + rand(-0.2,0.2),
-                    t*1.5,
-                    Math.sin(t*1.5 + strand)*5 + rand(-0.2,0.2)
-                );
-                shapes.helix.colors.push(0.5, 0.0, 0.8);
-            } else {
-                const r = rand(-5, 5);
-                shapes.helix.positions.push(Math.cos(t*1.5)*r, t*1.5, Math.sin(t*1.5)*r);
-                shapes.helix.colors.push(0.3, 0.3, 0.3);
-            }
-        }
-
-        // --- 5. CRYSTALS ---
-        for(let i=0; i<PARTICLE_COUNT; i++) {
-            if (i < PARTICLE_COUNT * 0.2) {
-                const angle = rand(0, Math.PI*2);
-                const r = rand(9, 9.5);
-                shapes.crystal.positions.push(Math.cos(angle)*r, -6, Math.sin(angle)*r);
-                shapes.crystal.colors.push(0.5, 0.5, 0.5);
-            } else {
-                const cluster = Math.floor(Math.random()*3);
-                let cx=0, cy=-4; 
-                if(cluster===1) cx=4; if(cluster===2) cx=-4;
-                const s = rand(0, 3);
-                shapes.crystal.positions.push(cx + rand(-s,s), cy + rand(0, s*2), rand(-s,s));
-                shapes.crystal.colors.push(0.0, 1.0, 1.0);
-            }
-        }
-
-        // --- 6. SMARTWATCH (Updated) ---
-        for(let i=0; i<PARTICLE_COUNT; i++) {
-            const r = Math.random();
-            // Strap (Cylinder wrap)
-            if(r < 0.3) {
-                const angle = rand(0, Math.PI*2);
-                const rad = 6;
-                const width = rand(-1.5, 1.5);
-                // Gap for the watch face
-                if (Math.abs(angle) > 0.5) {
-                    shapes.watch.positions.push(Math.sin(angle)*rad, Math.cos(angle)*rad, width);
-                    shapes.watch.colors.push(0.2, 0.2, 0.2); // Dark grey strap
-                } else {
-                    // Hide unused strap particles inside
-                     shapes.watch.positions.push(0, 0, 0);
-                     shapes.watch.colors.push(0,0,0);
-                }
-            } 
-            // Watch Face (Box)
-            else if (r < 0.9) {
-                const w = rand(-2.5, 2.5); // Width
-                const h = rand(-3, 3);     // Height
-                const d = rand(5.5, 6.5);  // Depth (on top of strap)
-                shapes.watch.positions.push(w, d, h);
-                shapes.watch.colors.push(0.1, 0.1, 0.1); // Black screen
-            } 
-            // Heartbeat Pulse (EKG Line)
-            else {
-                const x = rand(-2, 2); // Across screen
-                let y = 6.6; // Slightly above screen surface
-                let z = 0; // Center of screen vertically
-                
-                // Pulse Logic
-                // Flat line generally, spike in middle
-                if (Math.abs(x) < 0.5) {
-                    // Create the spike
-                    z = Math.sin(x * 20) * 1.5; 
-                } else {
-                    z = rand(-0.1, 0.1); // noisy flat line
-                }
-
-                shapes.watch.positions.push(x, y, z);
-                shapes.watch.colors.push(1.0, 0.0, 0.2); // Bright RED pulse
-            }
-        }
-
-        // --- 7. PLANTS ---
-        for(let i=0; i<PARTICLE_COUNT; i++) {
-            if(Math.random() > 0.3) {
-                const y = rand(-10, 8);
-                const w = (10-y)*0.05;
-                shapes.plant.positions.push(rand(-w,w), y, rand(-w,w));
-                shapes.plant.colors.push(0.4, 0.2, 0.0);
-            } else {
-                const r = rand(2, 6);
-                const a = rand(0, Math.PI*2);
-                const y = rand(-5, 8);
-                shapes.plant.positions.push(Math.cos(a)*r, y, Math.sin(a)*r);
-                shapes.plant.colors.push(0.0, 1.0, 0.2);
-            }
-        }
-
-        // --- 8. FORENSICS ---
-        for(let i=0; i<PARTICLE_COUNT; i++) {
-            const x = rand(-8, 8);
-            const y = rand(-10, 10);
-            const z = rand(-0.5, 0.5);
-            shapes.grid.positions.push(x, y, z);
-            if (y > 4 && y < 5) shapes.grid.colors.push(1.0, 0.0, 1.0);
-            else if (y > 1 && y < 2) shapes.grid.colors.push(0.0, 1.0, 0.0);
-            else if (y > -3 && y < -2) shapes.grid.colors.push(0.0, 1.0, 1.0);
-            else if (y > -6 && y < -5.5) shapes.grid.colors.push(1.0, 1.0, 0.0);
-            else shapes.grid.colors.push(0.1, 0.1, 0.3);
-        }
-
-        // --- 9. DOG ---
+        // 6. WATCH
         for(let i=0; i<PARTICLE_COUNT; i++) {
              const r = Math.random();
-             let x,y,z;
-             let col = [0.8, 0.5, 0.2];
-             if(r < 0.4) { x=rand(-4,4); y=rand(-2,2); z=rand(-1.5,1.5); } 
-             else if(r < 0.6) { x=rand(4,6.5); y=rand(1,3.5); z=rand(-1.2,1.2); } 
-             else if(r < 0.7) {
-                 const ear = Math.random() > 0.5 ? 1 : -1;
-                 x = rand(4.5, 5.5); y = rand(3.5, 5); z = rand(0.5, 1) * ear;
-                 col = [0.2, 0.1, 0.0];
-             } else if(r < 0.9) { 
-                 const lx = rand(-4, 4); 
-                 const legX = lx > 0 ? 3 : -3;
-                 const lz = rand(-1, 1) > 0 ? 1 : -1;
-                 x = legX + rand(-0.5, 0.5); y = rand(-6, -2); z = lz + rand(-0.5, 0.5);
-             } else { x=rand(-7,-4); y=rand(0,3); z=0; }
-             shapes.dog.positions.push(x,y,z);
-             shapes.dog.colors.push(...col);
+             if(r<0.4) { // Strap
+                const a = rand(0, Math.PI*2); 
+                if(Math.abs(a)>0.6) {
+                    shapes.watch.positions.push(Math.sin(a)*7, Math.cos(a)*7, rand(-2,2));
+                    shapes.watch.colors.push(0.2,0.2,0.2);
+                } else { shapes.watch.positions.push(0,0,0); shapes.watch.colors.push(0,0,0); }
+             } else { // Face + Pulse
+                 const x = rand(-3,3); let z=0;
+                 if(Math.abs(x)<1) z = Math.sin(x*10); // Pulse
+                 shapes.watch.positions.push(x, 7, z);
+                 if(Math.abs(z)>0.1) shapes.watch.colors.push(1,0,0.2); else shapes.watch.colors.push(0,0,0);
+             }
         }
 
-        // --- 10. POTENTIAL / DONOR (Question Mark) ---
+        // 7. DOG
         for(let i=0; i<PARTICLE_COUNT; i++) {
-            if (i < PARTICLE_COUNT * 0.8) {
-                // The Question Mark Shape
-                // Dot
-                if (i < PARTICLE_COUNT * 0.1) {
-                    shapes.potential.positions.push(rand(-1,1), -5 + rand(-1,1), rand(-1,1));
-                    shapes.potential.colors.push(1.0, 0.0, 1.0); // Purple glow
-                } 
-                // Stem
-                else if (i < PARTICLE_COUNT * 0.3) {
-                    shapes.potential.positions.push(rand(-0.8,0.8), rand(-3, 0), rand(-0.8,0.8));
-                    shapes.potential.colors.push(0.8, 0.0, 0.8);
-                }
-                // The Curve (Hook)
-                else {
-                    const angle = rand(0, Math.PI * 1.5); // 3/4 circle
-                    const r = 3;
-                    const tubeR = 0.8;
-                    // Parametric torus segment logic
-                    const tubeAngle = rand(0, Math.PI*2);
-                    
-                    // Main curve center
-                    const cx = Math.cos(angle) * r;
-                    const cy = Math.sin(angle) * r + 3; // Shift up
-                    
-                    const px = cx + Math.cos(tubeAngle)*tubeR;
-                    const py = cy + Math.sin(tubeAngle)*tubeR;
-                    const pz = Math.sin(tubeAngle)*tubeR; // tube thickness
+            const r = Math.random();
+            let x,y,z; let c=[0.6, 0.4, 0.2];
+            if(r<0.5) { x=rand(-4,4); y=rand(-2,2); z=rand(-1.5,1.5); } // Body
+            else if(r<0.7) { x=rand(4,6); y=rand(1,3.5); z=rand(-1,1); } // Head
+            else if(r<0.9) { x=(rand(-1,1)>0?3:-3); y=rand(-6,-2); z=rand(-1,1); } // Legs
+            else { x=rand(-6,-4); y=rand(0,2); z=0; } // Tail
+            shapes.dog.positions.push(x,y,z); shapes.dog.colors.push(...c);
+        }
 
-                    shapes.potential.positions.push(px, py, pz);
-                    shapes.potential.colors.push(0.6, 0.0, 1.0); // Deep Purple
-                }
+        // 8. HELIX
+        for(let i=0; i<PARTICLE_COUNT; i++) {
+            const t = rand(-10,10); const s = Math.random()>0.5?0:Math.PI;
+            if(Math.random()>0.3) {
+                shapes.helix.positions.push(Math.cos(t*1.5+s)*5, t*1.5, Math.sin(t*1.5+s)*5);
+                shapes.helix.colors.push(0.6,0,0.8);
             } else {
-                // Orbiting Ideas (Sparks)
-                const theta = Math.random() * Math.PI * 2;
-                const phi = Math.acos(Math.random() * 2 - 1);
-                const r = rand(6, 10);
-                
-                shapes.potential.positions.push(
-                    r * Math.sin(phi) * Math.cos(theta),
-                    r * Math.sin(phi) * Math.sin(theta),
-                    r * Math.cos(phi)
-                );
-                shapes.potential.colors.push(1.0, 0.8, 0.0); // Gold sparks
+                shapes.helix.positions.push(Math.cos(t*1.5)*rand(-5,5), t*1.5, Math.sin(t*1.5)*rand(-5,5));
+                shapes.helix.colors.push(0,0.8,0.8);
             }
         }
 
-
-        // --- 11. NETWORK (Earth + Connections) ---
+        // 9. CONTROLLER
         for(let i=0; i<PARTICLE_COUNT; i++) {
-            // Earth Sphere (70% of particles)
-            if (i < PARTICLE_COUNT * 0.7) {
-                const u = Math.random();
-                const v = Math.random();
-                const theta = 2 * Math.PI * u;
-                const phi = Math.acos(2 * v - 1);
-                const r = 8.5; 
-                
-                const x = r * Math.sin(phi) * Math.cos(theta);
-                const y = r * Math.sin(phi) * Math.sin(theta);
-                const z = r * Math.cos(phi);
-                
-                shapes.network.positions.push(x, y, z);
-                
-                // Color mapping
-                if (Math.abs(y) < 3 && Math.random() > 0.6) shapes.network.colors.push(0.0, 0.8, 0.5); // Tropics/Land
-                else shapes.network.colors.push(0.0, 0.1, 0.4); // Ocean
-            } 
-            // The People / Nodes (15%)
-            else if (i < PARTICLE_COUNT * 0.85) {
-                const u = Math.random();
-                const v = Math.random();
-                const theta = 2 * Math.PI * u;
-                const phi = Math.acos(2 * v - 1);
-                const r = 9.0; 
-                shapes.network.positions.push(
-                    r * Math.sin(phi) * Math.cos(theta),
-                    r * Math.sin(phi) * Math.sin(theta),
-                    r * Math.cos(phi)
-                );
-                shapes.network.colors.push(1.0, 0.8, 0.0); // Gold
-            }
-            // The Network Lines (15%)
-            else {
-                const band = Math.floor(Math.random() * 3); 
-                let angle = Math.random() * Math.PI * 2;
-                let r = 11 + Math.random();
-                let x,y,z;
-                if(band === 0) { x = Math.cos(angle)*r; z = Math.sin(angle)*r; y = rand(-1, 1); }
-                else if (band === 1) { y = Math.cos(angle)*r; z = Math.sin(angle)*r; x = rand(-1, 1); }
-                else { const base = Math.cos(angle)*r; x = base; y = base; z = Math.sin(angle)*r; }
-                
-                shapes.network.positions.push(x, y, z);
-                shapes.network.colors.push(1.0, 1.0, 1.0); 
-            }
+             const r = Math.random();
+             if(r<0.4) shapes.controller.positions.push(rand(-7,-3), rand(-2,2), rand(-2,2)); // L
+             else if(r<0.8) shapes.controller.positions.push(rand(3,7), rand(-2,2), rand(-2,2)); // R
+             else shapes.controller.positions.push(rand(-3,3), rand(-1,1), rand(-1,1)); // Center
+             shapes.controller.colors.push(0.8,0.8,0.8);
+        }
+
+        // 10. EARTH (End)
+        for(let i=0; i<PARTICLE_COUNT; i++) {
+            const u=Math.random(); const v=Math.random();
+            const r=8; const t=2*Math.PI*u; const p=Math.acos(2*v-1);
+            shapes.earth.positions.push(r*Math.sin(p)*Math.cos(t), r*Math.sin(p)*Math.sin(t), r*Math.cos(p));
+            if(Math.random()>0.7) shapes.earth.colors.push(0,1,0.5); else shapes.earth.colors.push(0,0.1,0.3);
         }
 
 
-        // --- PARTICLE SYSTEM INIT ---
+        // --- PARTICLE MESH ---
         const geometry = new THREE.BufferGeometry();
-        const positions = new Float32Array(PARTICLE_COUNT * 3);
-        const colors = new Float32Array(PARTICLE_COUNT * 3);
-
-        for(let i=0; i<PARTICLE_COUNT * 3; i++) {
-            positions[i] = shapes.chaos.positions[i];
-            colors[i] = shapes.chaos.colors[i];
+        const posArr = new Float32Array(PARTICLE_COUNT*3);
+        const colArr = new Float32Array(PARTICLE_COUNT*3);
+        
+        // Init with Chaos
+        for(let i=0; i<PARTICLE_COUNT*3; i++) {
+            posArr[i] = shapes.chaos.positions[i];
+            colArr[i] = shapes.chaos.colors[i];
         }
-
-        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
+        
+        geometry.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colArr, 3));
+        
         const material = new THREE.PointsMaterial({
-            size: PARTICLE_SIZE,
-            vertexColors: true,
-            transparent: true,
-            opacity: 0.8,
-            blending: THREE.AdditiveBlending
+            size: 0.15, vertexColors: true, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending
         });
-
         const points = new THREE.Points(geometry, material);
         scene.add(points);
 
-        loader.style.opacity = 0;
-        setTimeout(() => loader.style.display = 'none', 500);
 
-        // --- ANIMATION STATE ---
+        // --- STATE MANAGEMENT ---
         let currentPosTarget = shapes.chaos.positions;
         let currentColTarget = shapes.chaos.colors;
-        let isNetworkScene = false;
-        let isPotentialScene = false;
+        let appState = 'home'; // 'home' or 'project'
+        let currentShapeName = 'chaos';
+
+        // --- NAVIGATION LOGIC ---
         
-        // Scroll Logic
+        const homeContainer = document.getElementById('home-container');
+        const projectContainer = document.getElementById('project-container');
+        const backBtn = document.getElementById('back-btn');
+
+        // Scroll listener for HOME ONLY
         window.addEventListener('scroll', () => {
+            if(appState !== 'home') return;
+            
             const scrollY = window.scrollY;
             const h = window.innerHeight;
-            const sectionIndex = Math.round(scrollY / h);
+            const idx = Math.round(scrollY / h);
             
-            isNetworkScene = false;
-            isPotentialScene = false;
-
+            // Map home sections to shapes
+            // 0: Chaos/Intro, 1: Globe/Manifesto, 2: Barrier/Rebellion, 3: Workshop/Method, 4: Grid/Scanner
             let targetKey = 'chaos';
-            if(sectionIndex === 1) targetKey = 'scanner';
-            else if(sectionIndex === 2) targetKey = 'dot';
-            else if(sectionIndex === 3) targetKey = 'helix';
-            else if(sectionIndex === 4) targetKey = 'crystal';
-            else if(sectionIndex === 5) targetKey = 'watch';
-            else if(sectionIndex === 6) targetKey = 'plant';
-            else if(sectionIndex === 7) targetKey = 'grid';
-            else if(sectionIndex === 8) targetKey = 'dog';
-            else if(sectionIndex === 9) { targetKey = 'potential'; isPotentialScene = true; }
-            else if(sectionIndex === 10) { targetKey = 'network'; isNetworkScene = true; }
+            if(idx === 0) targetKey = 'globe';
+            if(idx === 1) targetKey = 'barrier';
+            if(idx === 2) targetKey = 'workshop';
+            if(idx >= 3) targetKey = 'earth';
 
+            currentShapeName = targetKey;
             currentPosTarget = shapes[targetKey].positions;
             currentColTarget = shapes[targetKey].colors;
         });
 
-        // --- RENDER LOOP ---
+        function openProject(index) {
+            appState = 'project';
+            const p = projects[index];
+            
+            // 1. Update UI Text
+            document.getElementById('p-label').innerText = p.label;
+            document.getElementById('p-title').innerText = p.title;
+            document.getElementById('p-body').innerText = p.body;
+            document.getElementById('p-stats').innerHTML = p.stats;
+
+            // 2. Transition Views
+            homeContainer.style.opacity = 0;
+            setTimeout(() => {
+                homeContainer.style.display = 'none';
+                window.scrollTo(0,0); // Reset scroll
+                projectContainer.classList.add('active');
+                backBtn.classList.add('active');
+            }, 500);
+
+            // 3. Update 3D Shape
+            const targetKey = p.shape;
+            currentPosTarget = shapes[targetKey].positions;
+            currentColTarget = shapes[targetKey].colors;
+            
+            // Move camera for side view (text is on left)
+            // We'll handle this in the render loop via targetOffset
+        }
+
+        function goHome() {
+            appState = 'home';
+            
+            // 1. Transition Views
+            projectContainer.classList.remove('active');
+            backBtn.classList.remove('active');
+            
+            setTimeout(() => {
+                homeContainer.style.display = 'block';
+                setTimeout(() => homeContainer.style.opacity = 1, 50);
+            }, 500);
+
+            // 2. Reset 3D
+            currentPosTarget = shapes.globe.positions;
+            currentColTarget = shapes.globe.colors;
+        }
+
+
+        // --- ANIMATION LOOP ---
         const clock = new THREE.Clock();
 
         function animate() {
             requestAnimationFrame(animate);
-
             const time = clock.getElapsedTime();
-            const posAttr = geometry.attributes.position;
-            const colAttr = geometry.attributes.color;
-            const p = posAttr.array;
-            const c = colAttr.array;
             
+            const p = geometry.attributes.position.array;
+            const c = geometry.attributes.color.array;
             const speed = 0.05;
 
-            for(let i=0; i<PARTICLE_COUNT; i++) {
-                const ix = i * 3;
-                const iy = i * 3 + 1;
-                const iz = i * 3 + 2;
+            // Offset logic: When in project mode, shift object right to make room for text
+            const xOffset = (appState === 'project') ? 7 : 0;
 
-                // Interpolation
-                p[ix] += (currentPosTarget[ix] - p[ix]) * speed;
-                p[iy] += (currentPosTarget[iy] - p[iy]) * speed;
-                p[iz] += (currentPosTarget[iz] - p[iz]) * speed;
+            for(let i=0; i<PARTICLE_COUNT; i++) {
+                const ix = i*3; const iy = i*3+1; const iz = i*3+2;
+                
+                // Target X position needs offset applied
+                const tx = currentPosTarget[ix] + xOffset;
+                const ty = currentPosTarget[iy];
+                const tz = currentPosTarget[iz];
+
+                p[ix] += (tx - p[ix]) * speed;
+                p[iy] += (ty - p[iy]) * speed;
+                p[iz] += (tz - p[iz]) * speed;
 
                 c[ix] += (currentColTarget[ix] - c[ix]) * speed;
                 c[iy] += (currentColTarget[iy] - c[iy]) * speed;
                 c[iz] += (currentColTarget[iz] - c[iz]) * speed;
                 
                 // Noise
-                const noise = Math.sin(time + p[iy]) * 0.005; 
-                p[ix] += noise;
+                p[ix] += Math.sin(time + p[iy]) * 0.003;
             }
 
-            posAttr.needsUpdate = true;
-            colAttr.needsUpdate = true;
+            geometry.attributes.position.needsUpdate = true;
+            geometry.attributes.color.needsUpdate = true;
             
-            // Special Scene Rotations
-            if(isNetworkScene) {
-                points.rotation.y += 0.001; // Earth Spin
-            } else if (isPotentialScene) {
-                points.rotation.y = Math.sin(time * 0.5) * 0.2; // Gentle swaying for question mark
+            // Scene Rotation
+            if(appState === 'home') {
+                points.rotation.y += 0.001;
             } else {
-                points.rotation.y += (0 - points.rotation.y) * 0.05; // Reset
+                points.rotation.y = Math.sin(time * 0.2) * 0.1; // Gentle sway in project mode
             }
-            
+
             renderer.render(scene, camera);
         }
 
