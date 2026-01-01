@@ -14,7 +14,7 @@
             --purple: #bf00ff;
             --alert: #ff3333;
             --dim: #445566;
-            --panel-bg: rgba(5, 10, 16, 0.9);
+            --panel: rgba(5, 10, 16, 0.95);
         }
 
         body, html {
@@ -28,62 +28,7 @@
             overflow-x: hidden;
         }
 
-        /* --- UI ELEMENTS --- */
-        
-        /* Navigation / HUD */
-        .hud-bar {
-            position: fixed;
-            top: 0; left: 0; width: 100%;
-            padding: 20px;
-            box-sizing: border-box;
-            display: flex;
-            justify-content: space-between;
-            z-index: 100;
-            pointer-events: none; /* Let clicks pass through to canvas */
-        }
-        
-        .logo {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: var(--gold);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            pointer-events: auto;
-            cursor: pointer;
-            border: 1px solid transparent;
-            padding: 5px 10px;
-            transition: 0.3s;
-        }
-        .logo:hover { border-color: var(--gold); background: rgba(255, 204, 0, 0.1); }
-
-        .status {
-            text-align: right;
-            font-size: 0.8rem;
-            color: var(--blue);
-        }
-
-        /* Back Button (Hidden on Home) */
-        #back-btn {
-            position: fixed;
-            bottom: 30px; left: 50%;
-            transform: translateX(-50%);
-            padding: 10px 30px;
-            background: var(--bg);
-            border: 1px solid var(--dim);
-            color: var(--dim);
-            text-transform: uppercase;
-            cursor: pointer;
-            z-index: 100;
-            opacity: 0;
-            pointer-events: none;
-            transition: 0.3s;
-            letter-spacing: 2px;
-        }
-        #back-btn.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
-        #back-btn:hover { color: var(--gold); border-color: var(--gold); }
+        button { font-family: 'Courier New', Courier, monospace; }
 
         /* --- 3D CANVAS --- */
         #canvas-container {
@@ -103,13 +48,51 @@
             z-index: 2;
         }
 
-        /* --- CONTENT CONTAINERS --- */
+        /* --- NAVIGATION --- */
+        .nav-bar {
+            position: fixed;
+            top: 0; left: 0; width: 100%;
+            padding: 25px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            pointer-events: none;
+        }
         
-        /* 1. HOME CONTAINER */
-        #home-container {
+        .logo {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            pointer-events: auto;
+            cursor: pointer;
+            border-bottom: 2px solid var(--gold);
+            padding-bottom: 5px;
+        }
+
+        .back-link {
+            pointer-events: auto;
+            cursor: pointer;
+            color: var(--dim);
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            display: none; /* Hidden on home */
+            transition: 0.3s;
+            background: rgba(0,0,0,0.5);
+            padding: 10px 20px;
+            border: 1px solid var(--dim);
+        }
+        .back-link:hover { color: var(--gold); border-color: var(--gold); }
+
+        /* --- VIEW: HOME PAGE --- */
+        #view-home {
             position: relative;
             z-index: 10;
-            transition: opacity 0.5s;
+            width: 100%;
+            transition: opacity 0.6s ease;
         }
 
         section {
@@ -121,245 +104,300 @@
             box-sizing: border-box;
         }
 
-        /* Text Cards */
-        .card {
-            background: var(--panel-bg);
+        .story-card {
+            background: var(--panel);
             border: 1px solid var(--dim);
             padding: 3rem;
-            max-width: 700px;
+            max-width: 800px;
             width: 100%;
-            backdrop-filter: blur(10px);
             box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            position: relative;
         }
-        
-        .card.manifesto { border-top: 4px solid var(--gold); text-align: center; }
-        .card.rebellion { border-left: 4px solid var(--alert); }
-        .card.method { border-right: 4px solid var(--blue); text-align: right; }
 
-        h1 { font-size: 3rem; margin: 0 0 1rem; color: #fff; text-transform: uppercase; line-height: 1; }
-        h2 { font-size: 2rem; margin: 0 0 1rem; color: var(--blue); text-transform: uppercase; }
-        p { font-size: 1.1rem; line-height: 1.6; color: #aaa; margin-bottom: 1rem; }
+        .story-card.hero { border-top: 4px solid var(--gold); text-align: center; }
+        .story-card.conflict { border-left: 4px solid var(--alert); }
+        .story-card.method { border-right: 4px solid var(--blue); text-align: right; }
+        .story-card.mission { border-bottom: 4px solid var(--green); text-align: center; }
+
+        h1 { font-size: 2.5rem; margin: 0 0 1.5rem; color: #fff; text-transform: uppercase; line-height: 1.1; }
+        h2 { font-size: 1.8rem; margin: 0 0 1rem; color: #fff; text-transform: uppercase; }
+        p { font-size: 1.1rem; line-height: 1.8; color: #aaa; margin-bottom: 1.5rem; }
         .highlight { color: #fff; font-weight: bold; }
+        
+        .label {
+            display: inline-block;
+            font-size: 0.7rem;
+            padding: 4px 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+            margin-bottom: 20px;
+            color: #888;
+            letter-spacing: 2px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
 
-        /* Project Grid (Bottom of Home) */
-        .grid-container {
+        /* Case File Grid */
+        .file-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 20px;
             width: 100%;
-            max-width: 1000px;
+            margin-top: 50px;
         }
-
-        .grid-item {
-            background: rgba(255,255,255,0.05);
+        .file-item {
+            background: rgba(255,255,255,0.03);
             border: 1px solid var(--dim);
-            padding: 20px;
+            padding: 25px;
             cursor: pointer;
-            transition: 0.3s;
+            transition: all 0.3s;
             text-align: left;
         }
-        .grid-item:hover {
-            background: rgba(255,255,255,0.1);
-            border-color: var(--green);
+        .file-item:hover {
+            border-color: var(--blue);
+            background: rgba(74, 144, 226, 0.1);
             transform: translateY(-5px);
         }
-        .grid-item h3 { margin: 0 0 5px; color: var(--green); font-size: 0.9rem; text-transform: uppercase; }
-        .grid-item span { color: #888; font-size: 0.8rem; }
+        .file-number { font-size: 0.8rem; color: var(--dim); display: block; margin-bottom: 10px; }
+        .file-title { font-size: 1.1rem; color: #fff; text-transform: uppercase; display: block; }
 
-        /* 2. PROJECT DETAIL CONTAINER (Initially Hidden) */
-        #project-container {
+        /* --- VIEW: PROBLEM PAGE --- */
+        #view-problem {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             z-index: 20;
-            pointer-events: none; /* Allow click through when hidden */
+            background: rgba(5, 10, 16, 0.6); 
+            display: none; 
             opacity: 0;
-            transition: opacity 0.5s;
+            transition: opacity 0.6s ease;
+            overflow-y: auto;
+        }
+
+        .problem-layout {
+            min-height: 100vh;
             display: flex;
             align-items: center;
-            justify-content: flex-start; /* Align text to side */
             padding: 5% 10%;
             box-sizing: border-box;
-            background: rgba(5, 10, 16, 0.4); /* Slight tint */
-        }
-        
-        #project-container.active {
-            opacity: 1;
-            pointer-events: auto;
         }
 
-        .project-card {
-            background: var(--panel-bg);
-            border: 1px solid var(--green);
-            padding: 40px;
-            max-width: 500px;
-            transform: translateX(-50px);
-            transition: transform 0.5s ease-out;
-        }
-        
-        #project-container.active .project-card {
-            transform: translateX(0);
+        .detail-card {
+            background: var(--panel);
+            border: 1px solid var(--dim);
+            padding: 4rem;
+            max-width: 600px;
+            position: relative;
+            z-index: 30;
+            transition: border-color 0.5s;
         }
 
-        .project-label { color: var(--green); font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase; display: block; margin-bottom: 15px; }
-        .project-title { color: #fff; font-size: 2.5rem; text-transform: uppercase; margin: 0 0 20px; line-height: 1; }
-        .project-body { color: #ccc; font-size: 1rem; line-height: 1.6; }
-        
-        .stat-box {
-            margin-top: 30px;
+        /* Stats */
+        .stat-row {
+            display: flex;
+            gap: 40px;
+            margin-top: 40px;
             padding-top: 20px;
             border-top: 1px dashed var(--dim);
-            display: flex;
-            justify-content: space-between;
         }
-        .stat { text-align: center; }
-        .stat .val { display: block; color: var(--blue); font-size: 1.5rem; font-weight: bold; }
-        .stat .lbl { display: block; color: #666; font-size: 0.7rem; text-transform: uppercase; }
+        .stat-block .val { display: block; font-size: 2rem; color: #fff; font-weight: bold; }
+        .stat-block .lbl { display: block; font-size: 0.8rem; color: var(--dim); text-transform: uppercase; }
+
+        /* Action Button */
+        .btn-reveal {
+            margin-top: 30px;
+            background: transparent;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            padding: 15px 30px;
+            font-size: 1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+            transition: 0.3s;
+            display: inline-block;
+        }
+        .btn-reveal:hover { background: var(--gold); color: #000; box-shadow: 0 0 20px rgba(255, 204, 0, 0.4); }
+
+        /* Mobile Adjustments */
+        @media (max-width: 768px) {
+            h1 { font-size: 1.8rem; }
+            .story-card, .detail-card { padding: 2rem; }
+            .problem-layout { padding: 80px 20px; align-items: flex-start; }
+        }
 
     </style>
 </head>
 <body>
 
-    <div class="hud-bar">
-        <div class="logo" onclick="goHome()">ODD EARTH INSTITUTE</div>
-        <div class="status">
-            LATERAL THINKING<br>
-            WITHERED TECH
-        </div>
+    <div class="nav-bar">
+        <div class="logo" onclick="navigateTo('home')">THE ODD EARTH INSTITUTE</div>
+        <div class="back-link" id="back-btn" onclick="navigateTo('home')">← RETURN TO ARCHIVE</div>
     </div>
 
     <div id="canvas-container"></div>
     <div class="scanlines"></div>
 
-    <div id="home-container">
+    <div id="view-home">
         
         <section>
-            <div class="card manifesto">
-                <h2>The Odd Earth Institute</h2>
+            <div class="story-card hero">
+                <span class="label">Identity</span>
+                <h1>The Odd Earth Institute</h1>
                 <p>We are a think tank for the left-behind.</p>
-                <p>We use lateral thinking with withered technologies to solve real-world problems for real people.</p>
+                <p>We use <span class="highlight">lateral thinking with withered technologies</span> to solve real-world problems for real people.</p>
                 <br>
-                <span style="font-size: 0.8rem; color: var(--gold);">SCROLL TO EXPLORE</span>
+                <small style="color:var(--gold)">SCROLL TO DECLASSIFY</small>
             </div>
         </section>
 
         <section>
-            <div class="card rebellion">
+            <div class="story-card conflict">
+                <span class="label">The Conflict</span>
                 <h2>Profit & Policy Have Failed</h2>
-                <p>Governments are slow. The Private Sector is greedy. They have failed to move the needle on the things that actually matter.</p>
-                <p>We act as a force for good with no regard for bureaucracy. We don't ask for permission. We just build solutions that work.</p>
+                <p>Governments are paralyzed by bureaucracy. The Private Sector is paralyzed by greed. Neither have moved the needle on the problems that actually kill people.</p>
+                <p>We operate with <span class="highlight" style="color:var(--alert)">no regard for either.</span> We are a force for good in a world that has forgotten how to build.</p>
             </div>
         </section>
 
         <section>
-            <div class="card method">
-                <h2>The Garage Method</h2>
-                <p>We don't need million-dollar labs. We need a garage, a soldering iron, and a fresh perspective.</p>
-                <p>Inspired by <strong>Gunpei Yokoi</strong>, we repurpose mature, cheap technology to do things they were never designed to do.</p>
+            <div class="story-card method">
+                <span class="label">The Methodology</span>
+                <h2>The Garage Approach</h2>
+                <p>Inspired by <strong>Gunpei Yokoi</strong>. We don't need new physics. We need to look at old technology with new eyes.</p>
+                <p>A calculator can become a game console. A microphone can become a medical scanner. Potential is infinite.</p>
             </div>
         </section>
 
-        <section style="flex-direction: column;">
-            <h2 style="color: #fff; margin-bottom: 30px;">Active Initiatives</h2>
-            <div class="grid-container">
-                <div class="grid-item" onclick="openProject(0)">
-                    <h3>The Medical Paradox</h3>
-                    <span>CT Scanners vs. Access</span>
-                </div>
-                <div class="grid-item" onclick="openProject(1)">
-                    <h3>Trauma Response</h3>
-                    <span>First Responders vs. Tech</span>
-                </div>
-                <div class="grid-item" onclick="openProject(2)">
-                    <h3>Forensics</h3>
-                    <span>The 8% Conviction Rate</span>
-                </div>
-                <div class="grid-item" onclick="openProject(3)">
-                    <h3>Genomics</h3>
-                    <span>$1000 Tests vs. Physics</span>
-                </div>
-                <div class="grid-item" onclick="openProject(4)">
-                    <h3>Diagnostics</h3>
-                    <span>Invasive vs. Video Games</span>
-                </div>
-                <div class="grid-item" onclick="openProject(5)">
-                    <h3>The Network</h3>
-                    <span>Join the Institute</span>
+        <section style="display: block; padding-top: 10vh;">
+            <div class="story-card mission" style="margin: auto;">
+                <span class="label">Access Case Files</span>
+                <h2>Active Initiatives</h2>
+                <p>Select a file to begin analysis.</p>
+                
+                <div class="file-grid">
+                    <div class="file-item" onclick="openProblem(0)">
+                        <span class="file-number">CASE 01</span>
+                        <span class="file-title">The Medical Paradox</span>
+                    </div>
+                    <div class="file-item" onclick="openProblem(1)">
+                        <span class="file-number">CASE 02</span>
+                        <span class="file-title">Trauma Response</span>
+                    </div>
+                    <div class="file-item" onclick="openProblem(2)">
+                        <span class="file-number">CASE 03</span>
+                        <span class="file-title">Forensic Blindspots</span>
+                    </div>
+                    <div class="file-item" onclick="openProblem(3)">
+                        <span class="file-number">CASE 04</span>
+                        <span class="file-title">Precision Medicine</span>
+                    </div>
+                    <div class="file-item" onclick="openProblem(4)">
+                        <span class="file-number">CASE 05</span>
+                        <span class="file-title">Lateral Diagnostics</span>
+                    </div>
                 </div>
             </div>
+            <br><br><br><br>
         </section>
     </div>
 
-    <div id="project-container">
-        <div class="project-card">
-            <span class="project-label" id="p-label">INITIATIVE 01</span>
-            <h1 class="project-title" id="p-title">Title Here</h1>
-            <div class="project-body" id="p-body">
-                Body text goes here.
-            </div>
-            <div class="stat-box" id="p-stats">
+    <div id="view-problem">
+        <div class="problem-layout">
+            <div class="detail-card" id="p-card" style="border-left: 5px solid var(--blue);">
+                <span class="label" id="p-label">CASE FILE</span>
+                <h1 id="p-title">Problem Title</h1>
+                <div id="p-content">
+                    Problem Content...
                 </div>
+                
+                <div id="reveal-container">
+                    <button class="btn-reveal" onclick="revealSolution()">REVEAL LATERAL SOLUTION</button>
+                </div>
+
+                <div class="stat-row" id="p-stats" style="opacity: 0; transition: opacity 1s;"></div>
+            </div>
         </div>
     </div>
 
-    <button id="back-btn" onclick="goHome()">Return to Grid</button>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
-        // --- DATA: PROJECT CONTENT ---
-        const projects = [
-            {
-                // CT
-                label: "THE MEDICAL PARADOX",
-                title: "The Accessible Scanner",
-                body: "It’s odd that we have CT scanners that can see inside brains, yet rural populations die because they live too far away. We reject big, expensive tubes. We are building localized, simplified scanning arrays using repurposed industrial sensors.",
-                stats: `<div class="stat"><span class="val">90%</span><span class="lbl">Cheaper</span></div><div class="stat"><span class="val">100%</span><span class="lbl">Portable</span></div>`,
-                shape: 'scanner'
+        // --- DATA: PROBLEM PAIRS ---
+        const caseFiles = [
+            {   // 0. MEDICAL
+                color: 'blue',
+                problem: {
+                    title: "The Medical Paradox",
+                    content: "It’s odd that we have CT scanners that can literally see inside our brains but we have a large population that live too far away to use them when it matters. Sure, let’s stick to big, expensive tubes that hardly anyone can afford.",
+                    shape: 'scanner'
+                },
+                solution: {
+                    title: "The Single Dot",
+                    content: "We replaced the machine with a single thermochromatic dot on the forehead. It monitors vitals instantly using simple physics. No power. No waiting. Just a sticker.",
+                    stats: `<div class="stat-block"><span class="val">99%</span><span class="lbl">Cheaper</span></div><div class="stat-block"><span class="val">100%</span><span class="lbl">Portable</span></div>`,
+                    shape: 'dot'
+                }
             },
-            {
-                // Trauma
-                label: "FIRST RESPONDER GAP",
-                title: "Bio-Telemetry",
-                body: "Trauma is the #1 killer of the working age. Responders are flying blind. We aren't building a Garmin for Golf. We are building rugged, passive bio-monitors that alert teams to stress and fatigue before mistakes happen.",
-                stats: `<div class="stat"><span class="val">20%</span><span class="lbl">Deaths Preventable</span></div><div class="stat"><span class="val">24/7</span><span class="lbl">Monitoring</span></div>`,
-                shape: 'watch'
+            {   // 1. TRAUMA
+                color: 'alert',
+                problem: {
+                    title: "First Responder Gap",
+                    content: "It’s odd that the number one cause of death for the working age population is trauma, but our first responders are overworked and underequipped. Sure, let’s build a Garmin for Golf so you can track your swing.",
+                    shape: 'watch'
+                },
+                solution: {
+                    title: "Companion Plants",
+                    content: "We don't need more screens. We use bio-modified plants in the home that change color based on the occupant's stress pheromones. Passive, constant monitoring without the battery life anxiety.",
+                    stats: `<div class="stat-block"><span class="val">Zero</span><span class="lbl">Power</span></div><div class="stat-block"><span class="val">24/7</span><span class="lbl">Active</span></div>`,
+                    shape: 'plant'
+                }
             },
-            {
-                // Forensics
-                label: "FORENSIC BLINDSPOTS",
-                title: "K9 Olfactory Data",
-                body: "Dogs can identify human targets with 90% accuracy. Why stick to an 8% conviction rate for violent crimes? We are digitizing and mapping K9 scent tracking to create admissible, irrefutable forensic data.",
-                stats: `<div class="stat"><span class="val">90%</span><span class="lbl">Accuracy</span></div><div class="stat"><span class="val">Zero</span><span class="lbl">Lab Time</span></div>`,
-                shape: 'dog'
+            {   // 2. FORENSICS
+                color: 'green',
+                problem: {
+                    title: "Forensic Blindspots",
+                    content: "It’s odd that dogs can identify human targets with 90% accuracy, yet we stick to slow lab tests with an 8% conviction rate for violent crimes. We ignore the best sensor on earth.",
+                    shape: 'gel'
+                },
+                solution: {
+                    title: "K9 Olfactory Data",
+                    content: "We utilize trained dogs to map scent data in real-time. We digitize their biological output into admissible forensic evidence. Nature's nose, digitized.",
+                    stats: `<div class="stat-block"><span class="val">90%</span><span class="lbl">Accuracy</span></div><div class="stat-block"><span class="val">Real</span><span class="lbl">Time</span></div>`,
+                    shape: 'dog'
+                }
             },
-            {
-                // Genomics
-                label: "PRECISION MEDICINE",
-                title: "Optical Sequencing",
-                body: "We abandoned Feynman’s idea of looking at DNA with microscopes. We're bringing it back. By using physics instead of chemistry, we drop the cost of cancer screening from $1000 to $50, with results in one hour.",
-                stats: `<div class="stat"><span class="val">$50</span><span class="lbl">Cost</span></div><div class="stat"><span class="val">1 Hr</span><span class="lbl">Time</span></div>`,
-                shape: 'helix'
+            {   // 3. GENOMICS
+                color: 'purple',
+                problem: {
+                    title: "The Precision Trap",
+                    content: "It’s odd that we abandoned Feynman’s idea for using electron microscopes to physically look at DNA. We rely on expensive chemical sequencing that takes days.",
+                    shape: 'helix'
+                },
+                solution: {
+                    title: "Optical Crystals",
+                    content: "We use basic salt crystallization. By observing how samples crystallize physically, we can screen for anomalies instantly for pennies. Physics over chemistry.",
+                    stats: `<div class="stat-block"><span class="val">$50</span><span class="lbl">Cost</span></div><div class="stat-block"><span class="val">1hr</span><span class="lbl">Result</span></div>`,
+                    shape: 'crystal'
+                }
             },
-            {
-                // Diagnostics
-                label: "LATERAL DIAGNOSTICS",
-                title: "The Game Controller",
-                body: "Why bleed into a test tube? We use modified game controllers to measure micro-tremors and reaction times, diagnosing neurological conditions through gameplay. Non-invasive, fun, and accurate.",
-                stats: `<div class="stat"><span class="val">0</span><span class="lbl">Needles</span></div><div class="stat"><span class="val">High</span><span class="lbl">Engagement</span></div>`,
-                shape: 'controller'
-            },
-            {
-                // Network
-                label: "THE ASK",
-                title: "Infinite Potential",
-                body: "The world deserves odd solutions. Every piece of old tech holds a new answer. We have the questions. We need the resources. Join us as a donor or an engineer.",
-                stats: `<div class="stat"><span class="val">∞</span><span class="lbl">Possibilities</span></div>`,
-                shape: 'earth' // Or Potential
+            {   // 4. DIAGNOSTICS
+                color: 'gold',
+                problem: {
+                    title: "Invasive Standards",
+                    content: "It’s odd that we feel the need to bleed into test tubes and call it “non-invasive”. We traumatize patients to get data we could get elsewhere.",
+                    shape: 'tube'
+                },
+                solution: {
+                    title: "Lateral Diagnostics",
+                    content: "We utilize modified video game controllers to measure micro-tremors and reaction times. We diagnose neuro-degenerative conditions while the patient plays a game.",
+                    stats: `<div class="stat-block"><span class="val">0</span><span class="lbl">Needles</span></div><div class="stat-block"><span class="val">High</span><span class="lbl">Fun</span></div>`,
+                    shape: 'controller'
+                }
             }
         ];
 
-        // --- 3D ENGINE SETUP ---
-        const PARTICLE_COUNT = 18000;
+        // --- 3D SETUP ---
+        const PARTICLE_COUNT = 15000;
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x050a10);
@@ -368,140 +406,149 @@
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
         camera.position.z = 25;
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         container.appendChild(renderer.domElement);
 
-        // --- SHAPE GENERATORS ---
+        // --- SHAPE GENERATION ---
         const rand = (min, max) => Math.random() * (max - min) + min;
         const createShapeData = () => ({ positions: [], colors: [] });
         
         const shapes = {
-            chaos: createShapeData(),     // Intro
-            globe: createShapeData(),     // Institute/Home
-            barrier: createShapeData(),   // "Rebellion" (Wall)
-            workshop: createShapeData(),  // "Method" (Gameboy/Tech)
-            
-            // Projects
-            scanner: createShapeData(),
-            watch: createShapeData(),
-            dog: createShapeData(),
-            helix: createShapeData(),
-            controller: createShapeData(),
-            earth: createShapeData()      // Network/End
+            // Home
+            globe: createShapeData(), barrier: createShapeData(), workshop: createShapeData(), network: createShapeData(),
+            // Cases (Problem -> Solution)
+            scanner: createShapeData(), dot: createShapeData(),
+            watch: createShapeData(), plant: createShapeData(),
+            gel: createShapeData(), dog: createShapeData(),
+            helix: createShapeData(), crystal: createShapeData(),
+            tube: createShapeData(), controller: createShapeData()
         };
 
-        // 1. CHAOS
+        // --- HOME SHAPES ---
+        // 1. GLOBE
         for(let i=0; i<PARTICLE_COUNT; i++) {
-            shapes.chaos.positions.push(rand(-30,30), rand(-30,30), rand(-20,20));
-            shapes.chaos.colors.push(0.2, 0.2, 0.3);
+            const u=Math.random(), v=Math.random(), r=9, t=2*Math.PI*u, p=Math.acos(2*v-1);
+            shapes.globe.positions.push(r*Math.sin(p)*Math.cos(t), r*Math.sin(p)*Math.sin(t), r*Math.cos(p));
+            shapes.globe.colors.push(1, 0.8, 0); 
+        }
+        // 2. BARRIER
+        for(let i=0; i<PARTICLE_COUNT; i++) {
+            shapes.barrier.positions.push(rand(-15,15), rand(-10,10), rand(-1,1));
+            shapes.barrier.colors.push(Math.random()>0.8 ? 1 : 0.3, Math.random()>0.8 ? 0.2 : 0.3, 0.4);
+        }
+        // 3. WORKSHOP
+        for(let i=0; i<PARTICLE_COUNT; i++) {
+             shapes.workshop.positions.push(rand(-8,8), rand(-5,5), rand(-5,5));
+             shapes.workshop.colors.push(0, 1, 0.5);
+        }
+        // 4. NETWORK
+        for(let i=0; i<PARTICLE_COUNT; i++) {
+            const u=Math.random(), v=Math.random(), r=8, t=2*Math.PI*u, p=Math.acos(2*v-1);
+            shapes.network.positions.push(r*Math.sin(p)*Math.cos(t), r*Math.sin(p)*Math.sin(t), r*Math.cos(p));
+            shapes.network.colors.push(0, Math.random()>0.8?1:0.1, 0.5); 
         }
 
-        // 2. GLOBE (Odd Earth Logo)
+        // --- CASE 1: SCANNER -> DOT ---
         for(let i=0; i<PARTICLE_COUNT; i++) {
-            const u = Math.random(); const v = Math.random();
-            const theta = 2 * Math.PI * u; const phi = Math.acos(2 * v - 1);
-            const r = 9;
-            shapes.globe.positions.push(r*Math.sin(phi)*Math.cos(theta), r*Math.sin(phi)*Math.sin(theta), r*Math.cos(phi));
-            shapes.globe.colors.push(1, 0.8, 0); // Gold Globe
-        }
-
-        // 3. BARRIER (Grid Wall)
-        for(let i=0; i<PARTICLE_COUNT; i++) {
-            shapes.barrier.positions.push(rand(-15,15), rand(-10,10), rand(-1,1)); // Flat wall
-            if(Math.random()>0.9) shapes.barrier.colors.push(1, 0.2, 0.2); // Red Glitch
-            else shapes.barrier.colors.push(0.4, 0.4, 0.5); // Grey Wall
-        }
-
-        // 4. WORKSHOP (Gameboy/Tech shape)
-        for(let i=0; i<PARTICLE_COUNT; i++) {
-             const x = rand(-5, 5); const y = rand(-7, 7); const z = rand(-2, 2);
-             shapes.workshop.positions.push(x, y, z);
-             // Screen
-             if(Math.abs(x)<4 && y>1 && y<5) shapes.workshop.colors.push(0, 1, 0.5); 
-             else shapes.workshop.colors.push(0.3, 0.3, 0.4);
-        }
-
-        // 5. SCANNER (CT)
-        for(let i=0; i<PARTICLE_COUNT; i++) {
-            if(i < PARTICLE_COUNT*0.7) {
-                const a = rand(0, Math.PI*2); const r = rand(9,11);
+            // Scanner
+            if(i<PARTICLE_COUNT*0.7) {
+                const a=rand(0,Math.PI*2), r=rand(9,11);
                 shapes.scanner.positions.push(Math.cos(a)*r, Math.sin(a)*r, rand(-4,4));
                 shapes.scanner.colors.push(0.2, 0.6, 1);
             } else {
                 shapes.scanner.positions.push(rand(-3,3), rand(-3,-2), rand(-10,10));
                 shapes.scanner.colors.push(1,1,1);
             }
-        }
-
-        // 6. WATCH
-        for(let i=0; i<PARTICLE_COUNT; i++) {
-             const r = Math.random();
-             if(r<0.4) { // Strap
-                const a = rand(0, Math.PI*2); 
-                if(Math.abs(a)>0.6) {
-                    shapes.watch.positions.push(Math.sin(a)*7, Math.cos(a)*7, rand(-2,2));
-                    shapes.watch.colors.push(0.2,0.2,0.2);
-                } else { shapes.watch.positions.push(0,0,0); shapes.watch.colors.push(0,0,0); }
-             } else { // Face + Pulse
-                 const x = rand(-3,3); let z=0;
-                 if(Math.abs(x)<1) z = Math.sin(x*10); // Pulse
-                 shapes.watch.positions.push(x, 7, z);
-                 if(Math.abs(z)>0.1) shapes.watch.colors.push(1,0,0.2); else shapes.watch.colors.push(0,0,0);
-             }
-        }
-
-        // 7. DOG
-        for(let i=0; i<PARTICLE_COUNT; i++) {
-            const r = Math.random();
-            let x,y,z; let c=[0.6, 0.4, 0.2];
-            if(r<0.5) { x=rand(-4,4); y=rand(-2,2); z=rand(-1.5,1.5); } // Body
-            else if(r<0.7) { x=rand(4,6); y=rand(1,3.5); z=rand(-1,1); } // Head
-            else if(r<0.9) { x=(rand(-1,1)>0?3:-3); y=rand(-6,-2); z=rand(-1,1); } // Legs
-            else { x=rand(-6,-4); y=rand(0,2); z=0; } // Tail
-            shapes.dog.positions.push(x,y,z); shapes.dog.colors.push(...c);
-        }
-
-        // 8. HELIX
-        for(let i=0; i<PARTICLE_COUNT; i++) {
-            const t = rand(-10,10); const s = Math.random()>0.5?0:Math.PI;
-            if(Math.random()>0.3) {
-                shapes.helix.positions.push(Math.cos(t*1.5+s)*5, t*1.5, Math.sin(t*1.5+s)*5);
-                shapes.helix.colors.push(0.6,0,0.8);
+            // Dot
+            if(i<500) {
+                shapes.dot.positions.push(rand(-0.5,0.5), 3+rand(-0.5,0.5), 4+rand(0,0.5));
+                shapes.dot.colors.push(1,0,0);
             } else {
-                shapes.helix.positions.push(Math.cos(t*1.5)*rand(-5,5), t*1.5, Math.sin(t*1.5)*rand(-5,5));
-                shapes.helix.colors.push(0,0.8,0.8);
+                const u=Math.random(), v=Math.random(), t=2*Math.PI*u, p=Math.acos(2*v-1);
+                shapes.dot.positions.push(6*Math.sin(p)*Math.cos(t), 8*Math.sin(p)*Math.sin(t), (Math.cos(p)>0?4:2)*Math.cos(p));
+                shapes.dot.colors.push(0.2, 0.8, 0.5);
             }
         }
 
-        // 9. CONTROLLER
+        // --- CASE 2: WATCH -> PLANT ---
         for(let i=0; i<PARTICLE_COUNT; i++) {
-             const r = Math.random();
-             if(r<0.4) shapes.controller.positions.push(rand(-7,-3), rand(-2,2), rand(-2,2)); // L
-             else if(r<0.8) shapes.controller.positions.push(rand(3,7), rand(-2,2), rand(-2,2)); // R
-             else shapes.controller.positions.push(rand(-3,3), rand(-1,1), rand(-1,1)); // Center
-             shapes.controller.colors.push(0.8,0.8,0.8);
+            // Watch
+            const r = Math.random();
+            if(r<0.4) { 
+                const a=rand(0,Math.PI*2); 
+                if(Math.abs(a)>0.6) { shapes.watch.positions.push(Math.sin(a)*7, Math.cos(a)*7, rand(-2,2)); shapes.watch.colors.push(0.2,0.2,0.2); }
+                else { shapes.watch.positions.push(0,0,0); shapes.watch.colors.push(0,0,0); }
+            } else { 
+                const x=rand(-3,3); let z=Math.abs(x)<1 ? Math.sin(x*10) : 0;
+                shapes.watch.positions.push(x, 7, z); shapes.watch.colors.push(Math.abs(z)>0.1 ? 1 : 0.1, 0, 0.2);
+            }
+            // Plant
+            if(Math.random()>0.3) {
+                const y=rand(-10,8), w=(10-y)*0.05;
+                shapes.plant.positions.push(rand(-w,w), y, rand(-w,w)); shapes.plant.colors.push(0.4, 0.2, 0);
+            } else {
+                const rr=rand(2,6), a=rand(0,Math.PI*2), y=rand(-5,8);
+                shapes.plant.positions.push(Math.cos(a)*rr, y, Math.sin(a)*rr); shapes.plant.colors.push(0, 1, 0.2);
+            }
         }
 
-        // 10. EARTH (End)
+        // --- CASE 3: GEL -> DOG ---
         for(let i=0; i<PARTICLE_COUNT; i++) {
-            const u=Math.random(); const v=Math.random();
-            const r=8; const t=2*Math.PI*u; const p=Math.acos(2*v-1);
-            shapes.earth.positions.push(r*Math.sin(p)*Math.cos(t), r*Math.sin(p)*Math.sin(t), r*Math.cos(p));
-            if(Math.random()>0.7) shapes.earth.colors.push(0,1,0.5); else shapes.earth.colors.push(0,0.1,0.3);
+            // Gel
+            const y=rand(-10,10);
+            shapes.gel.positions.push(rand(-6,6), y, rand(-0.5,0.5));
+            shapes.gel.colors.push(0, (y%4>2)?1:0.2, (y%4>2)?1:0.4);
+            // Dog
+            const rr=Math.random(); let x,yy,z,c=[0.6,0.4,0.2];
+            if(rr<0.5) { x=rand(-4,4); yy=rand(-2,2); z=rand(-1.5,1.5); }
+            else if(rr<0.7) { x=rand(4,6); yy=rand(1,3.5); z=rand(-1,1); }
+            else if(rr<0.9) { x=(rand(-1,1)>0?3:-3); yy=rand(-6,-2); z=rand(-1,1); }
+            else { x=rand(-6,-4); yy=rand(0,2); z=0; }
+            shapes.dog.positions.push(x,yy,z); shapes.dog.colors.push(...c);
         }
 
+        // --- CASE 4: HELIX -> CRYSTAL ---
+        for(let i=0; i<PARTICLE_COUNT; i++) {
+            // Helix
+            const t=rand(-10,10);
+            if(Math.random()>0.3) {
+                const s=Math.random()>0.5?0:Math.PI;
+                shapes.helix.positions.push(Math.cos(t*1.5+s)*5, t*1.5, Math.sin(t*1.5+s)*5); shapes.helix.colors.push(0.6,0,0.8);
+            } else {
+                shapes.helix.positions.push(Math.cos(t*1.5)*rand(-5,5), t*1.5, Math.sin(t*1.5)*rand(-5,5)); shapes.helix.colors.push(0,0.8,0.8);
+            }
+            // Crystal
+            const cl=Math.floor(Math.random()*3), cx=(cl==1)?4:(cl==2)?-4:0, cy=(cl==0)?-4:0, s=rand(0,3);
+            shapes.crystal.positions.push(cx+rand(-s,s), cy+rand(0,s*2), rand(-s,s)); shapes.crystal.colors.push(0,1,1);
+        }
 
-        // --- PARTICLE MESH ---
+        // --- CASE 5: TUBE -> CONTROLLER ---
+        for(let i=0; i<PARTICLE_COUNT; i++) {
+            // Tube
+            if(i<PARTICLE_COUNT*0.8) {
+                const a=rand(0,Math.PI*2), h=rand(-5,5);
+                shapes.tube.positions.push(Math.cos(a)*2, h, Math.sin(a)*2); shapes.tube.colors.push(0.8,0.8,1);
+            } else {
+                shapes.tube.positions.push(rand(-1.8,1.8), rand(-4,0), rand(-1.8,1.8)); shapes.tube.colors.push(1,0,0);
+            }
+            // Controller
+            const r=Math.random();
+            if(r<0.4) shapes.controller.positions.push(rand(-7,-3), rand(-2,2), rand(-2,2));
+            else if(r<0.8) shapes.controller.positions.push(rand(3,7), rand(-2,2), rand(-2,2));
+            else shapes.controller.positions.push(rand(-3,3), rand(-1,1), rand(-1,1));
+            shapes.controller.colors.push(1,0.8,0);
+        }
+
+        // --- INIT MESH ---
         const geometry = new THREE.BufferGeometry();
         const posArr = new Float32Array(PARTICLE_COUNT*3);
         const colArr = new Float32Array(PARTICLE_COUNT*3);
         
-        // Init with Chaos
         for(let i=0; i<PARTICLE_COUNT*3; i++) {
-            posArr[i] = shapes.chaos.positions[i];
-            colArr[i] = shapes.chaos.colors[i];
+            posArr[i] = shapes.globe.positions[i];
+            colArr[i] = shapes.globe.colors[i];
         }
         
         geometry.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
@@ -513,133 +560,126 @@
         const points = new THREE.Points(geometry, material);
         scene.add(points);
 
+        // --- LOGIC ---
+        let currentPosTarget = shapes.globe.positions;
+        let currentColTarget = shapes.globe.colors;
+        let state = 'home';
+        let activeCaseIndex = -1;
 
-        // --- STATE MANAGEMENT ---
-        let currentPosTarget = shapes.chaos.positions;
-        let currentColTarget = shapes.chaos.colors;
-        let appState = 'home'; // 'home' or 'project'
-        let currentShapeName = 'chaos';
-
-        // --- NAVIGATION LOGIC ---
-        
-        const homeContainer = document.getElementById('home-container');
-        const projectContainer = document.getElementById('project-container');
+        const homeView = document.getElementById('view-home');
+        const problemView = document.getElementById('view-problem');
         const backBtn = document.getElementById('back-btn');
+        const pTitle = document.getElementById('p-title');
+        const pContent = document.getElementById('p-content');
+        const pStats = document.getElementById('p-stats');
+        const pLabel = document.getElementById('p-label');
+        const revealBtnContainer = document.getElementById('reveal-container');
 
-        // Scroll listener for HOME ONLY
+        // Scroll (Home)
         window.addEventListener('scroll', () => {
-            if(appState !== 'home') return;
-            
-            const scrollY = window.scrollY;
-            const h = window.innerHeight;
-            const idx = Math.round(scrollY / h);
-            
-            // Map home sections to shapes
-            // 0: Chaos/Intro, 1: Globe/Manifesto, 2: Barrier/Rebellion, 3: Workshop/Method, 4: Grid/Scanner
-            let targetKey = 'chaos';
-            if(idx === 0) targetKey = 'globe';
-            if(idx === 1) targetKey = 'barrier';
-            if(idx === 2) targetKey = 'workshop';
-            if(idx >= 3) targetKey = 'earth';
-
-            currentShapeName = targetKey;
-            currentPosTarget = shapes[targetKey].positions;
-            currentColTarget = shapes[targetKey].colors;
+            if(state !== 'home') return;
+            const idx = Math.round(window.scrollY / window.innerHeight);
+            let target = 'globe';
+            if(idx === 1) target = 'barrier';
+            if(idx === 2) target = 'workshop';
+            if(idx >= 3) target = 'network';
+            currentPosTarget = shapes[target].positions;
+            currentColTarget = shapes[target].colors;
         });
 
-        function openProject(index) {
-            appState = 'project';
-            const p = projects[index];
-            
-            // 1. Update UI Text
-            document.getElementById('p-label').innerText = p.label;
-            document.getElementById('p-title').innerText = p.title;
-            document.getElementById('p-body').innerText = p.body;
-            document.getElementById('p-stats').innerHTML = p.stats;
+        // Navigation
+        window.openProblem = function(index) {
+            state = 'problem';
+            activeCaseIndex = index;
+            const data = caseFiles[index];
 
-            // 2. Transition Views
-            homeContainer.style.opacity = 0;
+            // Setup UI for Problem State
+            pLabel.innerText = "THE PROBLEM";
+            pTitle.innerText = data.problem.title;
+            pContent.innerText = data.problem.content;
+            pStats.style.opacity = 0; // Hide stats initially
+            revealBtnContainer.style.display = 'block'; // Show button
+            
+            document.getElementById('p-card').style.borderLeftColor = `var(--${data.color})`;
+
+            // Transitions
+            homeView.style.opacity = 0;
             setTimeout(() => {
-                homeContainer.style.display = 'none';
-                window.scrollTo(0,0); // Reset scroll
-                projectContainer.classList.add('active');
-                backBtn.classList.add('active');
+                homeView.style.display = 'none';
+                problemView.style.display = 'block';
+                backBtn.style.display = 'block';
+                setTimeout(() => problemView.style.opacity = 1, 50);
             }, 500);
 
-            // 3. Update 3D Shape
-            const targetKey = p.shape;
-            currentPosTarget = shapes[targetKey].positions;
-            currentColTarget = shapes[targetKey].colors;
+            // Set 3D Shape to Problem
+            currentPosTarget = shapes[data.problem.shape].positions;
+            currentColTarget = shapes[data.problem.shape].colors;
+        };
+
+        window.revealSolution = function() {
+            const data = caseFiles[activeCaseIndex];
             
-            // Move camera for side view (text is on left)
-            // We'll handle this in the render loop via targetOffset
-        }
+            // UI Update
+            pLabel.innerText = "THE SOLUTION";
+            pTitle.innerText = data.solution.title;
+            pContent.innerText = data.solution.content;
+            pStats.innerHTML = data.solution.stats;
+            pStats.style.opacity = 1;
+            revealBtnContainer.style.display = 'none'; // Hide button
 
-        function goHome() {
-            appState = 'home';
-            
-            // 1. Transition Views
-            projectContainer.classList.remove('active');
-            backBtn.classList.remove('active');
-            
-            setTimeout(() => {
-                homeContainer.style.display = 'block';
-                setTimeout(() => homeContainer.style.opacity = 1, 50);
-            }, 500);
+            // 3D Morph
+            currentPosTarget = shapes[data.solution.shape].positions;
+            currentColTarget = shapes[data.solution.shape].colors;
+        };
 
-            // 2. Reset 3D
-            currentPosTarget = shapes.globe.positions;
-            currentColTarget = shapes.globe.colors;
-        }
+        window.navigateTo = function(dest) {
+            if(dest === 'home') {
+                state = 'home';
+                problemView.style.opacity = 0;
+                backBtn.style.display = 'none';
+                setTimeout(() => {
+                    problemView.style.display = 'none';
+                    homeView.style.display = 'block';
+                    setTimeout(() => homeView.style.opacity = 1, 50);
+                }, 500);
+                currentPosTarget = shapes.globe.positions;
+                currentColTarget = shapes.globe.colors;
+            }
+        };
 
-
-        // --- ANIMATION LOOP ---
+        // --- LOOP ---
         const clock = new THREE.Clock();
-
         function animate() {
             requestAnimationFrame(animate);
             const time = clock.getElapsedTime();
-            
             const p = geometry.attributes.position.array;
             const c = geometry.attributes.color.array;
             const speed = 0.05;
 
-            // Offset logic: When in project mode, shift object right to make room for text
-            const xOffset = (appState === 'project') ? 7 : 0;
+            // Offset for side layout in problem view
+            const xOffset = (state === 'problem') ? 7 : 0;
 
             for(let i=0; i<PARTICLE_COUNT; i++) {
-                const ix = i*3; const iy = i*3+1; const iz = i*3+2;
+                const ix=i*3, iy=i*3+1, iz=i*3+2;
                 
-                // Target X position needs offset applied
-                const tx = currentPosTarget[ix] + xOffset;
-                const ty = currentPosTarget[iy];
-                const tz = currentPosTarget[iz];
-
-                p[ix] += (tx - p[ix]) * speed;
-                p[iy] += (ty - p[iy]) * speed;
-                p[iz] += (tz - p[iz]) * speed;
+                p[ix] += (currentPosTarget[ix] + xOffset - p[ix]) * speed;
+                p[iy] += (currentPosTarget[iy] - p[iy]) * speed;
+                p[iz] += (currentPosTarget[iz] - p[iz]) * speed;
 
                 c[ix] += (currentColTarget[ix] - c[ix]) * speed;
                 c[iy] += (currentColTarget[iy] - c[iy]) * speed;
                 c[iz] += (currentColTarget[iz] - c[iz]) * speed;
-                
-                // Noise
-                p[ix] += Math.sin(time + p[iy]) * 0.003;
-            }
 
+                p[ix] += Math.sin(time+p[iy])*0.003; 
+            }
             geometry.attributes.position.needsUpdate = true;
             geometry.attributes.color.needsUpdate = true;
-            
-            // Scene Rotation
-            if(appState === 'home') {
-                points.rotation.y += 0.001;
-            } else {
-                points.rotation.y = Math.sin(time * 0.2) * 0.1; // Gentle sway in project mode
-            }
+
+            if(state === 'home') points.rotation.y += 0.001;
+            else points.rotation.y = Math.sin(time*0.2)*0.1;
 
             renderer.render(scene, camera);
         }
-
         animate();
 
         window.addEventListener('resize', () => {
