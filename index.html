@@ -67,7 +67,7 @@
             letter-spacing: 2px;
             pointer-events: auto;
             cursor: pointer;
-            border-bottom: 2px solid var(--alert); /* Red for Mission 2035 */
+            border-bottom: 2px solid var(--alert); 
             padding-bottom: 5px;
         }
 
@@ -131,8 +131,7 @@
             transition: opacity 0.6s ease;
         }
         
-        /* New Story Card Styles */
-        .card.mission-hero { border-top: 4px solid var(--alert); text-align: center; } /* Mission 2035 = Urgent/Red */
+        .card.mission-hero { border-top: 4px solid var(--alert); text-align: center; } 
         .card.model { border-left: 4px solid var(--blue); }
         .card.garage { border-right: 4px solid var(--gold); text-align: right; }
         .card.menu { border-bottom: 4px solid var(--green); text-align: center; }
@@ -410,7 +409,7 @@
         
         const shapes = {
             // Home Story
-            heart: createShapeData(),   // Mission 2035 (Human/Life)
+            earth: createShapeData(),   // Odd Earth (Planet + Satellites)
             graph: createShapeData(),   // Models (Data Surface)
             workshop: createShapeData(),// Method (Tools)
             network: createShapeData(), // Menu
@@ -423,36 +422,39 @@
             tube: createShapeData(), controller: createShapeData()
         };
 
-        // 1. HEART (Mission 2035)
+        // 1. ODD EARTH (Planet + Pulsing Network)
         for(let i=0; i<PARTICLE_COUNT; i++) {
-            // 3D Heart formula approx
-            // x = 16sin^3(t)
-            // y = 13cos(t) - 5cos(2t) - 2cos(3t) - cos(4t)
-            // Rotate to make 3D volume
-            const t = Math.random() * Math.PI * 2;
-            const u = Math.random(); // volume filler
-            const scale = 0.5 * Math.cbrt(u); // uniform distribution inside
-            
-            // Base 2D heart shape
-            const xBase = 16 * Math.pow(Math.sin(t), 3);
-            const yBase = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
-            
-            // Extrude/Bloat for 3D
-            const z = rand(-4, 4) * (1 - Math.abs(yBase)/20); // Taper at bottom
-            
-            shapes.heart.positions.push(xBase * scale, yBase * scale + 2, z * scale);
-            shapes.heart.colors.push(0.9, 0.1, 0.2); // Red
+            // Planet Sphere (70%)
+            if (i < PARTICLE_COUNT * 0.7) {
+                const u = Math.random();
+                const v = Math.random();
+                const theta = 2 * Math.PI * u;
+                const phi = Math.acos(2 * v - 1);
+                const r = 8; 
+                shapes.earth.positions.push(r * Math.sin(phi) * Math.cos(theta), r * Math.sin(phi) * Math.sin(theta), r * Math.cos(phi));
+                // Tech Earth Colors
+                if (Math.random() > 0.85) shapes.earth.colors.push(1, 0.8, 0); // Gold lights
+                else if (Math.random() > 0.6) shapes.earth.colors.push(0, 0.3, 0.2); // Land
+                else shapes.earth.colors.push(0, 0.1, 0.4); // Ocean
+            }
+            // Satellite Network (30%)
+            else {
+                const angle = Math.random() * Math.PI * 2;
+                const radius = rand(10, 14); // Orbit distance
+                const height = rand(-4, 4); // Spread
+                shapes.earth.positions.push(Math.cos(angle)*radius, height, Math.sin(angle)*radius);
+                shapes.earth.colors.push(1, 1, 1); // White/Gold satellites
+            }
         }
 
         // 2. GRAPH (Mortality Models - 3D Surface)
         for(let i=0; i<PARTICLE_COUNT; i++) {
             const x = rand(-15, 15);
             const z = rand(-10, 10);
-            // Height based on some function (peaks of mortality)
+            // Height based on function (peaks of mortality)
             const y = Math.sin(x*0.3) * Math.cos(z*0.3) * 4;
             
             shapes.graph.positions.push(x, y - 2, z);
-            // Color based on height (Red = High Mortality, Blue = Low)
             if (y > 2) shapes.graph.colors.push(1, 0.2, 0.2);
             else if (y < -2) shapes.graph.colors.push(0.2, 0.6, 1);
             else shapes.graph.colors.push(0.5, 0.5, 0.8);
@@ -503,7 +505,7 @@
         const geometry = new THREE.BufferGeometry();
         const posArr = new Float32Array(PARTICLE_COUNT*3);
         const colArr = new Float32Array(PARTICLE_COUNT*3);
-        for(let i=0; i<PARTICLE_COUNT*3; i++) { posArr[i]=shapes.heart.positions[i]; colArr[i]=shapes.heart.colors[i]; }
+        for(let i=0; i<PARTICLE_COUNT*3; i++) { posArr[i]=shapes.earth.positions[i]; colArr[i]=shapes.earth.colors[i]; }
         geometry.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
         geometry.setAttribute('color', new THREE.BufferAttribute(colArr, 3));
         const material = new THREE.PointsMaterial({ size: 0.15, vertexColors: true, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending });
@@ -512,8 +514,8 @@
 
         // --- LOGIC ---
         let state = 'home';
-        let currentPosTarget = shapes.heart.positions;
-        let currentColTarget = shapes.heart.colors;
+        let currentPosTarget = shapes.earth.positions;
+        let currentColTarget = shapes.earth.colors;
         let activeCaseIndex = -1;
 
         const homeView = document.getElementById('view-home');
@@ -524,7 +526,7 @@
         window.addEventListener('scroll', () => {
             if(state !== 'home') return;
             const idx = Math.round(window.scrollY / window.innerHeight);
-            let target = 'heart';
+            let target = 'earth';
             if(idx === 1) target = 'graph';
             if(idx === 2) target = 'workshop';
             if(idx >= 3) target = 'network';
@@ -588,8 +590,8 @@
                     homeView.style.display = 'block';
                     setTimeout(() => homeView.style.opacity = 1, 50);
                 }, 500);
-                currentPosTarget = shapes.heart.positions;
-                currentColTarget = shapes.heart.colors;
+                currentPosTarget = shapes.earth.positions;
+                currentColTarget = shapes.earth.colors;
             }
         };
 
@@ -602,12 +604,11 @@
             const c = geometry.attributes.color.array;
             const speed = 0.05;
 
-            // Offset Logic for Side Layout
+            // Offset Logic
             let xOffset = 0;
             if (state === 'problem') {
                 const scroll = problemView.scrollTop;
                 const h = window.innerHeight;
-                // Fade from Right (+7) to Left (-7) based on scroll
                 const progress = Math.min(Math.max(scroll / h, 0), 1);
                 xOffset = 7 - (progress * 14); 
             }
@@ -622,10 +623,16 @@
                 c[iz] += (currentColTarget[iz] - c[iz]) * speed;
                 p[ix] += Math.sin(time+p[iy])*0.003; 
                 
-                // Pulse effect for Heart
-                if(state==='home' && window.scrollY < window.innerHeight) {
-                    const pulse = 1 + Math.sin(time*3)*0.02;
-                    p[ix] *= pulse; p[iy] *= pulse; p[iz] *= pulse;
+                // PULSATING SATELLITES (Odd Earth only)
+                if(state === 'home' && window.scrollY < window.innerHeight) {
+                     // Check if this particle is part of the satellite group (last 30%)
+                     if(i > PARTICLE_COUNT * 0.7) {
+                         // Expand radius with sin wave
+                         const pulse = 1 + Math.sin(time * 2) * 0.05;
+                         p[ix] *= pulse; 
+                         p[iy] *= pulse; 
+                         p[iz] *= pulse;
+                     }
                 }
             }
             geometry.attributes.position.needsUpdate = true;
