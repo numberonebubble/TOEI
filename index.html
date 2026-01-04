@@ -228,7 +228,7 @@
                 <span class="label" style="color:var(--gold); border-color:var(--gold);">The Identity</span>
                 <h1>The Makerspace That Matters.</h1>
                 <p>The world we live in is odd.</p>
-                <p>Somewhere, but not everywhere, we've prevented someone from dying today. We call these <span class="highlight">Frontier Mortality Problems</span> Our goal is to prevent all preventable deaths by 2035</p>
+                <p>Somewhere, but not everywhere, we've prevented someone from dying today. We call these <span class="highlight">Frontier Mortality Problems</span>. Our goal is to prevent all preventable deaths by 2035.</p>
                 <br>
                 <small style="color:var(--dim)">SCROLL TO ENTER</small>
             </div>
@@ -239,7 +239,7 @@
                 <span class="label">The Problem Set</span>
                 <h2>Frontier Mortality</h2>
                 <p>We analyze global data to find the "Frontier" - the gap between a life saved and a life lost due to access, cost, or complexity.</p>
-                <p>We don't just study why people die. <span class="highlight">We engineer the live-saving alternatives.</span></p>
+                <p>We don't just study why people die. <span class="highlight">We engineer the life-saving alternatives.</span></p>
             </div>
         </section>
 
@@ -261,23 +261,35 @@
                 <div class="file-grid">
                     <div class="file-item" onclick="openProblem(0)">
                         <span class="file-number">BUILD 01</span>
-                        <span class="file-title">Stroke detection</span>
+                        <span class="file-title">Stroke Detection</span>
                     </div>
                     <div class="file-item" onclick="openProblem(1)">
                         <span class="file-number">BUILD 02</span>
-                        <span class="file-title">Pollution detection</span>
+                        <span class="file-title">Pollution Detection</span>
                     </div>
                     <div class="file-item" onclick="openProblem(2)">
                         <span class="file-number">BUILD 03</span>
-                        <span class="file-title">Forensic evidence collection</span>
+                        <span class="file-title">Forensic Evidence</span>
                     </div>
                     <div class="file-item" onclick="openProblem(3)">
                         <span class="file-number">BUILD 04</span>
-                        <span class="file-title">Precision cancer detection</span>
+                        <span class="file-title">Precision Cancer</span>
                     </div>
                     <div class="file-item" onclick="openProblem(4)">
                         <span class="file-number">BUILD 05</span>
-                        <span class="file-title">Mental health dynamics</span>
+                        <span class="file-title">Mental Health</span>
+                    </div>
+                    <div class="file-item" onclick="openProblem(5)">
+                        <span class="file-number">BUILD 06</span>
+                        <span class="file-title">Hospital Infections</span>
+                    </div>
+                    <div class="file-item" onclick="openProblem(6)">
+                        <span class="file-number">BUILD 07</span>
+                        <span class="file-title">Pre-Eclampsia</span>
+                    </div>
+                    <div class="file-item" onclick="openProblem(7)">
+                        <span class="file-number">BUILD 08</span>
+                        <span class="file-title">Infant Monitoring</span>
                     </div>
                 </div>
             </div>
@@ -324,7 +336,7 @@
                 },
                 solution: {
                     title: "Percussion.",
-                    content: "We revied and modernised a percussion technique from the 1980s that outperforms CT-scanners using simple physics. No clunky machine. No waiting.",
+                    content: "We revived and modernised a percussion technique from the 1980s that outperforms CT-scanners using simple physics. No clunky machine. No waiting.",
                     stats: `<div class="stat-block"><span class="val">99%</span><span class="lbl">Cheaper</span></div><div class="stat-block"><span class="val">100%</span><span class="lbl">Portable</span></div>`,
                     shape: 'dot'
                 }
@@ -332,7 +344,7 @@
             {   // 1. TRAUMA
                 color: 'alert',
                 problem: {
-                    title: "The environment matters more than you think.",
+                    title: "The environment matters.",
                     content: "We lose ~7 million people every year to air pollution, while spending hundreds of billions treating downstream disease, yet don't monitor our exposure daily.",
                     shape: 'watch'
                 },
@@ -384,6 +396,48 @@
                     stats: `<div class="stat-block"><span class="val">0</span><span class="lbl">Needles</span></div><div class="stat-block"><span class="val">High</span><span class="lbl">Fun</span></div>`,
                     shape: 'controller'
                 }
+            },
+            {   // 5. INFECTIONS
+                color: 'alert',
+                problem: {
+                    title: "Hospital Infections",
+                    content: "It's odd that we wait up to 48 hours for a PCR machine to confirm a hospital-acquired infection, allowing sepsis to set in while we wait for the lab.",
+                    shape: 'pcr'
+                },
+                solution: {
+                    title: "The Optical IV",
+                    content: "We embed a micro-optical chip directly into IV lines. It detects bacteria using light refraction in real-time as fluids pass through. Instant alert. Zero lag.",
+                    stats: `<div class="stat-block"><span class="val">0s</span><span class="lbl">Delay</span></div><div class="stat-block"><span class="val">Passive</span><span class="lbl">Sensing</span></div>`,
+                    shape: 'chip'
+                }
+            },
+            {   // 6. PRE-ECLAMPSIA
+                color: 'purple',
+                problem: {
+                    title: "Maternal Access",
+                    content: "It's odd that pregnant mothers in rural areas must travel hours to massive hospital labs for monitoring pre-eclampsia, risking their lives during transport.",
+                    shape: 'lab'
+                },
+                solution: {
+                    title: "The Heart Patch",
+                    content: "A small, heart-shaped wearable patch. It monitors maternal heart rate variability and biomarkers in sweat to predict onset days in advance from home.",
+                    stats: `<div class="stat-block"><span class="val">Home</span><span class="lbl">Based</span></div><div class="stat-block"><span class="val">Early</span><span class="lbl">Warning</span></div>`,
+                    shape: 'patch'
+                }
+            },
+            {   // 7. INFANT MONITORING
+                color: 'blue',
+                problem: {
+                    title: "Infant Distress",
+                    content: "It's odd that we wrap premature babies in wires inside sterile cribs to monitor distress, creating separation anxiety and physical barriers to care.",
+                    shape: 'crib'
+                },
+                solution: {
+                    title: "Acoustic AI",
+                    content: "We utilize a simple speaker and AI to analyze the frequency of the infant's cry. We detect pain and hunger signals purely through sound. No wires.",
+                    stats: `<div class="stat-block"><span class="val">100%</span><span class="lbl">Wireless</span></div><div class="stat-block"><span class="val">AI</span><span class="lbl">Audio</span></div>`,
+                    shape: 'speaker'
+                }
             }
         ];
 
@@ -415,41 +469,33 @@
             watch: createShapeData(), plant: createShapeData(),
             gel: createShapeData(), dog: createShapeData(),
             helix: createShapeData(), crystal: createShapeData(),
-            tube: createShapeData(), controller: createShapeData()
+            tube: createShapeData(), controller: createShapeData(),
+            // NEW SHAPES
+            pcr: createShapeData(), chip: createShapeData(),
+            lab: createShapeData(), patch: createShapeData(),
+            crib: createShapeData(), speaker: createShapeData()
         };
 
-        // --- 1. ODD EARTH GENERATION (Using provided snippet logic) ---
+        // --- 1. ODD EARTH GENERATION ---
         for(let i=0; i<PARTICLE_COUNT; i++) {
-            // Earth Sphere (70% of particles)
+            // Earth Sphere (70%)
             if (i < PARTICLE_COUNT * 0.7) {
-                const u = Math.random();
-                const v = Math.random();
-                const theta = 2 * Math.PI * u;
-                const phi = Math.acos(2 * v - 1);
+                const u = Math.random(); const v = Math.random();
+                const theta = 2 * Math.PI * u; const phi = Math.acos(2 * v - 1);
                 const r = 8.5; 
-                
                 const x = r * Math.sin(phi) * Math.cos(theta);
                 const y = r * Math.sin(phi) * Math.sin(theta);
                 const z = r * Math.cos(phi);
-                
                 shapes.earth.positions.push(x, y, z);
-                
-                // Color mapping
                 if (Math.abs(y) < 3 && Math.random() > 0.6) shapes.earth.colors.push(0.0, 0.8, 0.5); // Tropics/Land
                 else shapes.earth.colors.push(0.0, 0.1, 0.4); // Ocean
             } 
             // The People / Nodes (15%)
             else if (i < PARTICLE_COUNT * 0.85) {
-                const u = Math.random();
-                const v = Math.random();
-                const theta = 2 * Math.PI * u;
-                const phi = Math.acos(2 * v - 1);
+                const u = Math.random(); const v = Math.random();
+                const theta = 2 * Math.PI * u; const phi = Math.acos(2 * v - 1);
                 const r = 9.0; 
-                shapes.earth.positions.push(
-                    r * Math.sin(phi) * Math.cos(theta),
-                    r * Math.sin(phi) * Math.sin(theta),
-                    r * Math.cos(phi)
-                );
+                shapes.earth.positions.push(r * Math.sin(phi) * Math.cos(theta), r * Math.sin(phi) * Math.sin(theta), r * Math.cos(phi));
                 shapes.earth.colors.push(1.0, 0.8, 0.0); // Gold
             }
             // The Network Lines / Orbitals (15%)
@@ -461,7 +507,6 @@
                 if(band === 0) { x = Math.cos(angle)*r; z = Math.sin(angle)*r; y = rand(-1, 1); }
                 else if (band === 1) { y = Math.cos(angle)*r; z = Math.sin(angle)*r; x = rand(-1, 1); }
                 else { const base = Math.cos(angle)*r; x = base; y = base; z = Math.sin(angle)*r; }
-                
                 shapes.earth.positions.push(x, y, z);
                 shapes.earth.colors.push(1.0, 1.0, 1.0); 
             }
@@ -470,8 +515,7 @@
         // 2. GRAPH (Mortality Models)
         for(let i=0; i<PARTICLE_COUNT; i++) {
             if (i < PARTICLE_COUNT * 0.8) {
-                const x = rand(-18, 18);
-                const z = rand(-12, 12);
+                const x = rand(-18, 18); const z = rand(-12, 12);
                 const y = (Math.sin(x*0.2) + Math.cos(z*0.3)) * 3 + Math.sin(Math.sqrt(x*x+z*z))*2;
                 shapes.graph.positions.push(x, y - 3, z);
                 if (y > 3) shapes.graph.colors.push(1, 0.2, 0.2); 
@@ -564,6 +608,94 @@
                 const r=Math.random(); if(r<0.4) shapes.controller.positions.push(rand(-7,-3), rand(-2,2), rand(-2,2)); else if(r<0.8) shapes.controller.positions.push(rand(3,7), rand(-2,2), rand(-2,2)); else shapes.controller.positions.push(rand(-3,3), rand(-1,1), rand(-1,1)); shapes.controller.colors.push(1, 0.8, 0);
              } else { shapes.controller.positions.push(rand(-12,12), rand(-8,8), rand(-5,5)); shapes.controller.colors.push(Math.random(), Math.random(), Math.random()); }
         }
+
+        // --- NEW SECTIONS ---
+        
+        // 1. PCR -> CHIP
+        for(let i=0; i<PARTICLE_COUNT; i++) {
+            // PCR (Box with Lid)
+            if(i < PARTICLE_COUNT * 0.6) {
+                const x = rand(-4, 4); const y = rand(-4, 2); const z = rand(-4, 4);
+                shapes.pcr.positions.push(x, y, z);
+                if(y>1) shapes.pcr.colors.push(0.8, 0.8, 0.9); // Lid
+                else shapes.pcr.colors.push(0.3, 0.3, 0.4); // Body
+            } else {
+                shapes.pcr.positions.push(rand(-10,10), rand(-10,10), rand(-10,10)); // Dust
+                shapes.pcr.colors.push(0.1, 0.1, 0.1);
+            }
+            // Chip (Line + Plate)
+            if(i < PARTICLE_COUNT * 0.2) {
+                // IV Line
+                shapes.chip.positions.push(rand(-0.2,0.2), rand(-10,10), rand(-0.2,0.2));
+                shapes.chip.colors.push(0.5, 0.8, 1);
+            } else if (i < PARTICLE_COUNT * 0.5) {
+                // The Chip
+                shapes.chip.positions.push(rand(-2,2), rand(-1,1), rand(0, 0.5));
+                shapes.chip.colors.push(0, 1, 0.5); // Green Tech
+            } else {
+                shapes.chip.positions.push(rand(-15,15), rand(-15,15), rand(-15,15));
+                shapes.chip.colors.push(0.5, 0.5, 0.5);
+            }
+        }
+
+        // 2. LAB -> PATCH
+        for(let i=0; i<PARTICLE_COUNT; i++) {
+            // Lab (Big Blocks)
+            if(i < PARTICLE_COUNT * 0.7) {
+                const x = rand(-12, 12); const z = rand(-5, 5);
+                let y = 0;
+                if(Math.abs(x) > 8) y = rand(-5, 5); // Side walls
+                else y = rand(-5, -2); // Floor equipment
+                shapes.lab.positions.push(x, y, z);
+                shapes.lab.colors.push(0.8, 0.8, 0.9);
+            } else {
+                shapes.lab.positions.push(rand(-15,15), rand(-15,15), rand(-15,15));
+                shapes.lab.colors.push(0.2, 0.2, 0.3);
+            }
+            // Patch (Heart Shape)
+            if(i < PARTICLE_COUNT * 0.6) {
+                const t = Math.random() * Math.PI * 2;
+                const r = 1;
+                // Heart curve
+                const x = 16 * Math.pow(Math.sin(t), 3);
+                const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
+                shapes.patch.positions.push(x*0.3, y*0.3, rand(0,1));
+                shapes.patch.colors.push(1, 0.2, 0.4);
+            } else {
+                shapes.patch.positions.push(rand(-10,10), rand(-10,10), rand(-10,10));
+                shapes.patch.colors.push(0.5, 0.1, 0.2);
+            }
+        }
+
+        // 3. CRIB -> SPEAKER
+        for(let i=0; i<PARTICLE_COUNT; i++) {
+            // Crib (Open Box)
+            if(i < PARTICLE_COUNT * 0.6) {
+                const x = rand(-5, 5); const z = rand(-3, 3);
+                let y = -3;
+                if(Math.abs(x)>4 || Math.abs(z)>2) y = rand(-3, 3); // Walls
+                shapes.crib.positions.push(x, y, z);
+                shapes.crib.colors.push(0.7, 0.7, 0.8);
+            } else {
+                // Baby form roughly
+                shapes.crib.positions.push(rand(-2,2), rand(-2,0), rand(-1,1));
+                shapes.crib.colors.push(1, 0.8, 0.6);
+            }
+            // Speaker (Cone)
+            if(i < PARTICLE_COUNT * 0.6) {
+                const r = rand(1, 6);
+                const angle = rand(0, Math.PI*2);
+                shapes.speaker.positions.push(Math.cos(angle)*r, Math.sin(angle)*r, r - 3);
+                shapes.speaker.colors.push(0.2, 0.2, 0.2);
+            } else {
+                // Sound waves
+                const r = rand(8, 15);
+                const angle = rand(0, Math.PI*2);
+                shapes.speaker.positions.push(Math.cos(angle)*r, Math.sin(angle)*r, r);
+                shapes.speaker.colors.push(0, 1, 1); // Cyan waves
+            }
+        }
+
 
         // --- INIT MESH ---
         const geometry = new THREE.BufferGeometry();
