@@ -24,7 +24,7 @@
             color: #eee;
             font-family: 'Courier New', Courier, monospace;
             width: 100%;
-            overflow-x: hidden; /* Allow vertical scroll to grow naturally */
+            overflow-x: hidden;
         }
 
         /* --- 3D CANVAS --- */
@@ -85,7 +85,6 @@
         .back-link:hover { color: var(--gold); border-color: var(--gold); }
 
         /* --- SHARED LAYOUT --- */
-        /* IMPORTANT: Added class for JS targeting */
         .scroll-section {
             min-height: 100vh;
             display: flex;
@@ -408,10 +407,10 @@
         const createShapeData = () => ({ positions: [], colors: [] });
         
         const shapes = {
-            earth: createShapeData(),   // Planet + Satellites
-            graph: createShapeData(),   // Models
-            workshop: createShapeData(),// Method
-            network: createShapeData(), // Menu
+            earth: createShapeData(),   // Planet + Satellites (Home 1)
+            graph: createShapeData(),   // Models (Home 2)
+            workshop: createShapeData(),// Method (Home 3)
+            network: createShapeData(), // Menu (Home 4)
             scanner: createShapeData(), dot: createShapeData(),
             watch: createShapeData(), plant: createShapeData(),
             gel: createShapeData(), dog: createShapeData(),
@@ -419,22 +418,52 @@
             tube: createShapeData(), controller: createShapeData()
         };
 
-        // 1. ODD EARTH (Planet + Pulsing Swarm)
+        // --- 1. ODD EARTH GENERATION (Using provided snippet logic) ---
         for(let i=0; i<PARTICLE_COUNT; i++) {
-            if (i < PARTICLE_COUNT * 0.6) {
-                const u = Math.random(), v = Math.random();
+            // Earth Sphere (70% of particles)
+            if (i < PARTICLE_COUNT * 0.7) {
+                const u = Math.random();
+                const v = Math.random();
                 const theta = 2 * Math.PI * u;
                 const phi = Math.acos(2 * v - 1);
-                const r = 8; 
-                shapes.earth.positions.push(r * Math.sin(phi) * Math.cos(theta), r * Math.sin(phi) * Math.sin(theta), r * Math.cos(phi));
-                if (Math.random() > 0.85) shapes.earth.colors.push(1, 0.8, 0); 
-                else shapes.earth.colors.push(0, 0.2, 0.3); 
-            } else {
-                const r = rand(9, 16);
-                const theta = Math.random() * Math.PI * 2;
-                const phi = Math.random() * Math.PI;
-                shapes.earth.positions.push(r * Math.sin(phi) * Math.cos(theta), r * Math.sin(phi) * Math.sin(theta), r * Math.cos(phi));
-                shapes.earth.colors.push(0.8, 0.8, 0.9);
+                const r = 8.5; 
+                
+                const x = r * Math.sin(phi) * Math.cos(theta);
+                const y = r * Math.sin(phi) * Math.sin(theta);
+                const z = r * Math.cos(phi);
+                
+                shapes.earth.positions.push(x, y, z);
+                
+                // Color mapping
+                if (Math.abs(y) < 3 && Math.random() > 0.6) shapes.earth.colors.push(0.0, 0.8, 0.5); // Tropics/Land
+                else shapes.earth.colors.push(0.0, 0.1, 0.4); // Ocean
+            } 
+            // The People / Nodes (15%)
+            else if (i < PARTICLE_COUNT * 0.85) {
+                const u = Math.random();
+                const v = Math.random();
+                const theta = 2 * Math.PI * u;
+                const phi = Math.acos(2 * v - 1);
+                const r = 9.0; 
+                shapes.earth.positions.push(
+                    r * Math.sin(phi) * Math.cos(theta),
+                    r * Math.sin(phi) * Math.sin(theta),
+                    r * Math.cos(phi)
+                );
+                shapes.earth.colors.push(1.0, 0.8, 0.0); // Gold
+            }
+            // The Network Lines / Orbitals (15%)
+            else {
+                const band = Math.floor(Math.random() * 3); 
+                let angle = Math.random() * Math.PI * 2;
+                let r = 11 + Math.random();
+                let x,y,z;
+                if(band === 0) { x = Math.cos(angle)*r; z = Math.sin(angle)*r; y = rand(-1, 1); }
+                else if (band === 1) { y = Math.cos(angle)*r; z = Math.sin(angle)*r; x = rand(-1, 1); }
+                else { const base = Math.cos(angle)*r; x = base; y = base; z = Math.sin(angle)*r; }
+                
+                shapes.earth.positions.push(x, y, z);
+                shapes.earth.colors.push(1.0, 1.0, 1.0); 
             }
         }
 
@@ -466,7 +495,7 @@
              shapes.workshop.colors.push(0, 1, 0.5); 
         }
 
-        // 4. NETWORK
+        // 4. NETWORK (Menu Grid)
         for(let i=0; i<PARTICLE_COUNT; i++) {
             if (i < PARTICLE_COUNT * 0.7) {
                 const u=Math.random(), v=Math.random(), r=8, t=2*Math.PI*u, p=Math.acos(2*v-1);
@@ -558,19 +587,16 @@
         const backBtn = document.getElementById('back-btn');
 
         // --- FIXED HOME SCROLL LOGIC ---
-        // We use Intersection Observer/Bounding Rect logic for reliability
         const homeSections = document.querySelectorAll('.scroll-section');
         
         window.addEventListener('scroll', () => {
             if(state !== 'home') return;
             
-            // Determine which section is currently active based on visibility
             let maxVisible = 0;
             let activeIdx = 0;
             
             homeSections.forEach((sec, i) => {
                 const rect = sec.getBoundingClientRect();
-                // Height visible in viewport
                 const visibleH = Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0);
                 if(visibleH > maxVisible) {
                     maxVisible = visibleH;
@@ -578,7 +604,6 @@
                 }
             });
 
-            // Map index to shape
             let target = 'earth';
             if(activeIdx === 1) target = 'graph';
             if(activeIdx === 2) target = 'workshop';
@@ -670,9 +695,9 @@
                 c[iz] += (currentColTarget[iz] - c[iz]) * speed;
                 p[ix] += Math.sin(time+p[iy])*0.003; 
 
-                // SPECIAL ANIMATION: PULSING SATELLITES
+                // SPECIAL ANIMATION: PULSING SATELLITES (Only index > 70% are nodes/orbits)
                 if(state==='home' && window.scrollY < window.innerHeight) {
-                    if (i > PARTICLE_COUNT * 0.6) {
+                    if (i > PARTICLE_COUNT * 0.7) {
                         const pulse = 1 + Math.sin(time * 1.5 + i) * 0.01;
                         p[ix] *= pulse; p[iy] *= pulse; p[iz] *= pulse;
                     }
