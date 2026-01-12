@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Odd Earth Institute | Open Source Survival</title>
+    <title>The Odd Earth Institute | Discipline Agnostic</title>
     <style>
         /* --- CORE STYLES --- */
         :root {
@@ -66,7 +66,7 @@
             letter-spacing: 2px;
             pointer-events: auto;
             cursor: pointer;
-            border-bottom: 2px solid var(--green); 
+            border-bottom: 2px solid var(--purple); 
             padding-bottom: 5px;
         }
 
@@ -130,11 +130,11 @@
             transition: opacity 0.6s ease;
         }
         
-        .card.mission-hero { border-top: 4px solid var(--green); text-align: center; } 
+        .card.mission-hero { border-top: 4px solid var(--purple); text-align: center; } 
         .card.model { border-left: 4px solid var(--blue); }
-        .card.garage { border-right: 4px solid var(--gold); text-align: right; }
-        .card.menu { border-bottom: 4px solid var(--purple); text-align: center; }
-        .card.submit { border: 1px solid var(--gold); text-align: center; }
+        .card.garage { border-right: 4px solid var(--green); text-align: right; }
+        .card.menu { border-bottom: 4px solid var(--gold); text-align: center; }
+        .card.submit { border: 1px solid var(--alert); text-align: center; }
 
         .file-grid {
             display: grid;
@@ -241,10 +241,10 @@
         
         <section class="scroll-section">
             <div class="card mission-hero">
-                <span class="label" style="color:var(--green); border-color:var(--green);">The Philosophy</span>
-                <h1>Somewhere vs. Everywhere.</h1>
-                <p>The gap between "We solved it" and "Everyone has it" is measured in human lives.</p>
-                <p>The Odd Earth Institute is a makerspace dedicated to bridging that gap. We build <span class="highlight">open-source, DIY lab alternatives</span> to existing medical and civic technologies.</p>
+                <span class="label" style="color:var(--purple); border-color:var(--purple);">Discipline Agnostic</span>
+                <h1>Physics. Biology. Code.</h1>
+                <p>We are the collision point where the <span class="highlight">DIY Bio-Lab</span> meets the <span class="highlight">Hardware Hackerspace</span>.</p>
+                <p>We build anything, for anyone. We don't care what branch of science solves the problem, as long as the problem stays solved.</p>
                 <br>
                 <small style="color:var(--dim)">SCROLL TO ENTER</small>
             </div>
@@ -254,25 +254,25 @@
             <div class="card model">
                 <span class="label">The Scope</span>
                 <h2>The Human Frontier</h2>
-                <p>We analyze global data to find where quality of life is failing. From mortality rates to basic dignity.</p>
-                <p>If it impacts human life, it's our problem. If the solution exists but is too expensive or complex for the real world, <span class="highlight">we hack it.</span></p>
+                <p>The "frontier" isn't space. It's the problems humans face every single day.</p>
+                <p>From quality of life to basic survival. The frontier is defined by the struggle of the end-user, not the trends of the industry. <span class="highlight">We solve for the daily reality.</span></p>
             </div>
         </section>
 
         <section class="scroll-section">
             <div class="card garage">
-                <span class="label">The Method</span>
-                <h2>Open Source Hardware.</h2>
-                <p>We don't file patents. We publish blueprints.</p>
-                <p>We take withered, mature technologies—Game Boys, speakers, old sensors—and repurpose them into rugged, lateral solutions that can be built in a garage, anywhere on Earth.</p>
+                <span class="label">The Philosophy</span>
+                <h2>Radical Empathy</h2>
+                <p>We don't build from an ivory tower. We build because we've been there.</p>
+                <p>Our solutions are human-centric because we have lived the problems. We are engineers, patients, citizens, and hackers building the world we need to exist in.</p>
             </div>
         </section>
 
         <section class="scroll-section" style="padding-top: 5vh;">
             <div class="card menu" style="margin: auto;">
-                <span class="label">The Workbench</span>
-                <h2>Active Prototypes</h2>
-                <p>Explore our open-source builds.</p>
+                <span class="label">Open Source Library</span>
+                <h2>The Blueprint</h2>
+                <p>Explore our active open-source solutions.</p>
                 
                 <div class="file-grid">
                     <div class="file-item" onclick="openProblem(0)">
@@ -313,10 +313,10 @@
 
         <section class="scroll-section">
             <div class="card submit">
-                <span class="label" style="color:var(--gold); border-color:var(--gold);">Field Intelligence</span>
-                <h2>Tell us your story.</h2>
-                <p>We build for the real world, not the lab. We need to know what problems you face in your community.</p>
-                <p>Submit a problem. We will ideate a lateral solution.</p>
+                <span class="label" style="color:var(--alert); border-color:var(--alert);">Field Intelligence</span>
+                <h2>We need your story.</h2>
+                <p>We can only solve what we understand. If you are facing a problem that technology has failed to solve, tell us.</p>
+                <p>Help us define the next frontier.</p>
                 <a href="mailto:solutions@oddearth.org" class="btn-action">Submit A Problem</a>
             </div>
         </section>
@@ -370,7 +370,7 @@
                 color: 'alert',
                 problem: {
                     title: "Invisible Pollution",
-                    content: "Air pollution kills millions, but industrial monitoring stations are rare and expensive. We cannot fix what we cannot see or measure locally.",
+                    content: "Air pollution kills millions, but industrial monitoring stations are rare and expensive. We cannot fix what we cannot see or measure locally in our own homes.",
                     shape: 'watch'
                 },
                 solution: {
@@ -384,7 +384,7 @@
                 color: 'green',
                 problem: {
                     title: "Forensic Barriers",
-                    content: "DNA labs are slow and backlogged. Justice is often delayed or denied because forensic technology is centralized and proprietary.",
+                    content: "DNA labs are slow and backlogged. Justice is often delayed or denied because forensic technology is centralized, proprietary, and bottlenecked.",
                     shape: 'gel'
                 },
                 solution: {
