@@ -3,710 +3,394 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Odd Earth Institute</title>
+    <title>Odd Earth: Kinetic Interface</title>
     <style>
-        /* --- CORE STYLES --- */
+        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;500;700&family=Space+Mono&display=swap');
+
         :root {
-            --bg: #050a10;
-            --blue: #4a90e2;
-            --green: #00ff88;
-            --gold: #ffcc00;
-            --purple: #bf00ff; /* New color for "Potential" */
-            --dim: #445566;
+            --base: #0a0a12;
+            --active: #00ffcc;
+            --alert: #ff3366;
         }
 
-        body, html {
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg);
-            color: #eee;
-            font-family: 'Courier New', Courier, monospace;
-            overflow-x: hidden;
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background-color: var(--base);
+            font-family: 'Rajdhani', sans-serif;
+            color: white;
+        }
+
+        /* Video Feed (HUD Style) */
+        #cam-container {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            width: 200px;
+            height: 150px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 4px;
+            overflow: hidden;
+            z-index: 10;
+            background: black;
+            transform: scaleX(-1); /* Mirror the preview */
+        }
+
+        video {
             width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.6;
+        }
+
+        /* Overlay UI */
+        #ui-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            padding: 40px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            text-shadow: 0 0 20px rgba(0, 255, 204, 0.5);
+        }
+
+        .status {
+            font-family: 'Space Mono', monospace;
+            color: var(--active);
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        #gesture-indicator {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border: 1px solid var(--active);
+            padding: 10px 20px;
+            color: var(--active);
+            background: rgba(0, 255, 204, 0.1);
+            backdrop-filter: blur(5px);
         }
 
         /* Loading Screen */
         #loader {
-            position: fixed;
+            position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg);
-            z-index: 999;
+            background: var(--base);
+            z-index: 100;
             display: flex;
             justify-content: center;
             align-items: center;
-            color: var(--blue);
-            transition: opacity 0.5s;
+            flex-direction: column;
         }
-
-        /* Canvas & Overlay */
-        #canvas-container {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: 1;
-        }
-
-        .overlay {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: 2;
-            background: 
-                linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
-                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            background-size: 100% 2px, 3px 100%;
-            pointer-events: none;
-        }
-
-        /* UI */
-        .hud {
-            position: fixed;
-            padding: 20px;
-            z-index: 3;
-            font-size: 12px;
-            color: var(--blue);
-            pointer-events: none;
-            border: 1px solid var(--dim);
-            background: rgba(5, 10, 16, 0.8);
-        }
-        .top-left { top: 20px; left: 20px; }
-        .btm-right { bottom: 20px; right: 20px; text-align: right; }
-
-        /* SCROLL CONTENT */
-        main {
-            position: relative;
-            z-index: 10;
-            padding-bottom: 100px;
-        }
-
-        section {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-            box-sizing: border-box;
-            position: relative;
-        }
-
-        .card {
-            background: rgba(5, 10, 16, 0.9);
-            border: 1px solid var(--blue);
-            padding: 3rem;
-            max-width: 700px;
-            width: 100%;
-            box-shadow: 0 0 30px rgba(0,0,0,0.5);
-            backdrop-filter: blur(5px);
-            transition: transform 0.3s;
-        }
-
-        .card.problem { border-left: 5px solid var(--blue); margin-right: auto; margin-left: 5%; }
-        .card.solution { border-right: 5px solid var(--green); margin-left: auto; margin-right: 5%; text-align: right; }
-        .card.connect { border: 1px solid var(--gold); text-align: center; margin: auto; }
-        
-        /* New Style for Donor Section */
-        .card.potential { 
-            border: 1px solid var(--purple); 
-            text-align: center; 
-            margin: auto;
-            border-left: 5px solid var(--purple);
-            border-right: 5px solid var(--purple);
-        }
-        .card.potential h2 { color: var(--purple); }
-        .card.potential .label { color: var(--purple); border-color: var(--purple); }
-
-        .card.solution h2 { color: var(--green); }
-        .card.solution .label { color: var(--green); border-color: var(--green); }
-        
-        .card.connect h2 { color: var(--gold); }
-        .card.connect .label { color: var(--gold); border-color: var(--gold); }
-
-        /* Typography */
-        h2 { 
-            margin: 0 0 1.5rem 0; 
-            font-size: 2.2rem; 
-            text-transform: uppercase; 
-            color: var(--blue); 
-            white-space: nowrap; 
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        p { line-height: 1.8; color: #aaa; margin: 0; font-size: 1.1rem; }
-        
-        .label {
-            display: inline-block;
-            font-size: 0.8rem;
-            padding: 4px 8px;
-            border: 1px solid var(--blue);
-            margin-bottom: 15px;
-            color: var(--blue);
-            letter-spacing: 2px;
-            font-weight: bold;
-        }
-
-        /* Buttons */
-        .btn-linkedin {
-            display: inline-block;
-            margin-top: 2rem;
-            padding: 1rem 2rem;
-            background: transparent;
-            color: var(--gold);
-            border: 1px solid var(--gold);
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 1.2rem;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-        }
-        .btn-linkedin:hover {
-            background: var(--gold);
-            color: var(--bg);
-            box-shadow: 0 0 20px rgba(255, 204, 0, 0.4);
-        }
-
-        /* Mobile */
-        @media (max-width: 768px) {
-            h2 { white-space: normal; font-size: 1.5rem; }
-            .card { padding: 1.5rem; }
-        }
-
     </style>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 </head>
 <body>
 
-    <div id="loader">INITIALIZING PARTICLE MATRIX...</div>
+    <div id="loader">
+        <h2 style="letter-spacing: 3px;">INITIALIZING NEURAL LINK...</h2>
+        <p style="font-family: 'Space Mono'; opacity: 0.5;">Please allow camera access.</p>
+    </div>
 
     <div id="canvas-container"></div>
-    <div class="overlay"></div>
 
-    <div class="hud top-left">ODD EARTH INSTITUTE<br>SYS.STATUS: ONLINE</div>
-    <div class="hud btm-right">LATERAL THINKING<br>WITHERED TECH</div>
+    <div id="ui-layer">
+        <div>
+            <h1>Kinetic Archive</h1>
+            <div class="status" id="system-status">WAITING FOR BIOMETRICS...</div>
+        </div>
+        <div id="gesture-indicator">NO SIGNAL</div>
+    </div>
 
-    <main>
-        <section>
-            <div class="card problem" style="text-align: center; margin: auto; border: 1px solid var(--blue);">
-                <span class="label">MANIFESTO</span>
-                <h2>The world we live in is odd.</h2>
-                <p>We're using that to solve planetary scale problems with garage-scale tech.</p>
-                <br>
-                <small>SCROLL TO SEE WHAT WE'RE WORKING ON</small>
-            </div>
-        </section>
+    <div id="cam-container">
+        <video class="input_video"></video>
+    </div>
 
-        <section>
-            <div class="card problem">
-                <span class="label">THE PROBLEM</span>
-                <h2>Million dollar machines for ten dollar problems</h2>
-                <p>CT Scanners. Massive, expensive, and terrifying. They require heavy infrastructure and specialized power grids. That's if your lucky enough to live near one.</p>
-            </div>
-        </section>
-        <section>
-            <div class="card solution">
-                <span class="label">ODD EARTH SOLUTION</span>
-                <h2>Tapping and a mic to record it.</h2>
-                <p>A single percussion sticker on the forehead. It changes color to indicate vitals. It broadcasts soundwaves and listens to changes inside the skull. Deployable anywhere.</p>
-            </div>
-        </section>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
 
-        <section>
-            <div class="card problem">
-                <span class="label">THE PROBLEM</span>
-                <h2>Genomics for cancer diagnostics</h2>
-                <p>Complex sequencing labs running supercomputers to decode biological noise and make a diagnosis in a matter of weeks for hundreds or thousands of dollars.</p>
-            </div>
-        </section>
-        <section>
-            <div class="card solution">
-                <span class="label">ODD EARTH SOLUTION</span>
-                <h2>Salt Crystals from the 1930s</h2>
-                <p>We use basic salt crystallization in a petri dish. The geometric patterns reveal the chemical data visually and can screen over 50 cancers for less than a dollar.</p>
-            </div>
-        </section>
+    <script type="module">
+        import * as THREE from 'three';
 
-         <section>
-            <div class="card problem">
-                <span class="label">THE PROBLEM</span>
-                <h2>Wearables. Just... Ugh.</h2>
-                <p>We have a Garmin for Golf but our first responders are burnt out and don't know when they need to recover.</p>
-            </div>
-        </section>
-        <section>
-            <div class="card solution">
-                <span class="label">ODD EARTH SOLUTION</span>
-                <h2>Home environment companion plants</h2>
-                <p>Nature knows best. Monitoring plants in the home as a reflection of the overall state of their caretakers puts the sensors off-body and eliminates data-fatigue.</p>
-            </div>
-        </section>
-        
-        <section>
-            <div class="card problem">
-                <span class="label">THE PROBLEM</span>
-                <h2>Forensics. Slow and unreliable.</h2>
-                <p>Sterile labs, weeks of backlog, and high error rates.</p>
-            </div>
-        </section>
-        <section>
-            <div class="card solution">
-                <span class="label">ODD EARTH SOLUTION</span>
-                <h2>Man's best friend. Loves justice.</h2>
-                <p>Nature's most advanced sensor. We map scent data matching humans to environments they've been in using trained dogs. Powered by kibble.</p>
-            </div>
-        </section>
-
-        <section>
-            <div class="card potential">
-                <span class="label">THE UNKNOWN</span>
-                <h2>Imagine what's next.</h2>
-                <p>Every piece of withered technology holds infinite potential. We have the questions. We need the resources to build the answers.</p>
-                <br>
-                <small>DONATE TO THE INSTITUTE</small>
-            </div>
-        </section>
-
-        <section>
-            <div class="card connect">
-                <span class="label">JOIN THE MISSION</span>
-                <h2>Connect with Odd Earth</h2>
-                <p>We are building a network of lateral thinkers. Engineers, biologists, and garage tinkerers.</p>
-                <a href="https://substack.com/@eugeneduvenage?utm_campaign=profile&utm_medium=profile-page" target="_blank" class="btn-linkedin">Connect to our Substack</a>
-            </div>
-        </section>
-    </main>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
-    <script>
         // --- CONFIG ---
         const PARTICLE_COUNT = 15000;
-        const PARTICLE_SIZE = 0.15;
+        const CAM_Z = 12;
 
-        // --- SETUP ---
-        const container = document.getElementById('canvas-container');
-        const loader = document.getElementById('loader');
-        
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x050a10);
-        scene.fog = new THREE.Fog(0x050a10, 10, 50);
-
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
-        camera.position.z = 22;
-
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        container.appendChild(renderer.domElement);
-
-        // --- SHAPE GENERATION HELPER ---
-        const rand = (min, max) => Math.random() * (max - min) + min;
-        const createShapeData = () => ({ positions: [], colors: [] });
-        
-        const shapes = {
-            chaos: createShapeData(),
-            scanner: createShapeData(), // CT
-            dot: createShapeData(),     // Face
-            helix: createShapeData(),   // Genomics
-            crystal: createShapeData(), // Petri Dish
-            watch: createShapeData(),   // Smartwatch + Pulse
-            plant: createShapeData(),   // Plants
-            grid: createShapeData(),    // Forensics Wall
-            dog: createShapeData(),     // K9
-            potential: createShapeData(), // Question Mark / Infinite
-            network: createShapeData()  // Earth + Network
+        // Global State
+        const handState = {
+            detected: false,
+            x: 0,
+            y: 0,
+            z: 0, // Depth estimation
+            pinching: false // Fist/Pinch detection
         };
 
-        // --- 1. CHAOS ---
-        for(let i=0; i<PARTICLE_COUNT; i++) {
-            shapes.chaos.positions.push(rand(-30,30), rand(-30,30), rand(-20,20));
-            shapes.chaos.colors.push(0.5, 0.5, 0.5);
-        }
+        // --- 1. THREE.JS SETUP ---
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x0a0a12, 0.02);
 
-        // --- 2. CT SCANNER ---
-        for(let i=0; i<PARTICLE_COUNT; i++) {
-            if(i < PARTICLE_COUNT * 0.7) {
-                const angle = Math.random() * Math.PI * 2;
-                const r = rand(9, 12);
-                shapes.scanner.positions.push(Math.cos(angle)*r, Math.sin(angle)*r, rand(-4,4));
-                shapes.scanner.colors.push(0.2, 0.6, 1.0);
-            } else {
-                const angle = Math.random() * Math.PI * 2;
-                const r = rand(0, 2.5);
-                shapes.scanner.positions.push(Math.cos(angle)*r, Math.sin(angle)*r - 2, rand(-12,12));
-                shapes.scanner.colors.push(0.8, 0.8, 0.8);
-            }
-        }
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.z = CAM_Z;
 
-        // --- 3. THE DOT ---
-        for(let i=0; i<PARTICLE_COUNT; i++) {
-            if (i < 500) {
-                const r = rand(0, 0.5);
-                const theta = rand(0, Math.PI*2);
-                const phi = rand(0, Math.PI);
-                shapes.dot.positions.push(
-                    Math.sin(phi)*Math.cos(theta)*r, 
-                    Math.sin(phi)*Math.sin(theta)*r + 4, 
-                    Math.cos(phi)*r + 4 
-                );
-                shapes.dot.colors.push(1.0, 0.2, 0.2);
-            } else {
-                const u = Math.random();
-                const v = Math.random();
-                const theta = 2 * Math.PI * u;
-                const phi = Math.acos(2 * v - 1);
-                const zMult = (Math.cos(phi) > 0) ? 4 : 2;
-                shapes.dot.positions.push(
-                    6 * Math.sin(phi) * Math.cos(theta),
-                    8 * Math.sin(phi) * Math.sin(theta),
-                    zMult * Math.cos(phi)
-                );
-                shapes.dot.colors.push(0.0, 1.0, 0.5);
-            }
-        }
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-        // --- 4. GENOMICS ---
-        for(let i=0; i<PARTICLE_COUNT; i++) {
-            const t = rand(-12, 12);
-            const isStrand = Math.random() > 0.2;
-            if (isStrand) {
-                const strand = Math.random() > 0.5 ? 0 : Math.PI;
-                shapes.helix.positions.push(
-                    Math.cos(t*1.5 + strand)*5 + rand(-0.2,0.2),
-                    t*1.5,
-                    Math.sin(t*1.5 + strand)*5 + rand(-0.2,0.2)
-                );
-                shapes.helix.colors.push(0.5, 0.0, 0.8);
-            } else {
-                const r = rand(-5, 5);
-                shapes.helix.positions.push(Math.cos(t*1.5)*r, t*1.5, Math.sin(t*1.5)*r);
-                shapes.helix.colors.push(0.3, 0.3, 0.3);
-            }
-        }
-
-        // --- 5. CRYSTALS ---
-        for(let i=0; i<PARTICLE_COUNT; i++) {
-            if (i < PARTICLE_COUNT * 0.2) {
-                const angle = rand(0, Math.PI*2);
-                const r = rand(9, 9.5);
-                shapes.crystal.positions.push(Math.cos(angle)*r, -6, Math.sin(angle)*r);
-                shapes.crystal.colors.push(0.5, 0.5, 0.5);
-            } else {
-                const cluster = Math.floor(Math.random()*3);
-                let cx=0, cy=-4; 
-                if(cluster===1) cx=4; if(cluster===2) cx=-4;
-                const s = rand(0, 3);
-                shapes.crystal.positions.push(cx + rand(-s,s), cy + rand(0, s*2), rand(-s,s));
-                shapes.crystal.colors.push(0.0, 1.0, 1.0);
-            }
-        }
-
-        // --- 6. SMARTWATCH (Updated) ---
-        for(let i=0; i<PARTICLE_COUNT; i++) {
-            const r = Math.random();
-            // Strap (Cylinder wrap)
-            if(r < 0.3) {
-                const angle = rand(0, Math.PI*2);
-                const rad = 6;
-                const width = rand(-1.5, 1.5);
-                // Gap for the watch face
-                if (Math.abs(angle) > 0.5) {
-                    shapes.watch.positions.push(Math.sin(angle)*rad, Math.cos(angle)*rad, width);
-                    shapes.watch.colors.push(0.2, 0.2, 0.2); // Dark grey strap
-                } else {
-                    // Hide unused strap particles inside
-                     shapes.watch.positions.push(0, 0, 0);
-                     shapes.watch.colors.push(0,0,0);
-                }
-            } 
-            // Watch Face (Box)
-            else if (r < 0.9) {
-                const w = rand(-2.5, 2.5); // Width
-                const h = rand(-3, 3);     // Height
-                const d = rand(5.5, 6.5);  // Depth (on top of strap)
-                shapes.watch.positions.push(w, d, h);
-                shapes.watch.colors.push(0.1, 0.1, 0.1); // Black screen
-            } 
-            // Heartbeat Pulse (EKG Line)
-            else {
-                const x = rand(-2, 2); // Across screen
-                let y = 6.6; // Slightly above screen surface
-                let z = 0; // Center of screen vertically
-                
-                // Pulse Logic
-                // Flat line generally, spike in middle
-                if (Math.abs(x) < 0.5) {
-                    // Create the spike
-                    z = Math.sin(x * 20) * 1.5; 
-                } else {
-                    z = rand(-0.1, 0.1); // noisy flat line
-                }
-
-                shapes.watch.positions.push(x, y, z);
-                shapes.watch.colors.push(1.0, 0.0, 0.2); // Bright RED pulse
-            }
-        }
-
-        // --- 7. PLANTS ---
-        for(let i=0; i<PARTICLE_COUNT; i++) {
-            if(Math.random() > 0.3) {
-                const y = rand(-10, 8);
-                const w = (10-y)*0.05;
-                shapes.plant.positions.push(rand(-w,w), y, rand(-w,w));
-                shapes.plant.colors.push(0.4, 0.2, 0.0);
-            } else {
-                const r = rand(2, 6);
-                const a = rand(0, Math.PI*2);
-                const y = rand(-5, 8);
-                shapes.plant.positions.push(Math.cos(a)*r, y, Math.sin(a)*r);
-                shapes.plant.colors.push(0.0, 1.0, 0.2);
-            }
-        }
-
-        // --- 8. FORENSICS ---
-        for(let i=0; i<PARTICLE_COUNT; i++) {
-            const x = rand(-8, 8);
-            const y = rand(-10, 10);
-            const z = rand(-0.5, 0.5);
-            shapes.grid.positions.push(x, y, z);
-            if (y > 4 && y < 5) shapes.grid.colors.push(1.0, 0.0, 1.0);
-            else if (y > 1 && y < 2) shapes.grid.colors.push(0.0, 1.0, 0.0);
-            else if (y > -3 && y < -2) shapes.grid.colors.push(0.0, 1.0, 1.0);
-            else if (y > -6 && y < -5.5) shapes.grid.colors.push(1.0, 1.0, 0.0);
-            else shapes.grid.colors.push(0.1, 0.1, 0.3);
-        }
-
-        // --- 9. DOG ---
-        for(let i=0; i<PARTICLE_COUNT; i++) {
-             const r = Math.random();
-             let x,y,z;
-             let col = [0.8, 0.5, 0.2];
-             if(r < 0.4) { x=rand(-4,4); y=rand(-2,2); z=rand(-1.5,1.5); } 
-             else if(r < 0.6) { x=rand(4,6.5); y=rand(1,3.5); z=rand(-1.2,1.2); } 
-             else if(r < 0.7) {
-                 const ear = Math.random() > 0.5 ? 1 : -1;
-                 x = rand(4.5, 5.5); y = rand(3.5, 5); z = rand(0.5, 1) * ear;
-                 col = [0.2, 0.1, 0.0];
-             } else if(r < 0.9) { 
-                 const lx = rand(-4, 4); 
-                 const legX = lx > 0 ? 3 : -3;
-                 const lz = rand(-1, 1) > 0 ? 1 : -1;
-                 x = legX + rand(-0.5, 0.5); y = rand(-6, -2); z = lz + rand(-0.5, 0.5);
-             } else { x=rand(-7,-4); y=rand(0,3); z=0; }
-             shapes.dog.positions.push(x,y,z);
-             shapes.dog.colors.push(...col);
-        }
-
-        // --- 10. POTENTIAL / DONOR (Question Mark) ---
-        for(let i=0; i<PARTICLE_COUNT; i++) {
-            if (i < PARTICLE_COUNT * 0.8) {
-                // The Question Mark Shape
-                // Dot
-                if (i < PARTICLE_COUNT * 0.1) {
-                    shapes.potential.positions.push(rand(-1,1), -5 + rand(-1,1), rand(-1,1));
-                    shapes.potential.colors.push(1.0, 0.0, 1.0); // Purple glow
-                } 
-                // Stem
-                else if (i < PARTICLE_COUNT * 0.3) {
-                    shapes.potential.positions.push(rand(-0.8,0.8), rand(-3, 0), rand(-0.8,0.8));
-                    shapes.potential.colors.push(0.8, 0.0, 0.8);
-                }
-                // The Curve (Hook)
-                else {
-                    const angle = rand(0, Math.PI * 1.5); // 3/4 circle
-                    const r = 3;
-                    const tubeR = 0.8;
-                    // Parametric torus segment logic
-                    const tubeAngle = rand(0, Math.PI*2);
-                    
-                    // Main curve center
-                    const cx = Math.cos(angle) * r;
-                    const cy = Math.sin(angle) * r + 3; // Shift up
-                    
-                    const px = cx + Math.cos(tubeAngle)*tubeR;
-                    const py = cy + Math.sin(tubeAngle)*tubeR;
-                    const pz = Math.sin(tubeAngle)*tubeR; // tube thickness
-
-                    shapes.potential.positions.push(px, py, pz);
-                    shapes.potential.colors.push(0.6, 0.0, 1.0); // Deep Purple
-                }
-            } else {
-                // Orbiting Ideas (Sparks)
-                const theta = Math.random() * Math.PI * 2;
-                const phi = Math.acos(Math.random() * 2 - 1);
-                const r = rand(6, 10);
-                
-                shapes.potential.positions.push(
-                    r * Math.sin(phi) * Math.cos(theta),
-                    r * Math.sin(phi) * Math.sin(theta),
-                    r * Math.cos(phi)
-                );
-                shapes.potential.colors.push(1.0, 0.8, 0.0); // Gold sparks
-            }
-        }
-
-
-        // --- 11. NETWORK (Earth + Connections) ---
-        for(let i=0; i<PARTICLE_COUNT; i++) {
-            // Earth Sphere (70% of particles)
-            if (i < PARTICLE_COUNT * 0.7) {
-                const u = Math.random();
-                const v = Math.random();
-                const theta = 2 * Math.PI * u;
-                const phi = Math.acos(2 * v - 1);
-                const r = 8.5; 
-                
-                const x = r * Math.sin(phi) * Math.cos(theta);
-                const y = r * Math.sin(phi) * Math.sin(theta);
-                const z = r * Math.cos(phi);
-                
-                shapes.network.positions.push(x, y, z);
-                
-                // Color mapping
-                if (Math.abs(y) < 3 && Math.random() > 0.6) shapes.network.colors.push(0.0, 0.8, 0.5); // Tropics/Land
-                else shapes.network.colors.push(0.0, 0.1, 0.4); // Ocean
-            } 
-            // The People / Nodes (15%)
-            else if (i < PARTICLE_COUNT * 0.85) {
-                const u = Math.random();
-                const v = Math.random();
-                const theta = 2 * Math.PI * u;
-                const phi = Math.acos(2 * v - 1);
-                const r = 9.0; 
-                shapes.network.positions.push(
-                    r * Math.sin(phi) * Math.cos(theta),
-                    r * Math.sin(phi) * Math.sin(theta),
-                    r * Math.cos(phi)
-                );
-                shapes.network.colors.push(1.0, 0.8, 0.0); // Gold
-            }
-            // The Network Lines (15%)
-            else {
-                const band = Math.floor(Math.random() * 3); 
-                let angle = Math.random() * Math.PI * 2;
-                let r = 11 + Math.random();
-                let x,y,z;
-                if(band === 0) { x = Math.cos(angle)*r; z = Math.sin(angle)*r; y = rand(-1, 1); }
-                else if (band === 1) { y = Math.cos(angle)*r; z = Math.sin(angle)*r; x = rand(-1, 1); }
-                else { const base = Math.cos(angle)*r; x = base; y = base; z = Math.sin(angle)*r; }
-                
-                shapes.network.positions.push(x, y, z);
-                shapes.network.colors.push(1.0, 1.0, 1.0); 
-            }
-        }
-
-
-        // --- PARTICLE SYSTEM INIT ---
+        // --- 2. PARTICLE SYSTEM ---
         const geometry = new THREE.BufferGeometry();
         const positions = new Float32Array(PARTICLE_COUNT * 3);
+        const velocities = new Float32Array(PARTICLE_COUNT * 3);
         const colors = new Float32Array(PARTICLE_COUNT * 3);
+        
+        const baseColor = new THREE.Color(0x00ffcc);
+        const activeColor = new THREE.Color(0xff3366);
 
-        for(let i=0; i<PARTICLE_COUNT * 3; i++) {
-            positions[i] = shapes.chaos.positions[i];
-            colors[i] = shapes.chaos.colors[i];
+        for(let i=0; i<PARTICLE_COUNT; i++) {
+            positions[i*3] = (Math.random()-0.5) * 20;
+            positions[i*3+1] = (Math.random()-0.5) * 10;
+            positions[i*3+2] = (Math.random()-0.5) * 10;
+            
+            colors[i*3] = baseColor.r;
+            colors[i*3+1] = baseColor.g;
+            colors[i*3+2] = baseColor.b;
         }
 
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
         const material = new THREE.PointsMaterial({
-            size: PARTICLE_SIZE,
+            size: 0.1,
             vertexColors: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
             transparent: true,
-            opacity: 0.8,
-            blending: THREE.AdditiveBlending
+            opacity: 0.8
         });
 
-        const points = new THREE.Points(geometry, material);
-        scene.add(points);
+        const particles = new THREE.Points(geometry, material);
+        scene.add(particles);
 
-        loader.style.opacity = 0;
-        setTimeout(() => loader.style.display = 'none', 500);
+        // Hand Marker (The glowing orb following your hand)
+        const markerGeo = new THREE.IcosahedronGeometry(0.5, 0);
+        const markerMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true });
+        const handMarker = new THREE.Mesh(markerGeo, markerMat);
+        scene.add(handMarker);
 
-        // --- ANIMATION STATE ---
-        let currentPosTarget = shapes.chaos.positions;
-        let currentColTarget = shapes.chaos.colors;
-        let isNetworkScene = false;
-        let isPotentialScene = false;
+
+        // --- 3. MEDIAPIPE LOGIC ---
         
-        // Scroll Logic
-        window.addEventListener('scroll', () => {
-            const scrollY = window.scrollY;
-            const h = window.innerHeight;
-            const sectionIndex = Math.round(scrollY / h);
-            
-            isNetworkScene = false;
-            isPotentialScene = false;
+        const videoElement = document.getElementsByClassName('input_video')[0];
+        const statusText = document.getElementById('system-status');
+        const gestureText = document.getElementById('gesture-indicator');
+        const loader = document.getElementById('loader');
 
-            let targetKey = 'chaos';
-            if(sectionIndex === 1) targetKey = 'scanner';
-            else if(sectionIndex === 2) targetKey = 'dot';
-            else if(sectionIndex === 3) targetKey = 'helix';
-            else if(sectionIndex === 4) targetKey = 'crystal';
-            else if(sectionIndex === 5) targetKey = 'watch';
-            else if(sectionIndex === 6) targetKey = 'plant';
-            else if(sectionIndex === 7) targetKey = 'grid';
-            else if(sectionIndex === 8) targetKey = 'dog';
-            else if(sectionIndex === 9) { targetKey = 'potential'; isPotentialScene = true; }
-            else if(sectionIndex === 10) { targetKey = 'network'; isNetworkScene = true; }
+        function onResults(results) {
+            // Hide loader on first successful frame
+            if(loader.style.display !== 'none') {
+                loader.style.display = 'none';
+                statusText.innerText = "LINK ESTABLISHED";
+            }
 
-            currentPosTarget = shapes[targetKey].positions;
-            currentColTarget = shapes[targetKey].colors;
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                handState.detected = true;
+                
+                // Get the first hand detected
+                const landmarks = results.multiHandLandmarks[0];
+                
+                // Index Finger Tip (Landmark 8) for position
+                // We flip X because webcam is mirrored
+                const x = (1 - landmarks[8].x) * 2 - 1; 
+                const y = -(landmarks[8].y * 2 - 1);
+                
+                // Map 2D normalized coords to 3D world coords roughly
+                // At z=0, the view width is approx: tan(fov/2) * dist * 2 * aspect
+                // For simplified mapping:
+                const viewWidth = 15; 
+                const viewHeight = 8;
+                
+                handState.x = x * viewWidth;
+                handState.y = y * viewHeight;
+
+                // DETECT GESTURE (Open Hand vs Fist)
+                // Logic: Check distance between wrist (0) and finger tips (8, 12, 16, 20)
+                // If tips are close to wrist => Fist.
+                
+                const wrist = landmarks[0];
+                const middleTip = landmarks[12];
+                const ringTip = landmarks[16];
+                
+                // Simple distance check
+                const dMiddle = Math.hypot(middleTip.x - wrist.x, middleTip.y - wrist.y);
+                const dRing = Math.hypot(ringTip.x - wrist.x, ringTip.y - wrist.y);
+
+                if (dMiddle < 0.3 && dRing < 0.3) {
+                    handState.pinching = true;
+                    gestureText.innerText = "STATUS: FOCUSING";
+                    gestureText.style.borderColor = "#ff3366";
+                    gestureText.style.color = "#ff3366";
+                } else {
+                    handState.pinching = false;
+                    gestureText.innerText = "STATUS: NURTURING";
+                    gestureText.style.borderColor = "#00ffcc";
+                    gestureText.style.color = "#00ffcc";
+                }
+
+            } else {
+                handState.detected = false;
+                gestureText.innerText = "NO SIGNAL";
+                gestureText.style.borderColor = "#555";
+                gestureText.style.color = "#555";
+            }
+        }
+
+        const hands = new Hands({locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+        }});
+
+        hands.setOptions({
+            maxNumHands: 1,
+            modelComplexity: 1,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
         });
 
-        // --- RENDER LOOP ---
+        hands.onResults(onResults);
+
+        const cam = new Camera(videoElement, {
+            onFrame: async () => {
+                await hands.send({image: videoElement});
+            },
+            width: 320,
+            height: 240
+        });
+        
+        cam.start();
+
+
+        // --- 4. ANIMATION LOOP ---
+
         const clock = new THREE.Clock();
 
         function animate() {
             requestAnimationFrame(animate);
-
             const time = clock.getElapsedTime();
-            const posAttr = geometry.attributes.position;
-            const colAttr = geometry.attributes.color;
-            const p = posAttr.array;
-            const c = colAttr.array;
-            
-            const speed = 0.05;
+
+            // Move Marker
+            if(handState.detected) {
+                // Smooth lerp to hand position
+                handMarker.position.x += (handState.x - handMarker.position.x) * 0.2;
+                handMarker.position.y += (handState.y - handMarker.position.y) * 0.2;
+                handMarker.rotation.x += 0.05;
+                handMarker.rotation.y += 0.05;
+                handMarker.visible = true;
+            } else {
+                handMarker.visible = false;
+            }
+
+            // Particle Physics
+            const pos = geometry.attributes.position.array;
+            const col = geometry.attributes.color.array;
+
+            // Define target (Hand or Center)
+            const tx = handState.detected ? handMarker.position.x : 0;
+            const ty = handState.detected ? handMarker.position.y : 0;
+            const tz = handState.detected ? 0 : 0;
 
             for(let i=0; i<PARTICLE_COUNT; i++) {
-                const ix = i * 3;
-                const iy = i * 3 + 1;
-                const iz = i * 3 + 2;
+                const px = pos[i*3];
+                const py = pos[i*3+1];
+                const pz = pos[i*3+2];
 
-                // Interpolation
-                p[ix] += (currentPosTarget[ix] - p[ix]) * speed;
-                p[iy] += (currentPosTarget[iy] - p[iy]) * speed;
-                p[iz] += (currentPosTarget[iz] - p[iz]) * speed;
-
-                c[ix] += (currentColTarget[ix] - c[ix]) * speed;
-                c[iy] += (currentColTarget[iy] - c[iy]) * speed;
-                c[iz] += (currentColTarget[iz] - c[iz]) * speed;
+                const dx = tx - px;
+                const dy = ty - py;
+                const dz = tz - pz;
                 
-                // Noise
-                const noise = Math.sin(time + p[iy]) * 0.005; 
-                p[ix] += noise;
+                const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+                
+                // BEHAVIOR LOGIC
+                
+                if (handState.detected && handState.pinching) {
+                    // FIST: High Gravity / Black Hole
+                    // Strong pull towards center
+                    velocities[i*3]   += dx * 0.003;
+                    velocities[i*3+1] += dy * 0.003;
+                    velocities[i*3+2] += dz * 0.003;
+                    
+                    // Turn Red
+                    col[i*3] = THREE.MathUtils.lerp(col[i*3], activeColor.r, 0.1);
+                    col[i*3+1] = THREE.MathUtils.lerp(col[i*3+1], activeColor.g, 0.1);
+                    col[i*3+2] = THREE.MathUtils.lerp(col[i*3+2], activeColor.b, 0.1);
+
+                } else if (handState.detected) {
+                    // OPEN HAND: Gentle Orbit / Swarm
+                    // Pull is weaker
+                    const force = 0.0005;
+                    velocities[i*3]   += dx * force;
+                    velocities[i*3+1] += dy * force;
+                    velocities[i*3+2] += dz * force;
+
+                    // Add Swirl (Cross product roughly)
+                    velocities[i*3]   += -dy * 0.001; 
+                    velocities[i*3+1] += dx * 0.001; 
+
+                    // Turn Cyan
+                    col[i*3] = THREE.MathUtils.lerp(col[i*3], baseColor.r, 0.1);
+                    col[i*3+1] = THREE.MathUtils.lerp(col[i*3+1], baseColor.g, 0.1);
+                    col[i*3+2] = THREE.MathUtils.lerp(col[i*3+2], baseColor.b, 0.1);
+                } else {
+                    // IDLE: Return to center slowly + noise
+                    velocities[i*3]   += (-px) * 0.0001;
+                    velocities[i*3+1] += (-py) * 0.0001;
+                    velocities[i*3+2] += (-pz) * 0.0001;
+                    
+                    // Float around
+                    velocities[i*3]   += Math.sin(time + py) * 0.0002;
+                    velocities[i*3+1] += Math.cos(time + px) * 0.0002;
+                }
+
+                // Apply Velocity
+                pos[i*3]   += velocities[i*3];
+                pos[i*3+1] += velocities[i*3+1];
+                pos[i*3+2] += velocities[i*3+2];
+
+                // Friction (Air resistance)
+                // Lower friction = more chaotic, Higher = more controlled
+                velocities[i*3]   *= 0.96;
+                velocities[i*3+1] *= 0.96;
+                velocities[i*3+2] *= 0.96;
             }
 
-            posAttr.needsUpdate = true;
-            colAttr.needsUpdate = true;
-            
-            // Special Scene Rotations
-            if(isNetworkScene) {
-                points.rotation.y += 0.001; // Earth Spin
-            } else if (isPotentialScene) {
-                points.rotation.y = Math.sin(time * 0.5) * 0.2; // Gentle swaying for question mark
-            } else {
-                points.rotation.y += (0 - points.rotation.y) * 0.05; // Reset
-            }
-            
+            geometry.attributes.position.needsUpdate = true;
+            geometry.attributes.color.needsUpdate = true;
             renderer.render(scene, camera);
         }
-
-        animate();
 
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
+
+        animate();
 
     </script>
 </body>
