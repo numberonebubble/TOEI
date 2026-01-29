@@ -1,397 +1,513 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Odd Earth: Kinetic Interface</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;500;700&family=Space+Mono&display=swap');
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Things That Should Exist</title>
+  <style>
+    :root{
+      --bg:#05070b;
+      --fg:#e9eef7;
+      --muted:rgba(233,238,247,.72);
+      --card:rgba(10,14,24,.52);
+      --cardBorder:rgba(255,255,255,.08);
+    }
+    html,body{height:100%; margin:0; background:var(--bg); color:var(--fg);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;}
+    canvas{position:fixed; inset:0; z-index:0;}
 
-        :root {
-            --base: #0a0a12;
-            --active: #00ffcc;
-            --alert: #ff3366;
-        }
+    .top{
+      position:fixed; left:0; right:0; top:0; z-index:2;
+      padding:18px 18px 0;
+      pointer-events:none;
+      backdrop-filter: blur(10px);
+      background: linear-gradient(to bottom, rgba(5,7,11,.84), rgba(5,7,11,.10));
+      border-bottom:1px solid rgba(255,255,255,.06);
+    }
+    .kicker{ font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); }
+    .headline{ margin:6px 0 10px; font-size:18px; font-weight:650; color:rgba(233,238,247,.92); }
+    .sub{ margin:0 0 12px; font-size:12px; color:rgba(233,238,247,.58); max-width:78ch; line-height:1.35; }
 
-        body { 
-            margin: 0; 
-            overflow: hidden; 
-            background-color: var(--base);
-            font-family: 'Rajdhani', sans-serif;
-            color: white;
-        }
+    .scroll{
+      position:relative;
+      z-index:1;
+      height:100vh;
+      overflow-y:auto;
+      scroll-snap-type:y mandatory;
+      scroll-behavior:smooth;
+    }
+    .pane{
+      height:100vh;
+      scroll-snap-align:start;
+      display:flex;
+      align-items:flex-end;
+      justify-content:center;
+      padding:18px;
+      box-sizing:border-box;
+    }
+    .card{
+      width:min(920px, 92vw);
+      background:var(--card);
+      border:1px solid var(--cardBorder);
+      border-radius:22px;
+      box-shadow:0 30px 120px rgba(0,0,0,.45);
+      padding:18px 18px;
+      backdrop-filter: blur(12px);
+    }
+    .card .label{ font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+    .card .title{ margin:8px 0 8px; font-size:20px; font-weight:650; }
+    .card .desc{ margin:0; color:rgba(233,238,247,.75); font-size:14px; line-height:1.55; max-width:90ch; }
 
-        /* Video Feed (HUD Style) */
-        #cam-container {
-            position: absolute;
-            bottom: 30px;
-            left: 30px;
-            width: 200px;
-            height: 150px;
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 4px;
-            overflow: hidden;
-            z-index: 10;
-            background: black;
-            transform: scaleX(-1); /* Mirror the preview */
-        }
+    .controls{
+      position:fixed; left:0; right:0; bottom:0; z-index:2;
+      display:flex; justify-content:space-between; align-items:center;
+      padding:0 18px 18px;
+      gap:12px;
+      pointer-events:none;
+    }
+    .btn{
+      pointer-events:auto;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.10);
+      color:var(--fg);
+      padding:10px 12px;
+      border-radius:999px;
+      font-size:13px;
+      cursor:pointer;
+      user-select:none;
+      backdrop-filter: blur(10px);
+    }
+    .badge{
+      pointer-events:none;
+      padding:10px 14px;
+      border-radius:999px;
+      background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.08);
+      color:rgba(233,238,247,.75);
+      font-size:13px;
+      backdrop-filter: blur(10px);
+    }
 
-        video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            opacity: 0.6;
-        }
-
-        /* Overlay UI */
-        #ui-layer {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-            padding: 40px;
-            box-sizing: border-box;
-        }
-
-        h1 {
-            font-size: 3rem;
-            margin: 0;
-            text-transform: uppercase;
-            letter-spacing: 5px;
-            text-shadow: 0 0 20px rgba(0, 255, 204, 0.5);
-        }
-
-        .status {
-            font-family: 'Space Mono', monospace;
-            color: var(--active);
-            margin-top: 10px;
-            font-size: 0.9rem;
-        }
-
-        #gesture-indicator {
-            position: absolute;
-            top: 40px;
-            right: 40px;
-            font-size: 1.5rem;
-            font-weight: bold;
-            border: 1px solid var(--active);
-            padding: 10px 20px;
-            color: var(--active);
-            background: rgba(0, 255, 204, 0.1);
-            backdrop-filter: blur(5px);
-        }
-
-        /* Loading Screen */
-        #loader {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--base);
-            z-index: 100;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-        }
-    </style>
-    
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    .scroll::-webkit-scrollbar{ width:10px; }
+    .scroll::-webkit-scrollbar-thumb{ background:rgba(255,255,255,.08); border-radius:999px; }
+    .scroll::-webkit-scrollbar-track{ background:rgba(0,0,0,0); }
+  </style>
 </head>
 <body>
+  <canvas id="c"></canvas>
 
-    <div id="loader">
-        <h2 style="letter-spacing: 3px;">INITIALIZING NEURAL LINK...</h2>
-        <p style="font-family: 'Space Mono'; opacity: 0.5;">Please allow camera access.</p>
-    </div>
+  <div class="top">
+    <div class="kicker">Odd Earth Institute</div>
+    <div class="headline">Things that should exist, but don’t:</div>
+    <p class="sub">
+      Each idea animates as: globe → idea text → globe. Scroll or use the buttons.
+      (Press Enter to replay the current transition.)
+    </p>
+  </div>
 
-    <div id="canvas-container"></div>
+  <!-- Scroll panes -->
+  <div class="scroll" id="scroll">
 
-    <div id="ui-layer">
-        <div>
-            <h1>Kinetic Archive</h1>
-            <div class="status" id="system-status">WAITING FOR BIOMETRICS...</div>
-        </div>
-        <div id="gesture-indicator">NO SIGNAL</div>
-    </div>
+    <section class="pane" data-title="Emotionally aware GPS">
+      <div class="card">
+        <div class="label">mobility × behavior</div>
+        <div class="title">Emotionally aware GPS</div>
+        <p class="desc">
+          It’s weird that navigation optimizes minutes but ignores mood. A GPS that detects rising stress
+          and quietly chooses routes that reduce friction — without turning your commute into a lecture.
+        </p>
+      </div>
+    </section>
 
-    <div id="cam-container">
-        <video class="input_video"></video>
-    </div>
+    <section class="pane" data-title="30-second infection detection">
+      <div class="card">
+        <div class="label">diagnostics</div>
+        <div class="title">30-second infection detection</div>
+        <p class="desc">
+          A tiny, fast, first-pass signal for “something infectious is likely happening” should be as normal
+          as a thermometer. Not definitive—just fast triage you can repeat over time.
+        </p>
+      </div>
+    </section>
 
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-            }
+    <section class="pane" data-title="Caffeine quantifying coffee cups">
+      <div class="card">
+        <div class="label">food × field tools</div>
+        <div class="title">Caffeine quantifying coffee cups</div>
+        <p class="desc">
+          A disposable lid or cup insert that estimates caffeine content on the spot. It’s weird that we still
+          treat caffeine as folklore when it’s one of the most consumed psychoactive molecules on Earth.
+        </p>
+      </div>
+    </section>
+
+    <section class="pane" data-title="Nutrient profiling device">
+      <div class="card">
+        <div class="label">nutrition × measurement</div>
+        <div class="title">Nutrient profiling device</div>
+        <p class="desc">
+          A pocketable way to estimate basic nutrient signals (macro-ish + key micronutrient proxies) from common foods.
+          Not perfect—good enough to teach your intuition with real numbers.
+        </p>
+      </div>
+    </section>
+
+    <section class="pane" data-title="Vein finders for neonatal patients">
+      <div class="card">
+        <div class="label">clinical tools</div>
+        <div class="title">Vein finders for neonatal patients</div>
+        <p class="desc">
+          Neonatal vein access should not depend on luck and experience alone. A tiny, affordable vein finder
+          designed specifically for neonates feels like an obvious missing object.
+        </p>
+      </div>
+    </section>
+
+    <section class="pane" data-title="Universal fall detection for old age homes">
+      <div class="card">
+        <div class="label">care systems</div>
+        <div class="title">Universal fall detection for old age homes</div>
+        <p class="desc">
+          Fall detection shouldn’t require buying a particular watch or brand ecosystem.
+          It should be universal, ambient, and opt-in—working across rooms, beds, and walkers.
+        </p>
+      </div>
+    </section>
+
+    <section class="pane" data-title="Desk plants that diagnose cancer">
+      <div class="card">
+        <div class="label">living sensors</div>
+        <div class="title">Desk plants that diagnose cancer</div>
+        <p class="desc">
+          It’s weird that plants aren’t part of diagnostics culture. A desk plant that responds (and is measured)
+          alongside human biomarkers—becoming a living, off-body sensing companion.
+        </p>
+      </div>
+    </section>
+
+    <section class="pane" data-title="Bio-secure safes and vaults">
+      <div class="card">
+        <div class="label">security × bio</div>
+        <div class="title">Bio-secure safes and vaults</div>
+        <p class="desc">
+          A safe that authenticates via biological liveness (not just a fingerprint) should be commonplace:
+          stress patterns, pulse presence, multi-signal confirmation—security that’s hard to spoof.
+        </p>
+      </div>
+    </section>
+
+    <section class="pane" data-title="Stick-on parking sensors for any vehicle">
+      <div class="card">
+        <div class="label">mobility × retrofit</div>
+        <div class="title">Stick-on parking sensors for any vehicle</div>
+        <p class="desc">
+          Parking sensors shouldn’t be “new-car privilege.” A universal stick-on kit that feels factory-fitted,
+          installs in minutes, and just works—why is this not everywhere?
+        </p>
+      </div>
+    </section>
+
+    <section class="pane" data-title="Crop-yield prediction from saplings">
+      <div class="card">
+        <div class="label">agri × forecasting</div>
+        <div class="title">Crop-yield prediction from saplings</div>
+        <p class="desc">
+          A way to estimate yield potential early—from sapling traits + simple environment signals—would change
+          planning, logistics, and risk. It’s weird this isn’t a farmer’s default tool.
+        </p>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="controls">
+    <button class="btn" id="prev">← Prev</button>
+    <div class="badge" id="counter">1 / 10</div>
+    <button class="btn" id="next">Next →</button>
+  </div>
+
+  <script type="module">
+    import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+
+    // ---------- Timing ----------
+    const GLOBE_HOLD_MS = 700;
+    const TEXT_HOLD_MS  = 1100;
+
+    // ---------- Three.js setup ----------
+    const canvas = document.getElementById("c");
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.Fog(0x05070b, 55, 220);
+
+    const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 500);
+    camera.position.set(0, 0, 120);
+
+    function resize(){
+      renderer.setSize(innerWidth, innerHeight, false);
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+    }
+    addEventListener("resize", resize);
+    resize();
+
+    // ---------- Particle system ----------
+    const COUNT = 24000;
+    const SPHERE_R = 46;
+    const TEXT_SCALE = 0.30;
+    const MORPH = 0.055;
+    const DRIFT = 0.09;
+    const THICKNESS = 10;
+
+    const pos = new Float32Array(COUNT*3);
+    const vel = new Float32Array(COUNT*3);
+    const target = new Float32Array(COUNT*3);
+    const sphere = new Float32Array(COUNT*3);
+
+    function randSpherePoint(r){
+      let x1, x2, s;
+      do { x1 = Math.random()*2 - 1; x2 = Math.random()*2 - 1; s = x1*x1 + x2*x2; } while (s >= 1 || s === 0);
+      const f = Math.sqrt(1 - s);
+      const x = 2 * x1 * f;
+      const y = 2 * x2 * f;
+      const z = 1 - 2 * s;
+      const jitter = (Math.random() - 0.5) * 2.2;
+      const rr = r + jitter;
+      return [x*rr, y*rr, z*rr];
+    }
+
+    for(let i=0;i<COUNT;i++){
+      const i3=i*3;
+      const [x,y,z] = randSpherePoint(SPHERE_R);
+      sphere[i3]=x; sphere[i3+1]=y; sphere[i3+2]=z;
+
+      pos[i3]=x; pos[i3+1]=y; pos[i3+2]=z;
+      target[i3]=x; target[i3+1]=y; target[i3+2]=z;
+
+      vel[i3]=(Math.random()-0.5)*0.02;
+      vel[i3+1]=(Math.random()-0.5)*0.02;
+      vel[i3+2]=(Math.random()-0.5)*0.02;
+    }
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+
+    const mat = new THREE.PointsMaterial({
+      color: 0xe9eef7,
+      size: 0.11,
+      sizeAttenuation: true,
+      transparent: true,
+      opacity: 0.92,
+      depthWrite: false
+    });
+
+    const points = new THREE.Points(geo, mat);
+    scene.add(points);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.65));
+
+    // ---------- Text to points ----------
+    const textCanvas = document.createElement("canvas");
+    const ctx = textCanvas.getContext("2d", { willReadFrequently:true });
+
+    function buildTextTargets(text){
+      const W = 1800, H = 520;
+      textCanvas.width = W; textCanvas.height = H;
+
+      ctx.clearRect(0,0,W,H);
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0,0,W,H);
+
+      ctx.fillStyle = "#fff";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      let fontSize = 150;
+      const maxWidth = W * 0.88;
+
+      function measure(fs){
+        ctx.font = `700 ${fs}px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial`;
+        return ctx.measureText(text).width;
+      }
+      while(measure(fontSize) > maxWidth && fontSize > 70) fontSize -= 6;
+
+      ctx.font = `700 ${fontSize}px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial`;
+      ctx.fillText(text, W/2, H/2);
+
+      const img = ctx.getImageData(0,0,W,H).data;
+
+      const pts = [];
+      const step = 3; // density
+      for(let y=0;y<H;y+=step){
+        for(let x=0;x<W;x+=step){
+          const idx = (y*W + x)*4;
+          if (img[idx] > 16) pts.push([x,y]);
         }
-    </script>
+      }
+      if (pts.length < 1000){
+        for(let i=0;i<2000;i++) pts.push([Math.random()*W, Math.random()*H]);
+      }
 
-    <script type="module">
-        import * as THREE from 'three';
+      const worldW = 140;
+      const worldH = 40;
+      const out = new Float32Array(COUNT*3);
 
-        // --- CONFIG ---
-        const PARTICLE_COUNT = 15000;
-        const CAM_Z = 12;
+      for(let i=0;i<COUNT;i++){
+        const p = pts[i % pts.length];
+        const nx = (p[0]/W - 0.5) * worldW;
+        const ny = -(p[1]/H - 0.5) * worldH;
+        const nz = (Math.random()-0.5) * THICKNESS;
 
-        // Global State
-        const handState = {
-            detected: false,
-            x: 0,
-            y: 0,
-            z: 0, // Depth estimation
-            pinching: false // Fist/Pinch detection
-        };
+        const i3=i*3;
+        out[i3]   = nx * TEXT_SCALE;
+        out[i3+1] = ny * TEXT_SCALE;
+        out[i3+2] = nz;
+      }
+      return out;
+    }
 
-        // --- 1. THREE.JS SETUP ---
-        const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x0a0a12, 0.02);
+    const textCache = new Map();
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
-        camera.position.z = CAM_Z;
+    function setTargetsSphere(){
+      target.set(sphere);
+      mode = "sphere";
+      burst = 0.0;
+    }
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.getElementById('canvas-container').appendChild(renderer.domElement);
+    function setTargetsText(text){
+      if(!textCache.has(text)) textCache.set(text, buildTextTargets(text));
+      target.set(textCache.get(text));
+      mode = "text";
+      burst = 1.0;
+    }
 
-        // --- 2. PARTICLE SYSTEM ---
-        const geometry = new THREE.BufferGeometry();
-        const positions = new Float32Array(PARTICLE_COUNT * 3);
-        const velocities = new Float32Array(PARTICLE_COUNT * 3);
-        const colors = new Float32Array(PARTICLE_COUNT * 3);
-        
-        const baseColor = new THREE.Color(0x00ffcc);
-        const activeColor = new THREE.Color(0xff3366);
+    // ---------- Globe spin + animation ----------
+    let mode = "sphere";
+    let burst = 0.0;
+    let globeSpin = 0.0;
 
-        for(let i=0; i<PARTICLE_COUNT; i++) {
-            positions[i*3] = (Math.random()-0.5) * 20;
-            positions[i*3+1] = (Math.random()-0.5) * 10;
-            positions[i*3+2] = (Math.random()-0.5) * 10;
-            
-            colors[i*3] = baseColor.r;
-            colors[i*3+1] = baseColor.g;
-            colors[i*3+2] = baseColor.b;
-        }
+    let mx=0, my=0;
+    addEventListener("mousemove", (e)=>{
+      mx = (e.clientX/innerWidth - 0.5);
+      my = (e.clientY/innerHeight - 0.5);
+    });
 
-        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    const clock = new THREE.Clock();
 
-        const material = new THREE.PointsMaterial({
-            size: 0.1,
-            vertexColors: true,
-            blending: THREE.AdditiveBlending,
-            depthWrite: false,
-            transparent: true,
-            opacity: 0.8
-        });
+    function tick(){
+      requestAnimationFrame(tick);
+      const t = clock.getElapsedTime();
 
-        const particles = new THREE.Points(geometry, material);
-        scene.add(particles);
+      camera.position.x += ((mx*10) - camera.position.x) * 0.02;
+      camera.position.y += ((-my*6) - camera.position.y) * 0.02;
+      camera.lookAt(0,0,0);
 
-        // Hand Marker (The glowing orb following your hand)
-        const markerGeo = new THREE.IcosahedronGeometry(0.5, 0);
-        const markerMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true });
-        const handMarker = new THREE.Mesh(markerGeo, markerMat);
-        scene.add(handMarker);
+      if (burst > 0.0001){
+        globeSpin += 0.18 * burst;
+        burst *= 0.94;
+      } else {
+        globeSpin += (mode === "sphere" ? 0.0035 : 0.0018);
+      }
 
+      points.rotation.y = globeSpin;
+      points.rotation.x = Math.sin(t*0.12) * 0.08;
 
-        // --- 3. MEDIAPIPE LOGIC ---
-        
-        const videoElement = document.getElementsByClassName('input_video')[0];
-        const statusText = document.getElementById('system-status');
-        const gestureText = document.getElementById('gesture-indicator');
-        const loader = document.getElementById('loader');
+      for(let i=0;i<COUNT;i++){
+        const i3=i*3;
 
-        function onResults(results) {
-            // Hide loader on first successful frame
-            if(loader.style.display !== 'none') {
-                loader.style.display = 'none';
-                statusText.innerText = "LINK ESTABLISHED";
-            }
+        vel[i3]   += Math.sin(t*0.7 + pos[i3+1]*0.06) * 0.00055;
+        vel[i3+1] += Math.cos(t*0.8 + pos[i3]*0.06)   * 0.00055;
+        vel[i3+2] += Math.sin(t*0.6 + pos[i3]*0.05)   * 0.00035;
 
-            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-                handState.detected = true;
-                
-                // Get the first hand detected
-                const landmarks = results.multiHandLandmarks[0];
-                
-                // Index Finger Tip (Landmark 8) for position
-                // We flip X because webcam is mirrored
-                const x = (1 - landmarks[8].x) * 2 - 1; 
-                const y = -(landmarks[8].y * 2 - 1);
-                
-                // Map 2D normalized coords to 3D world coords roughly
-                // At z=0, the view width is approx: tan(fov/2) * dist * 2 * aspect
-                // For simplified mapping:
-                const viewWidth = 15; 
-                const viewHeight = 8;
-                
-                handState.x = x * viewWidth;
-                handState.y = y * viewHeight;
+        vel[i3]   *= 0.982;
+        vel[i3+1] *= 0.982;
+        vel[i3+2] *= 0.982;
 
-                // DETECT GESTURE (Open Hand vs Fist)
-                // Logic: Check distance between wrist (0) and finger tips (8, 12, 16, 20)
-                // If tips are close to wrist => Fist.
-                
-                const wrist = landmarks[0];
-                const middleTip = landmarks[12];
-                const ringTip = landmarks[16];
-                
-                // Simple distance check
-                const dMiddle = Math.hypot(middleTip.x - wrist.x, middleTip.y - wrist.y);
-                const dRing = Math.hypot(ringTip.x - wrist.x, ringTip.y - wrist.y);
+        pos[i3]   += (target[i3]   - pos[i3])   * MORPH + vel[i3]*DRIFT;
+        pos[i3+1] += (target[i3+1] - pos[i3+1]) * MORPH + vel[i3+1]*DRIFT;
+        pos[i3+2] += (target[i3+2] - pos[i3+2]) * MORPH + vel[i3+2]*DRIFT;
+      }
 
-                if (dMiddle < 0.3 && dRing < 0.3) {
-                    handState.pinching = true;
-                    gestureText.innerText = "STATUS: FOCUSING";
-                    gestureText.style.borderColor = "#ff3366";
-                    gestureText.style.color = "#ff3366";
-                } else {
-                    handState.pinching = false;
-                    gestureText.innerText = "STATUS: NURTURING";
-                    gestureText.style.borderColor = "#00ffcc";
-                    gestureText.style.color = "#00ffcc";
-                }
+      geo.attributes.position.needsUpdate = true;
+      renderer.render(scene, camera);
+    }
+    tick();
 
-            } else {
-                handState.detected = false;
-                gestureText.innerText = "NO SIGNAL";
-                gestureText.style.borderColor = "#555";
-                gestureText.style.color = "#555";
-            }
-        }
+    // ---------- Globe → Text → Globe sequencing ----------
+    let seqToken = 0;
 
-        const hands = new Hands({locateFile: (file) => {
-            return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
-        }});
+    function runSequenceForTitle(title){
+      const token = ++seqToken;
 
-        hands.setOptions({
-            maxNumHands: 1,
-            modelComplexity: 1,
-            minDetectionConfidence: 0.5,
-            minTrackingConfidence: 0.5
-        });
+      // Always start at globe
+      setTargetsSphere();
 
-        hands.onResults(onResults);
+      // Globe hold -> text
+      setTimeout(() => {
+        if (token !== seqToken) return;
+        setTargetsText(title);
 
-        const cam = new Camera(videoElement, {
-            onFrame: async () => {
-                await hands.send({image: videoElement});
-            },
-            width: 320,
-            height: 240
-        });
-        
-        cam.start();
+        // Text hold -> globe
+        setTimeout(() => {
+          if (token !== seqToken) return;
+          setTargetsSphere();
+        }, TEXT_HOLD_MS);
 
+      }, GLOBE_HOLD_MS);
+    }
 
-        // --- 4. ANIMATION LOOP ---
+    // ---------- Scroll activation ----------
+    const panes = Array.from(document.querySelectorAll(".pane"));
+    const counter = document.getElementById("counter");
 
-        const clock = new THREE.Clock();
+    let activeIndex = 0;
+    function updateCounter(){
+      counter.textContent = `${activeIndex+1} / ${panes.length}`;
+    }
+    updateCounter();
 
-        function animate() {
-            requestAnimationFrame(animate);
-            const time = clock.getElapsedTime();
+    function activateIndex(idx){
+      idx = Math.max(0, Math.min(panes.length-1, idx));
+      activeIndex = idx;
+      updateCounter();
+      const title = panes[idx].getAttribute("data-title") || "Untitled";
+      runSequenceForTitle(title);
+    }
 
-            // Move Marker
-            if(handState.detected) {
-                // Smooth lerp to hand position
-                handMarker.position.x += (handState.x - handMarker.position.x) * 0.2;
-                handMarker.position.y += (handState.y - handMarker.position.y) * 0.2;
-                handMarker.rotation.x += 0.05;
-                handMarker.rotation.y += 0.05;
-                handMarker.visible = true;
-            } else {
-                handMarker.visible = false;
-            }
+    const io = new IntersectionObserver((entries)=>{
+      const best = entries
+        .filter(e=>e.isIntersecting)
+        .sort((a,b)=>b.intersectionRatio - a.intersectionRatio)[0];
+      if(!best) return;
+      const idx = panes.indexOf(best.target);
+      if(idx !== -1 && idx !== activeIndex){
+        activateIndex(idx);
+      }
+    }, { threshold:[0.35, 0.55, 0.75] });
 
-            // Particle Physics
-            const pos = geometry.attributes.position.array;
-            const col = geometry.attributes.color.array;
+    panes.forEach(p=>io.observe(p));
 
-            // Define target (Hand or Center)
-            const tx = handState.detected ? handMarker.position.x : 0;
-            const ty = handState.detected ? handMarker.position.y : 0;
-            const tz = handState.detected ? 0 : 0;
+    // Buttons
+    document.getElementById("prev").addEventListener("click", ()=>{
+      const nextIdx = Math.max(0, activeIndex - 1);
+      panes[nextIdx].scrollIntoView({ behavior:"smooth" });
+      activateIndex(nextIdx);
+    });
+    document.getElementById("next").addEventListener("click", ()=>{
+      const nextIdx = Math.min(panes.length-1, activeIndex + 1);
+      panes[nextIdx].scrollIntoView({ behavior:"smooth" });
+      activateIndex(nextIdx);
+    });
 
-            for(let i=0; i<PARTICLE_COUNT; i++) {
-                const px = pos[i*3];
-                const py = pos[i*3+1];
-                const pz = pos[i*3+2];
+    // Keyboard
+    addEventListener("keydown", (e)=>{
+      if (e.key === "ArrowDown" || e.key === "PageDown") document.getElementById("next").click();
+      if (e.key === "ArrowUp"   || e.key === "PageUp")   document.getElementById("prev").click();
+      if (e.key === "Enter") activateIndex(activeIndex); // replay sequence
+    });
 
-                const dx = tx - px;
-                const dy = ty - py;
-                const dz = tz - pz;
-                
-                const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
-                
-                // BEHAVIOR LOGIC
-                
-                if (handState.detected && handState.pinching) {
-                    // FIST: High Gravity / Black Hole
-                    // Strong pull towards center
-                    velocities[i*3]   += dx * 0.003;
-                    velocities[i*3+1] += dy * 0.003;
-                    velocities[i*3+2] += dz * 0.003;
-                    
-                    // Turn Red
-                    col[i*3] = THREE.MathUtils.lerp(col[i*3], activeColor.r, 0.1);
-                    col[i*3+1] = THREE.MathUtils.lerp(col[i*3+1], activeColor.g, 0.1);
-                    col[i*3+2] = THREE.MathUtils.lerp(col[i*3+2], activeColor.b, 0.1);
-
-                } else if (handState.detected) {
-                    // OPEN HAND: Gentle Orbit / Swarm
-                    // Pull is weaker
-                    const force = 0.0005;
-                    velocities[i*3]   += dx * force;
-                    velocities[i*3+1] += dy * force;
-                    velocities[i*3+2] += dz * force;
-
-                    // Add Swirl (Cross product roughly)
-                    velocities[i*3]   += -dy * 0.001; 
-                    velocities[i*3+1] += dx * 0.001; 
-
-                    // Turn Cyan
-                    col[i*3] = THREE.MathUtils.lerp(col[i*3], baseColor.r, 0.1);
-                    col[i*3+1] = THREE.MathUtils.lerp(col[i*3+1], baseColor.g, 0.1);
-                    col[i*3+2] = THREE.MathUtils.lerp(col[i*3+2], baseColor.b, 0.1);
-                } else {
-                    // IDLE: Return to center slowly + noise
-                    velocities[i*3]   += (-px) * 0.0001;
-                    velocities[i*3+1] += (-py) * 0.0001;
-                    velocities[i*3+2] += (-pz) * 0.0001;
-                    
-                    // Float around
-                    velocities[i*3]   += Math.sin(time + py) * 0.0002;
-                    velocities[i*3+1] += Math.cos(time + px) * 0.0002;
-                }
-
-                // Apply Velocity
-                pos[i*3]   += velocities[i*3];
-                pos[i*3+1] += velocities[i*3+1];
-                pos[i*3+2] += velocities[i*3+2];
-
-                // Friction (Air resistance)
-                // Lower friction = more chaotic, Higher = more controlled
-                velocities[i*3]   *= 0.96;
-                velocities[i*3+1] *= 0.96;
-                velocities[i*3+2] *= 0.96;
-            }
-
-            geometry.attributes.position.needsUpdate = true;
-            geometry.attributes.color.needsUpdate = true;
-            renderer.render(scene, camera);
-        }
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        animate();
-
-    </script>
+    // Start at first idea
+    activateIndex(0);
+  </script>
 </body>
 </html>
