@@ -11,13 +11,17 @@
       --muted:rgba(233,238,247,.60);
       --border:rgba(255,255,255,.08);
     }
-    html,body{height:100%; margin:0; background:var(--bg); color:var(--fg);
+    html,body{
+      height:100%;
+      margin:0;
+      background:var(--bg);
+      color:var(--fg);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
       overflow:hidden;
     }
     canvas{position:fixed; inset:0;}
 
-    /* Minimal hint only (optional) */
+    /* Tiny hint (optional). Remove if you want a pure visuals-only page. */
     .hint{
       position:fixed; left:18px; bottom:16px; z-index:2;
       font-size:12px; color:var(--muted);
@@ -33,12 +37,14 @@
 </head>
 <body>
   <canvas id="c"></canvas>
-  <div class="hint">Scroll / ← → to change idea • Space to replay</div>
+  <div class="hint">Scroll / ← → to change idea • Space to replay • Click to advance</div>
 
   <script type="module">
     import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
-    // ---------- Content ----------
+    // =========================
+    // Content
+    // =========================
     const HEADLINE = "Things that should exist, but don't:";
     const IDEAS = [
       "Emotionally aware GPS",
@@ -53,14 +59,24 @@
       "Crop-yield prediction from saplings"
     ];
 
-    // ---------- Timing ----------
+    // =========================
+    // Timing
+    // =========================
     const GLOBE_HOLD_MS = 650;
     const TEXT_HOLD_MS  = 1100;
+    const SHOW_HEADLINE_ON_LOAD = true;
 
-    // Also show headline between ideas? (set true to do globe→headline→globe→idea each time)
-    const SHOW_HEADLINE_FIRST = true;  // plays once on load
+    // =========================
+    // Globe realism: continents mask
+    // Uses a real Earth texture (equirectangular).
+    // We sample pixels to decide if a lat/lon is land or ocean.
+    // =========================
+    const EARTH_TEX_URL =
+      "https://threejs.org/examples/textures/land_ocean_ice_cloud_2048.jpg";
 
-    // ---------- Three.js setup ----------
+    // =========================
+    // Three.js setup
+    // =========================
     const canvas = document.getElementById("c");
     const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
     renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -70,6 +86,7 @@
 
     const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 600);
     camera.position.set(0, 0, 135);
+    camera.lookAt(0,0,0);
 
     function resize(){
       renderer.setSize(innerWidth, innerHeight, false);
@@ -79,74 +96,210 @@
     addEventListener("resize", resize);
     resize();
 
-    // ---------- Particles ----------
-    const COUNT = 26000;     // dense, but still browser-friendly
+    scene.add(new THREE.AmbientLight(0xffffff, 0.75));
+
+    // =========================
+    // Particles config
+    // =========================
+    const TOTAL = 28000;             // total particles on-screen
+    const LAND_COUNT = 9000;         // land points (continents)
+    const OCEAN_COUNT = TOTAL - LAND_COUNT;
+
     const SPHERE_R = 50;
 
-    const MORPH = 0.052;     // morph speed
-    const DRIFT = 0.08;      // turbulence effect
-    const THICKNESS = 9;     // text depth
+    // motion / morph
+    const MORPH = 0.052;
+    const DRIFT = 0.08;
+    const THICKNESS = 9;             // depth thickness for text
 
-    // Text sizing: we map text canvas -> world units
-    const TEXT_WORLD_W = 165;   // wider = larger text in world coords
+    // text sizing
+    const TEXT_WORLD_W = 165;
     const TEXT_WORLD_H = 48;
-    const TEXT_SCALE   = 0.33;  // global scale factor
+    const TEXT_SCALE   = 0.33;
 
-    const pos = new Float32Array(COUNT*3);
-    const vel = new Float32Array(COUNT*3);
-    const target = new Float32Array(COUNT*3);
-    const sphere = new Float32Array(COUNT*3);
-
-    function randSpherePoint(r){
+    // =========================
+    // Helpers
+    // =========================
+    function randUnitSphere(){
       // Marsaglia
       let x1, x2, s;
-      do { x1 = Math.random()*2 - 1; x2 = Math.random()*2 - 1; s = x1*x1 + x2*x2; }
-      while (s >= 1 || s === 0);
+      do {
+        x1 = Math.random()*2 - 1;
+        x2 = Math.random()*2 - 1;
+        s = x1*x1 + x2*x2;
+      } while (s >= 1 || s === 0);
       const f = Math.sqrt(1 - s);
       const x = 2 * x1 * f;
       const y = 2 * x2 * f;
       const z = 1 - 2 * s;
-
-      // slight radial jitter to feel like a "globe volume"
-      const jitter = (Math.random() - 0.5) * 3.0;
-      const rr = r + jitter;
-      return [x*rr, y*rr, z*rr];
+      return [x,y,z];
     }
 
-    for(let i=0;i<COUNT;i++){
-      const i3=i*3;
-      const [x,y,z] = randSpherePoint(SPHERE_R);
-
-      sphere[i3]=x; sphere[i3+1]=y; sphere[i3+2]=z;
-      pos[i3]=x; pos[i3+1]=y; pos[i3+2]=z;
-      target[i3]=x; target[i3+1]=y; target[i3+2]=z;
-
-      vel[i3]=(Math.random()-0.5)*0.02;
-      vel[i3+1]=(Math.random()-0.5)*0.02;
-      vel[i3+2]=(Math.random()-0.5)*0.02;
+    function lonLatToUV(lonRad, latRad){
+      // equirectangular: u: [0..1] from lon [-π..π], v: [0..1] from lat [-π/2..π/2]
+      const u = (lonRad + Math.PI) / (2*Math.PI);
+      const v = 1 - ((latRad + Math.PI/2) / Math.PI);
+      return [u,v];
     }
 
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    function vecToLonLat(x,y,z){
+      // unit sphere vector -> lon/lat
+      const lat = Math.asin(THREE.MathUtils.clamp(y, -1, 1));
+      const lon = Math.atan2(z, x); // note: lon around y-axis; x-z plane
+      return [lon, lat];
+    }
 
-    const mat = new THREE.PointsMaterial({
-      color: 0xe9eef7,
-      size: 0.115,
-      sizeAttenuation: true,
-      transparent: true,
-      opacity: 0.92,
-      depthWrite: false
-    });
+    // =========================
+    // Load earth texture into a canvas for sampling
+    // =========================
+    async function loadEarthSampler(url){
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          const c = document.createElement("canvas");
+          c.width = img.width;
+          c.height = img.height;
+          const ctx = c.getContext("2d", { willReadFrequently:true });
+          ctx.drawImage(img, 0, 0);
+          const data = ctx.getImageData(0, 0, c.width, c.height).data;
 
-    const points = new THREE.Points(geo, mat);
-    scene.add(points);
-    scene.add(new THREE.AmbientLight(0xffffff, 0.70));
+          function sample(u, v){
+            // clamp
+            u = Math.min(0.999999, Math.max(0, u));
+            v = Math.min(0.999999, Math.max(0, v));
+            const x = Math.floor(u * c.width);
+            const y = Math.floor(v * c.height);
+            const idx = (y * c.width + x) * 4;
+            return [data[idx], data[idx+1], data[idx+2]]; // r,g,b
+          }
 
-    // ---------- Text -> points (canvas sampling) ----------
+          resolve({ width: c.width, height: c.height, sample });
+        };
+        img.onerror = (e) => reject(e);
+        img.src = url;
+      });
+    }
+
+    // Heuristic: classify as land vs ocean based on pixel color
+    // The texture is photographic-ish, but oceans tend to be more blue.
+    function isLandRGB(r,g,b){
+      // Blue-dominant tends to be ocean; land tends to have higher (g+r) relative to b.
+      const blueDominant = (b > r + 18) && (b > g + 18);
+      if (blueDominant) return false;
+
+      // near-white (ice/clouds) could be tricky; treat bright whites as land to keep continents/ice visible
+      const bright = (r+g+b) > 630;
+      if (bright) return true;
+
+      // Otherwise: land-ish if red+green outweigh blue a bit
+      return (r + g) > (b * 1.08);
+    }
+
+    // =========================
+    // Build globe point sets (ocean sphere + land continents)
+    // =========================
+    async function buildGlobePoints(){
+      const sampler = await loadEarthSampler(EARTH_TEX_URL);
+
+      const oceanSphere = new Float32Array(OCEAN_COUNT * 3);
+      const landSphere  = new Float32Array(LAND_COUNT * 3);
+
+      // Ocean: uniform sphere points with slight radial jitter (globe volume feel)
+      for (let i=0;i<OCEAN_COUNT;i++){
+        const i3 = i*3;
+        const [ux,uy,uz] = randUnitSphere();
+        const jitter = (Math.random()-0.5)*3.0;
+        const rr = SPHERE_R + jitter;
+        oceanSphere[i3] = ux*rr;
+        oceanSphere[i3+1] = uy*rr;
+        oceanSphere[i3+2] = uz*rr;
+      }
+
+      // Land: rejection sampling on sphere surface using texture mask
+      let placed = 0;
+      let safety = 0;
+
+      while (placed < LAND_COUNT && safety < LAND_COUNT * 60){
+        safety++;
+        const [ux,uy,uz] = randUnitSphere();
+
+        // Convert to lon/lat and sample texture
+        const [lon, lat] = vecToLonLat(ux,uy,uz);
+        const [u,v] = lonLatToUV(lon, lat);
+        const [r,g,b] = sampler.sample(u,v);
+
+        if (!isLandRGB(r,g,b)) continue;
+
+        const i3 = placed*3;
+        // Keep land points closer to surface (less radial jitter) so continents look crisp
+        const rr = SPHERE_R + (Math.random()-0.5)*0.7;
+        landSphere[i3] = ux*rr;
+        landSphere[i3+1] = uy*rr;
+        landSphere[i3+2] = uz*rr;
+        placed++;
+      }
+
+      // If mask sampling fails for some reason (CORS / texture), fallback to “all land”
+      if (placed < LAND_COUNT){
+        for (let i=placed;i<LAND_COUNT;i++){
+          const i3 = i*3;
+          const [ux,uy,uz] = randUnitSphere();
+          const rr = SPHERE_R + (Math.random()-0.5)*0.7;
+          landSphere[i3] = ux*rr;
+          landSphere[i3+1] = uy*rr;
+          landSphere[i3+2] = uz*rr;
+        }
+      }
+
+      return { oceanSphere, landSphere };
+    }
+
+    // =========================
+    // Particle systems (two layers)
+    // =========================
+    function makeParticleLayer(count, basePositions, materialOpts){
+      const pos = new Float32Array(count*3);
+      const vel = new Float32Array(count*3);
+      const tgt = new Float32Array(count*3);
+
+      pos.set(basePositions);
+      tgt.set(basePositions);
+
+      for (let i=0;i<count;i++){
+        const i3=i*3;
+        vel[i3]=(Math.random()-0.5)*0.02;
+        vel[i3+1]=(Math.random()-0.5)*0.02;
+        vel[i3+2]=(Math.random()-0.5)*0.02;
+      }
+
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+
+      const mat = new THREE.PointsMaterial({
+        color: 0xe9eef7,
+        size: 0.115,
+        sizeAttenuation: true,
+        transparent: true,
+        opacity: 0.92,
+        depthWrite: false,
+        ...materialOpts
+      });
+
+      const pts = new THREE.Points(geo, mat);
+      scene.add(pts);
+
+      return { count, pos, vel, tgt, base: basePositions, geo, pts, mat };
+    }
+
+    // =========================
+    // Text -> points (center-corrected)
+    // We compute the REAL bounding box of sampled pixels and center to (0,0,0).
+    // =========================
     const textCanvas = document.createElement("canvas");
     const ctx = textCanvas.getContext("2d", { willReadFrequently:true });
 
-    function buildTextTargets(text){
+    function buildTextTargets(text, count){
       const W = 2000, H = 600;
       textCanvas.width = W;
       textCanvas.height = H;
@@ -172,27 +325,42 @@
       ctx.font = `700 ${fontSize}px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial`;
       ctx.fillText(text, W/2, H/2);
 
-      // Sample pixels for points
       const img = ctx.getImageData(0,0,W,H).data;
 
+      // Collect pixels + bounding box
       const pts = [];
-      const step = 3; // density (2 = denser)
+      let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
+
+      const step = 3; // density; set to 2 for denser text
       for(let y=0;y<H;y+=step){
         for(let x=0;x<W;x+=step){
           const idx = (y*W + x)*4;
-          if (img[idx] > 16) pts.push([x,y]);
+          if (img[idx] > 16) {
+            pts.push([x,y]);
+            if(x < minX) minX = x;
+            if(y < minY) minY = y;
+            if(x > maxX) maxX = x;
+            if(y > maxY) maxY = y;
+          }
         }
       }
+
       if (pts.length < 1200){
-        for(let i=0;i<4000;i++) pts.push([Math.random()*W, Math.random()*H]);
+        for(let i=0;i<4000;i++) pts.push([W/2, H/2]);
+        minX = maxX = W/2;
+        minY = maxY = H/2;
       }
 
-      // Map to world coords centered at origin
-      const out = new Float32Array(COUNT*3);
-      for(let i=0;i<COUNT;i++){
+      const cx = (minX + maxX) / 2;
+      const cy = (minY + maxY) / 2;
+
+      const out = new Float32Array(count*3);
+      for(let i=0;i<count;i++){
         const p = pts[i % pts.length];
-        const nx = (p[0]/W - 0.5) * TEXT_WORLD_W;
-        const ny = -(p[1]/H - 0.5) * TEXT_WORLD_H;
+
+        // Centered, normalized map to world
+        const nx = (p[0] - cx) * (TEXT_WORLD_W / W);
+        const ny = -(p[1] - cy) * (TEXT_WORLD_H / H);
         const nz = (Math.random()-0.5) * THICKNESS;
 
         const i3=i*3;
@@ -204,74 +372,39 @@
     }
 
     const textCache = new Map();
-    function getTextTargets(text){
-      if(!textCache.has(text)) textCache.set(text, buildTextTargets(text));
-      return textCache.get(text);
+    function getTextTargets(text, count){
+      const key = text + "::" + count;
+      if(!textCache.has(key)) textCache.set(key, buildTextTargets(text, count));
+      return textCache.get(key);
     }
 
-    function setTargetsSphere(){
-      target.set(sphere);
-      mode = "sphere";
-      burst = 0.0;
-    }
-    function setTargetsText(text){
-      target.set(getTextTargets(text));
-      mode = "text";
-      burst = 1.0; // spin burst
-    }
-
-    // ---------- Motion ----------
+    // =========================
+    // Sequencing / Animation state
+    // =========================
+    let oceanLayer, landLayer;
     let mode = "sphere";
     let burst = 0.0;
     let globeSpin = 0.0;
-
-    // Keep the globe centered: no camera parallax shifting.
-    // (We still add gentle rotation + breathing.)
-    const clock = new THREE.Clock();
-
-    function tick(){
-      requestAnimationFrame(tick);
-      const t = clock.getElapsedTime();
-
-      // Spin burst on transitions
-      if (burst > 0.0001){
-        globeSpin += 0.20 * burst;
-        burst *= 0.94;
-      } else {
-        globeSpin += (mode === "sphere" ? 0.0036 : 0.0018);
-      }
-
-      points.rotation.y = globeSpin;
-      points.rotation.x = Math.sin(t*0.10) * 0.07;
-
-      // Morph + subtle turbulence
-      for(let i=0;i<COUNT;i++){
-        const i3=i*3;
-
-        vel[i3]   += Math.sin(t*0.7 + pos[i3+1]*0.06) * 0.00052;
-        vel[i3+1] += Math.cos(t*0.8 + pos[i3]*0.06)   * 0.00052;
-        vel[i3+2] += Math.sin(t*0.6 + pos[i3]*0.05)   * 0.00034;
-
-        vel[i3]   *= 0.982;
-        vel[i3+1] *= 0.982;
-        vel[i3+2] *= 0.982;
-
-        pos[i3]   += (target[i3]   - pos[i3])   * MORPH + vel[i3]*DRIFT;
-        pos[i3+1] += (target[i3+1] - pos[i3+1]) * MORPH + vel[i3+1]*DRIFT;
-        pos[i3+2] += (target[i3+2] - pos[i3+2]) * MORPH + vel[i3+2]*DRIFT;
-      }
-
-      geo.attributes.position.needsUpdate = true;
-      renderer.render(scene, camera);
-    }
-    tick();
-
-    // ---------- Sequencing ----------
     let seqToken = 0;
+    let idx = 0;
+
+    function setTargetsSphere(){
+      oceanLayer.tgt.set(oceanLayer.base);
+      landLayer.tgt.set(landLayer.base);
+      mode = "sphere";
+      burst = 0.0;
+    }
+
+    function setTargetsText(text){
+      // Both layers form the same text (so the whole mass becomes the words)
+      oceanLayer.tgt.set(getTextTargets(text, oceanLayer.count));
+      landLayer.tgt.set(getTextTargets(text, landLayer.count));
+      mode = "text";
+      burst = 1.0;
+    }
 
     function playGlobeToTextToGlobe(text){
       const token = ++seqToken;
-
       setTargetsSphere();
 
       setTimeout(() => {
@@ -286,49 +419,83 @@
       }, GLOBE_HOLD_MS);
     }
 
-    // ---------- Idea navigation (no visible cards) ----------
-    let idx = 0;
-
     function playCurrentIdea(){
       playGlobeToTextToGlobe(IDEAS[idx]);
     }
-
-    // On load: headline (particles), then first idea
-    async function start(){
-      if (SHOW_HEADLINE_FIRST){
-        playGlobeToTextToGlobe(HEADLINE);
-        // after headline sequence ends, play first idea
-        setTimeout(() => {
-          // ensure we didn't cancel
-          if (seqToken === 1) playCurrentIdea();
-        }, GLOBE_HOLD_MS + TEXT_HOLD_MS + 80);
-      } else {
-        playCurrentIdea();
-      }
-    }
-    start();
 
     function nextIdea(){
       idx = (idx + 1) % IDEAS.length;
       playCurrentIdea();
     }
+
     function prevIdea(){
       idx = (idx - 1 + IDEAS.length) % IDEAS.length;
       playCurrentIdea();
     }
 
-    // Scroll wheel: step through ideas (debounced)
+    // =========================
+    // Render loop
+    // =========================
+    const clock = new THREE.Clock();
+
+    function stepLayer(layer, t){
+      const { count, pos, vel, tgt } = layer;
+
+      for(let i=0;i<count;i++){
+        const i3=i*3;
+
+        // tiny turbulence
+        vel[i3]   += Math.sin(t*0.7 + pos[i3+1]*0.06) * 0.00052;
+        vel[i3+1] += Math.cos(t*0.8 + pos[i3]*0.06)   * 0.00052;
+        vel[i3+2] += Math.sin(t*0.6 + pos[i3]*0.05)   * 0.00034;
+
+        vel[i3]   *= 0.982;
+        vel[i3+1] *= 0.982;
+        vel[i3+2] *= 0.982;
+
+        pos[i3]   += (tgt[i3]   - pos[i3])   * MORPH + vel[i3]*DRIFT;
+        pos[i3+1] += (tgt[i3+1] - pos[i3+1]) * MORPH + vel[i3+1]*DRIFT;
+        pos[i3+2] += (tgt[i3+2] - pos[i3+2]) * MORPH + vel[i3+2]*DRIFT;
+      }
+
+      layer.geo.attributes.position.needsUpdate = true;
+    }
+
+    function animate(){
+      requestAnimationFrame(animate);
+      const t = clock.getElapsedTime();
+
+      // spin burst
+      if (burst > 0.0001){
+        globeSpin += 0.20 * burst;
+        burst *= 0.94;
+      } else {
+        globeSpin += (mode === "sphere" ? 0.0036 : 0.0018);
+      }
+
+      // keep centered
+      oceanLayer.pts.rotation.y = globeSpin;
+      landLayer.pts.rotation.y  = globeSpin;
+      oceanLayer.pts.rotation.x = Math.sin(t*0.10) * 0.07;
+      landLayer.pts.rotation.x  = Math.sin(t*0.10) * 0.07;
+
+      stepLayer(oceanLayer, t);
+      stepLayer(landLayer, t);
+
+      renderer.render(scene, camera);
+    }
+
+    // =========================
+    // Input
+    // =========================
     let wheelLock = false;
     addEventListener("wheel", (e)=>{
       if (wheelLock) return;
       wheelLock = true;
       setTimeout(()=> wheelLock=false, 380);
-
-      if (e.deltaY > 0) nextIdea();
-      else prevIdea();
+      if (e.deltaY > 0) nextIdea(); else prevIdea();
     }, { passive:true });
 
-    // Keys
     addEventListener("keydown", (e)=>{
       if (e.key === "ArrowRight" || e.key === "ArrowDown") nextIdea();
       if (e.key === "ArrowLeft"  || e.key === "ArrowUp")   prevIdea();
@@ -336,9 +503,33 @@
       if (e.key === "Enter") { playGlobeToTextToGlobe(HEADLINE); }
     });
 
-    // Optional: tap/click advances
     addEventListener("pointerdown", ()=> nextIdea());
 
+    // =========================
+    // Boot
+    // =========================
+    (async function init(){
+      const { oceanSphere, landSphere } = await buildGlobePoints();
+
+      // Ocean layer slightly dimmer/smaller; Land layer slightly stronger
+      oceanLayer = makeParticleLayer(OCEAN_COUNT, oceanSphere, { opacity: 0.72, size: 0.105 });
+      landLayer  = makeParticleLayer(LAND_COUNT,  landSphere,  { opacity: 0.98, size: 0.125 });
+
+      // Start idle as globe
+      setTargetsSphere();
+
+      // Sequence on load
+      if (SHOW_HEADLINE_ON_LOAD){
+        playGlobeToTextToGlobe(HEADLINE);
+        setTimeout(() => {
+          if (seqToken === 1) playCurrentIdea();
+        }, GLOBE_HOLD_MS + TEXT_HOLD_MS + 120);
+      } else {
+        playCurrentIdea();
+      }
+
+      animate();
+    })();
   </script>
 </body>
 </html>
