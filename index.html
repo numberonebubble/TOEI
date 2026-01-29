@@ -8,230 +8,57 @@
     :root{
       --bg:#05070b;
       --fg:#e9eef7;
-      --muted:rgba(233,238,247,.72);
-      --card:rgba(10,14,24,.52);
-      --cardBorder:rgba(255,255,255,.08);
+      --muted:rgba(233,238,247,.60);
+      --border:rgba(255,255,255,.08);
     }
     html,body{height:100%; margin:0; background:var(--bg); color:var(--fg);
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;}
-    canvas{position:fixed; inset:0; z-index:0;}
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      overflow:hidden;
+    }
+    canvas{position:fixed; inset:0;}
 
-    .top{
-      position:fixed; left:0; right:0; top:0; z-index:2;
-      padding:18px 18px 0;
-      pointer-events:none;
-      backdrop-filter: blur(10px);
-      background: linear-gradient(to bottom, rgba(5,7,11,.84), rgba(5,7,11,.10));
-      border-bottom:1px solid rgba(255,255,255,.06);
-    }
-    .kicker{ font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); }
-    .headline{ margin:6px 0 10px; font-size:18px; font-weight:650; color:rgba(233,238,247,.92); }
-    .sub{ margin:0 0 12px; font-size:12px; color:rgba(233,238,247,.58); max-width:78ch; line-height:1.35; }
-
-    .scroll{
-      position:relative;
-      z-index:1;
-      height:100vh;
-      overflow-y:auto;
-      scroll-snap-type:y mandatory;
-      scroll-behavior:smooth;
-    }
-    .pane{
-      height:100vh;
-      scroll-snap-align:start;
-      display:flex;
-      align-items:flex-end;
-      justify-content:center;
-      padding:18px;
-      box-sizing:border-box;
-    }
-    .card{
-      width:min(920px, 92vw);
-      background:var(--card);
-      border:1px solid var(--cardBorder);
-      border-radius:22px;
-      box-shadow:0 30px 120px rgba(0,0,0,.45);
-      padding:18px 18px;
-      backdrop-filter: blur(12px);
-    }
-    .card .label{ font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
-    .card .title{ margin:8px 0 8px; font-size:20px; font-weight:650; }
-    .card .desc{ margin:0; color:rgba(233,238,247,.75); font-size:14px; line-height:1.55; max-width:90ch; }
-
-    .controls{
-      position:fixed; left:0; right:0; bottom:0; z-index:2;
-      display:flex; justify-content:space-between; align-items:center;
-      padding:0 18px 18px;
-      gap:12px;
-      pointer-events:none;
-    }
-    .btn{
-      pointer-events:auto;
-      background:rgba(255,255,255,.04);
-      border:1px solid rgba(255,255,255,.10);
-      color:var(--fg);
+    /* Minimal hint only (optional) */
+    .hint{
+      position:fixed; left:18px; bottom:16px; z-index:2;
+      font-size:12px; color:var(--muted);
+      background:rgba(255,255,255,.03);
+      border:1px solid var(--border);
       padding:10px 12px;
       border-radius:999px;
-      font-size:13px;
-      cursor:pointer;
+      backdrop-filter: blur(10px);
       user-select:none;
-      backdrop-filter: blur(10px);
-    }
-    .badge{
       pointer-events:none;
-      padding:10px 14px;
-      border-radius:999px;
-      background:rgba(255,255,255,.03);
-      border:1px solid rgba(255,255,255,.08);
-      color:rgba(233,238,247,.75);
-      font-size:13px;
-      backdrop-filter: blur(10px);
     }
-
-    .scroll::-webkit-scrollbar{ width:10px; }
-    .scroll::-webkit-scrollbar-thumb{ background:rgba(255,255,255,.08); border-radius:999px; }
-    .scroll::-webkit-scrollbar-track{ background:rgba(0,0,0,0); }
   </style>
 </head>
 <body>
   <canvas id="c"></canvas>
-
-  <div class="top">
-    <div class="kicker">Odd Earth Institute</div>
-    <div class="headline">Things that should exist, but don’t:</div>
-    <p class="sub">
-      Each idea animates as: globe → idea text → globe. Scroll or use the buttons.
-      (Press Enter to replay the current transition.)
-    </p>
-  </div>
-
-  <!-- Scroll panes -->
-  <div class="scroll" id="scroll">
-
-    <section class="pane" data-title="Emotionally aware GPS">
-      <div class="card">
-        <div class="label">mobility × behavior</div>
-        <div class="title">Emotionally aware GPS</div>
-        <p class="desc">
-          It’s weird that navigation optimizes minutes but ignores mood. A GPS that detects rising stress
-          and quietly chooses routes that reduce friction — without turning your commute into a lecture.
-        </p>
-      </div>
-    </section>
-
-    <section class="pane" data-title="30-second infection detection">
-      <div class="card">
-        <div class="label">diagnostics</div>
-        <div class="title">30-second infection detection</div>
-        <p class="desc">
-          A tiny, fast, first-pass signal for “something infectious is likely happening” should be as normal
-          as a thermometer. Not definitive—just fast triage you can repeat over time.
-        </p>
-      </div>
-    </section>
-
-    <section class="pane" data-title="Caffeine quantifying coffee cups">
-      <div class="card">
-        <div class="label">food × field tools</div>
-        <div class="title">Caffeine quantifying coffee cups</div>
-        <p class="desc">
-          A disposable lid or cup insert that estimates caffeine content on the spot. It’s weird that we still
-          treat caffeine as folklore when it’s one of the most consumed psychoactive molecules on Earth.
-        </p>
-      </div>
-    </section>
-
-    <section class="pane" data-title="Nutrient profiling device">
-      <div class="card">
-        <div class="label">nutrition × measurement</div>
-        <div class="title">Nutrient profiling device</div>
-        <p class="desc">
-          A pocketable way to estimate basic nutrient signals (macro-ish + key micronutrient proxies) from common foods.
-          Not perfect—good enough to teach your intuition with real numbers.
-        </p>
-      </div>
-    </section>
-
-    <section class="pane" data-title="Vein finders for neonatal patients">
-      <div class="card">
-        <div class="label">clinical tools</div>
-        <div class="title">Vein finders for neonatal patients</div>
-        <p class="desc">
-          Neonatal vein access should not depend on luck and experience alone. A tiny, affordable vein finder
-          designed specifically for neonates feels like an obvious missing object.
-        </p>
-      </div>
-    </section>
-
-    <section class="pane" data-title="Universal fall detection for old age homes">
-      <div class="card">
-        <div class="label">care systems</div>
-        <div class="title">Universal fall detection for old age homes</div>
-        <p class="desc">
-          Fall detection shouldn’t require buying a particular watch or brand ecosystem.
-          It should be universal, ambient, and opt-in—working across rooms, beds, and walkers.
-        </p>
-      </div>
-    </section>
-
-    <section class="pane" data-title="Desk plants that diagnose cancer">
-      <div class="card">
-        <div class="label">living sensors</div>
-        <div class="title">Desk plants that diagnose cancer</div>
-        <p class="desc">
-          It’s weird that plants aren’t part of diagnostics culture. A desk plant that responds (and is measured)
-          alongside human biomarkers—becoming a living, off-body sensing companion.
-        </p>
-      </div>
-    </section>
-
-    <section class="pane" data-title="Bio-secure safes and vaults">
-      <div class="card">
-        <div class="label">security × bio</div>
-        <div class="title">Bio-secure safes and vaults</div>
-        <p class="desc">
-          A safe that authenticates via biological liveness (not just a fingerprint) should be commonplace:
-          stress patterns, pulse presence, multi-signal confirmation—security that’s hard to spoof.
-        </p>
-      </div>
-    </section>
-
-    <section class="pane" data-title="Stick-on parking sensors for any vehicle">
-      <div class="card">
-        <div class="label">mobility × retrofit</div>
-        <div class="title">Stick-on parking sensors for any vehicle</div>
-        <p class="desc">
-          Parking sensors shouldn’t be “new-car privilege.” A universal stick-on kit that feels factory-fitted,
-          installs in minutes, and just works—why is this not everywhere?
-        </p>
-      </div>
-    </section>
-
-    <section class="pane" data-title="Crop-yield prediction from saplings">
-      <div class="card">
-        <div class="label">agri × forecasting</div>
-        <div class="title">Crop-yield prediction from saplings</div>
-        <p class="desc">
-          A way to estimate yield potential early—from sapling traits + simple environment signals—would change
-          planning, logistics, and risk. It’s weird this isn’t a farmer’s default tool.
-        </p>
-      </div>
-    </section>
-
-  </div>
-
-  <div class="controls">
-    <button class="btn" id="prev">← Prev</button>
-    <div class="badge" id="counter">1 / 10</div>
-    <button class="btn" id="next">Next →</button>
-  </div>
+  <div class="hint">Scroll / ← → to change idea • Space to replay</div>
 
   <script type="module">
     import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
+    // ---------- Content ----------
+    const HEADLINE = "Things that should exist, but don't:";
+    const IDEAS = [
+      "Emotionally aware GPS",
+      "30-second infection detection",
+      "Caffeine quantifying coffee cups",
+      "Nutrient profiling device",
+      "Vein finders for neonatal patients",
+      "Universal fall detection for old age homes",
+      "Desk plants that diagnose cancer",
+      "Bio-secure safes and vaults",
+      "Stick-on parking sensors for any vehicle",
+      "Crop-yield prediction from saplings"
+    ];
+
     // ---------- Timing ----------
-    const GLOBE_HOLD_MS = 700;
+    const GLOBE_HOLD_MS = 650;
     const TEXT_HOLD_MS  = 1100;
+
+    // Also show headline between ideas? (set true to do globe→headline→globe→idea each time)
+    const SHOW_HEADLINE_FIRST = true;  // plays once on load
 
     // ---------- Three.js setup ----------
     const canvas = document.getElementById("c");
@@ -239,10 +66,10 @@
     renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 
     const scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0x05070b, 55, 220);
+    scene.fog = new THREE.Fog(0x05070b, 70, 260);
 
-    const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 500);
-    camera.position.set(0, 0, 120);
+    const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 600);
+    camera.position.set(0, 0, 135);
 
     function resize(){
       renderer.setSize(innerWidth, innerHeight, false);
@@ -252,13 +79,18 @@
     addEventListener("resize", resize);
     resize();
 
-    // ---------- Particle system ----------
-    const COUNT = 24000;
-    const SPHERE_R = 46;
-    const TEXT_SCALE = 0.30;
-    const MORPH = 0.055;
-    const DRIFT = 0.09;
-    const THICKNESS = 10;
+    // ---------- Particles ----------
+    const COUNT = 26000;     // dense, but still browser-friendly
+    const SPHERE_R = 50;
+
+    const MORPH = 0.052;     // morph speed
+    const DRIFT = 0.08;      // turbulence effect
+    const THICKNESS = 9;     // text depth
+
+    // Text sizing: we map text canvas -> world units
+    const TEXT_WORLD_W = 165;   // wider = larger text in world coords
+    const TEXT_WORLD_H = 48;
+    const TEXT_SCALE   = 0.33;  // global scale factor
 
     const pos = new Float32Array(COUNT*3);
     const vel = new Float32Array(COUNT*3);
@@ -266,13 +98,17 @@
     const sphere = new Float32Array(COUNT*3);
 
     function randSpherePoint(r){
+      // Marsaglia
       let x1, x2, s;
-      do { x1 = Math.random()*2 - 1; x2 = Math.random()*2 - 1; s = x1*x1 + x2*x2; } while (s >= 1 || s === 0);
+      do { x1 = Math.random()*2 - 1; x2 = Math.random()*2 - 1; s = x1*x1 + x2*x2; }
+      while (s >= 1 || s === 0);
       const f = Math.sqrt(1 - s);
       const x = 2 * x1 * f;
       const y = 2 * x2 * f;
       const z = 1 - 2 * s;
-      const jitter = (Math.random() - 0.5) * 2.2;
+
+      // slight radial jitter to feel like a "globe volume"
+      const jitter = (Math.random() - 0.5) * 3.0;
       const rr = r + jitter;
       return [x*rr, y*rr, z*rr];
     }
@@ -280,8 +116,8 @@
     for(let i=0;i<COUNT;i++){
       const i3=i*3;
       const [x,y,z] = randSpherePoint(SPHERE_R);
-      sphere[i3]=x; sphere[i3+1]=y; sphere[i3+2]=z;
 
+      sphere[i3]=x; sphere[i3+1]=y; sphere[i3+2]=z;
       pos[i3]=x; pos[i3+1]=y; pos[i3+2]=z;
       target[i3]=x; target[i3+1]=y; target[i3+2]=z;
 
@@ -295,7 +131,7 @@
 
     const mat = new THREE.PointsMaterial({
       color: 0xe9eef7,
-      size: 0.11,
+      size: 0.115,
       sizeAttenuation: true,
       transparent: true,
       opacity: 0.92,
@@ -304,15 +140,16 @@
 
     const points = new THREE.Points(geo, mat);
     scene.add(points);
-    scene.add(new THREE.AmbientLight(0xffffff, 0.65));
+    scene.add(new THREE.AmbientLight(0xffffff, 0.70));
 
-    // ---------- Text to points ----------
+    // ---------- Text -> points (canvas sampling) ----------
     const textCanvas = document.createElement("canvas");
     const ctx = textCanvas.getContext("2d", { willReadFrequently:true });
 
     function buildTextTargets(text){
-      const W = 1800, H = 520;
-      textCanvas.width = W; textCanvas.height = H;
+      const W = 2000, H = 600;
+      textCanvas.width = W;
+      textCanvas.height = H;
 
       ctx.clearRect(0,0,W,H);
       ctx.fillStyle = "#000";
@@ -322,8 +159,9 @@
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
 
-      let fontSize = 150;
-      const maxWidth = W * 0.88;
+      // Fit font to width
+      let fontSize = 165;
+      const maxWidth = W * 0.90;
 
       function measure(fs){
         ctx.font = `700 ${fs}px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial`;
@@ -334,28 +172,27 @@
       ctx.font = `700 ${fontSize}px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial`;
       ctx.fillText(text, W/2, H/2);
 
+      // Sample pixels for points
       const img = ctx.getImageData(0,0,W,H).data;
 
       const pts = [];
-      const step = 3; // density
+      const step = 3; // density (2 = denser)
       for(let y=0;y<H;y+=step){
         for(let x=0;x<W;x+=step){
           const idx = (y*W + x)*4;
           if (img[idx] > 16) pts.push([x,y]);
         }
       }
-      if (pts.length < 1000){
-        for(let i=0;i<2000;i++) pts.push([Math.random()*W, Math.random()*H]);
+      if (pts.length < 1200){
+        for(let i=0;i<4000;i++) pts.push([Math.random()*W, Math.random()*H]);
       }
 
-      const worldW = 140;
-      const worldH = 40;
+      // Map to world coords centered at origin
       const out = new Float32Array(COUNT*3);
-
       for(let i=0;i<COUNT;i++){
         const p = pts[i % pts.length];
-        const nx = (p[0]/W - 0.5) * worldW;
-        const ny = -(p[1]/H - 0.5) * worldH;
+        const nx = (p[0]/W - 0.5) * TEXT_WORLD_W;
+        const ny = -(p[1]/H - 0.5) * TEXT_WORLD_H;
         const nz = (Math.random()-0.5) * THICKNESS;
 
         const i3=i*3;
@@ -367,57 +204,53 @@
     }
 
     const textCache = new Map();
+    function getTextTargets(text){
+      if(!textCache.has(text)) textCache.set(text, buildTextTargets(text));
+      return textCache.get(text);
+    }
 
     function setTargetsSphere(){
       target.set(sphere);
       mode = "sphere";
       burst = 0.0;
     }
-
     function setTargetsText(text){
-      if(!textCache.has(text)) textCache.set(text, buildTextTargets(text));
-      target.set(textCache.get(text));
+      target.set(getTextTargets(text));
       mode = "text";
-      burst = 1.0;
+      burst = 1.0; // spin burst
     }
 
-    // ---------- Globe spin + animation ----------
+    // ---------- Motion ----------
     let mode = "sphere";
     let burst = 0.0;
     let globeSpin = 0.0;
 
-    let mx=0, my=0;
-    addEventListener("mousemove", (e)=>{
-      mx = (e.clientX/innerWidth - 0.5);
-      my = (e.clientY/innerHeight - 0.5);
-    });
-
+    // Keep the globe centered: no camera parallax shifting.
+    // (We still add gentle rotation + breathing.)
     const clock = new THREE.Clock();
 
     function tick(){
       requestAnimationFrame(tick);
       const t = clock.getElapsedTime();
 
-      camera.position.x += ((mx*10) - camera.position.x) * 0.02;
-      camera.position.y += ((-my*6) - camera.position.y) * 0.02;
-      camera.lookAt(0,0,0);
-
+      // Spin burst on transitions
       if (burst > 0.0001){
-        globeSpin += 0.18 * burst;
+        globeSpin += 0.20 * burst;
         burst *= 0.94;
       } else {
-        globeSpin += (mode === "sphere" ? 0.0035 : 0.0018);
+        globeSpin += (mode === "sphere" ? 0.0036 : 0.0018);
       }
 
       points.rotation.y = globeSpin;
-      points.rotation.x = Math.sin(t*0.12) * 0.08;
+      points.rotation.x = Math.sin(t*0.10) * 0.07;
 
+      // Morph + subtle turbulence
       for(let i=0;i<COUNT;i++){
         const i3=i*3;
 
-        vel[i3]   += Math.sin(t*0.7 + pos[i3+1]*0.06) * 0.00055;
-        vel[i3+1] += Math.cos(t*0.8 + pos[i3]*0.06)   * 0.00055;
-        vel[i3+2] += Math.sin(t*0.6 + pos[i3]*0.05)   * 0.00035;
+        vel[i3]   += Math.sin(t*0.7 + pos[i3+1]*0.06) * 0.00052;
+        vel[i3+1] += Math.cos(t*0.8 + pos[i3]*0.06)   * 0.00052;
+        vel[i3+2] += Math.sin(t*0.6 + pos[i3]*0.05)   * 0.00034;
 
         vel[i3]   *= 0.982;
         vel[i3+1] *= 0.982;
@@ -433,21 +266,18 @@
     }
     tick();
 
-    // ---------- Globe → Text → Globe sequencing ----------
+    // ---------- Sequencing ----------
     let seqToken = 0;
 
-    function runSequenceForTitle(title){
+    function playGlobeToTextToGlobe(text){
       const token = ++seqToken;
 
-      // Always start at globe
       setTargetsSphere();
 
-      // Globe hold -> text
       setTimeout(() => {
         if (token !== seqToken) return;
-        setTargetsText(title);
+        setTargetsText(text);
 
-        // Text hold -> globe
         setTimeout(() => {
           if (token !== seqToken) return;
           setTargetsSphere();
@@ -456,58 +286,59 @@
       }, GLOBE_HOLD_MS);
     }
 
-    // ---------- Scroll activation ----------
-    const panes = Array.from(document.querySelectorAll(".pane"));
-    const counter = document.getElementById("counter");
+    // ---------- Idea navigation (no visible cards) ----------
+    let idx = 0;
 
-    let activeIndex = 0;
-    function updateCounter(){
-      counter.textContent = `${activeIndex+1} / ${panes.length}`;
-    }
-    updateCounter();
-
-    function activateIndex(idx){
-      idx = Math.max(0, Math.min(panes.length-1, idx));
-      activeIndex = idx;
-      updateCounter();
-      const title = panes[idx].getAttribute("data-title") || "Untitled";
-      runSequenceForTitle(title);
+    function playCurrentIdea(){
+      playGlobeToTextToGlobe(IDEAS[idx]);
     }
 
-    const io = new IntersectionObserver((entries)=>{
-      const best = entries
-        .filter(e=>e.isIntersecting)
-        .sort((a,b)=>b.intersectionRatio - a.intersectionRatio)[0];
-      if(!best) return;
-      const idx = panes.indexOf(best.target);
-      if(idx !== -1 && idx !== activeIndex){
-        activateIndex(idx);
+    // On load: headline (particles), then first idea
+    async function start(){
+      if (SHOW_HEADLINE_FIRST){
+        playGlobeToTextToGlobe(HEADLINE);
+        // after headline sequence ends, play first idea
+        setTimeout(() => {
+          // ensure we didn't cancel
+          if (seqToken === 1) playCurrentIdea();
+        }, GLOBE_HOLD_MS + TEXT_HOLD_MS + 80);
+      } else {
+        playCurrentIdea();
       }
-    }, { threshold:[0.35, 0.55, 0.75] });
+    }
+    start();
 
-    panes.forEach(p=>io.observe(p));
+    function nextIdea(){
+      idx = (idx + 1) % IDEAS.length;
+      playCurrentIdea();
+    }
+    function prevIdea(){
+      idx = (idx - 1 + IDEAS.length) % IDEAS.length;
+      playCurrentIdea();
+    }
 
-    // Buttons
-    document.getElementById("prev").addEventListener("click", ()=>{
-      const nextIdx = Math.max(0, activeIndex - 1);
-      panes[nextIdx].scrollIntoView({ behavior:"smooth" });
-      activateIndex(nextIdx);
-    });
-    document.getElementById("next").addEventListener("click", ()=>{
-      const nextIdx = Math.min(panes.length-1, activeIndex + 1);
-      panes[nextIdx].scrollIntoView({ behavior:"smooth" });
-      activateIndex(nextIdx);
-    });
+    // Scroll wheel: step through ideas (debounced)
+    let wheelLock = false;
+    addEventListener("wheel", (e)=>{
+      if (wheelLock) return;
+      wheelLock = true;
+      setTimeout(()=> wheelLock=false, 380);
 
-    // Keyboard
+      if (e.deltaY > 0) nextIdea();
+      else prevIdea();
+    }, { passive:true });
+
+    // Keys
     addEventListener("keydown", (e)=>{
-      if (e.key === "ArrowDown" || e.key === "PageDown") document.getElementById("next").click();
-      if (e.key === "ArrowUp"   || e.key === "PageUp")   document.getElementById("prev").click();
-      if (e.key === "Enter") activateIndex(activeIndex); // replay sequence
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") nextIdea();
+      if (e.key === "ArrowLeft"  || e.key === "ArrowUp")   prevIdea();
+      if (e.key === " ") { e.preventDefault(); playCurrentIdea(); }
+      if (e.key === "Enter") { playGlobeToTextToGlobe(HEADLINE); }
     });
 
-    // Start at first idea
-    activateIndex(0);
+    // Optional: tap/click advances
+    addEventListener("pointerdown", ()=> nextIdea());
+
   </script>
 </body>
 </html>
