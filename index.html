@@ -14,6 +14,14 @@
             pointer-events: none;
             z-index: 10;
         }
+        #status {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: #ffaa00;
+            font-size: 0.8rem;
+            z-index: 10;
+        }
         h1 { margin: 0; font-size: 1.2rem; letter-spacing: 2px; text-transform: uppercase; }
         p { font-size: 0.8rem; opacity: 0.7; }
     </style>
@@ -31,6 +39,7 @@
         <h1>The Odd Earth Institute</h1>
         <p>Methodology: Materialization</p>
     </div>
+    <div id="status">Initializing Neural Physics...</div>
     <div id="canvas-container"></div>
 
     <script type="module">
@@ -40,12 +49,12 @@
         import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
         // --- CONFIGURATION ---
-        const PARTICLE_COUNT = 18000; // Total particles available
+        const PARTICLE_COUNT = 15000; // Reduced slightly for performance on mobile
         const GLOBE_RADIUS = 60;
         const PARTICLE_SIZE = 0.6;
-        const COLOR_GLOBE = 0x00aaff; // Tesla Blue
-        const COLOR_TEXT = 0xffaa00;   // Amber/Electric
-        const TRANSITION_SPEED = 0.04; // Lower is slower/smoother
+        const COLOR_GLOBE = 0x00aaff;
+        const COLOR_TEXT = 0xffaa00; 
+        const TRANSITION_SPEED = 0.05;
 
         const IDEAS = [
             "Emotionally aware GPS",
@@ -53,7 +62,7 @@
             "Caffeine quantifying coffee cups",
             "Nutrient profiling device",
             "Vein finders for neonatal patients",
-            "Universal fall detection", // Shortened slightly for visual balance
+            "Universal fall detection", 
             "Desk plants that diagnose cancer",
             "Bio-secure safes and vaults",
             "Stick-on parking sensors",
@@ -62,13 +71,14 @@
 
         // --- SCENE SETUP ---
         const container = document.getElementById('canvas-container');
+        const statusDiv = document.getElementById('status');
         const scene = new THREE.Scene();
         scene.fog = new THREE.FogExp2(0x050505, 0.002);
 
         const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 2000);
         camera.position.z = 250;
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.setSize(window.innerWidth, window.innerHeight);
         container.appendChild(renderer.domElement);
@@ -82,17 +92,16 @@
         let particles;
         let particleGeometry;
         const positions = [];
-        const currentPositions = []; // Where they actually are
-        const targetPositions = [];  // Where they want to go
+        const currentPositions = []; 
+        const targetPositions = []; 
         const colors = [];
 
         // Initialize particles
         particleGeometry = new THREE.BufferGeometry();
         
         for (let i = 0; i < PARTICLE_COUNT; i++) {
-            // Start at 0,0,0
             currentPositions.push(0, 0, 0);
-            targetPositions.push(0, 0, 0);
+            targetPositions.push(0, 0, 0); // Start at center
             colors.push(0, 0, 0);
         }
 
@@ -113,29 +122,24 @@
 
         // --- SHAPE GENERATORS ---
 
-        // 1. GLOBE SHAPE
         function getSphereCoordinates() {
             const coords = [];
             for (let i = 0; i < PARTICLE_COUNT; i++) {
-                // Random point on sphere surface
                 const phi = Math.acos(-1 + (2 * i) / PARTICLE_COUNT);
                 const theta = Math.sqrt(PARTICLE_COUNT * Math.PI) * phi;
-                
                 const x = GLOBE_RADIUS * Math.cos(theta) * Math.sin(phi);
                 const y = GLOBE_RADIUS * Math.sin(theta) * Math.sin(phi);
                 const z = GLOBE_RADIUS * Math.cos(phi);
-                
                 coords.push({x, y, z});
             }
             return coords;
         }
 
-        // 2. TEXT SHAPE
         function getTextCoordinates(text, font) {
             const geometry = new TextGeometry(text, {
                 font: font,
-                size: 10,  // Base size
-                height: 1, // Thickness
+                size: 10,
+                height: 1,
                 curveSegments: 4,
                 bevelEnabled: false
             });
@@ -143,34 +147,21 @@
             geometry.computeBoundingBox();
             const xOffset = -0.5 * (geometry.boundingBox.max.x - geometry.boundingBox.min.x);
             const yOffset = -0.5 * (geometry.boundingBox.max.y - geometry.boundingBox.min.y);
-            
             geometry.translate(xOffset, yOffset, 0);
 
-            // Sample points from the text mesh surface
-            // We create a temporary mesh to sample from
-            const mesh = new THREE.Mesh(geometry);
-            const sampler = [];
-            
-            // Simple random sampling within the geometry vertices isn't enough for density
-            // We will just map particles to the vertices of the text geometry
-            // Note: TextGeometry has many vertices.
-            
             const posAttribute = geometry.attributes.position;
             const vertexCount = posAttribute.count;
-            
             const coords = [];
             
             for (let i = 0; i < PARTICLE_COUNT; i++) {
                 if (i < vertexCount) {
-                    // Map to vertex
                     coords.push({
                         x: posAttribute.getX(i),
                         y: posAttribute.getY(i),
                         z: posAttribute.getZ(i)
                     });
                 } else {
-                    // If we have extra particles, map them randomly to existing vertices
-                    // to add density to the text
+                    // Random scatter for extra particles (keeps them from bunching at 0,0,0)
                     const randIndex = Math.floor(Math.random() * vertexCount);
                     coords.push({
                         x: posAttribute.getX(randIndex),
@@ -183,29 +174,23 @@
         }
 
         // --- STATE MACHINE ---
-        let state = 'GLOBE'; // GLOBE, TEXT
         let currentIdeaIndex = 0;
-        let lastTime = 0;
         const sphereCoords = getSphereCoordinates();
         let loadedFont = null;
+        let isFontLoaded = false;
 
         function setTargetParticles(shapeCoords, colorHex) {
             const color = new THREE.Color(colorHex);
-            
             for (let i = 0; i < PARTICLE_COUNT; i++) {
-                // Update Target XYZ
                 if (shapeCoords[i]) {
                     targetPositions[i * 3] = shapeCoords[i].x;
                     targetPositions[i * 3 + 1] = shapeCoords[i].y;
                     targetPositions[i * 3 + 2] = shapeCoords[i].z;
                 } else {
-                    // Hide unused particles in center
                     targetPositions[i * 3] = 0;
                     targetPositions[i * 3 + 1] = 0;
                     targetPositions[i * 3 + 2] = 0;
                 }
-                
-                // Update Color immediately (or could tween this too)
                 colors[i * 3] = color.r;
                 colors[i * 3 + 1] = color.g;
                 colors[i * 3 + 2] = color.b;
@@ -214,48 +199,43 @@
         }
 
         function triggerGlobe() {
-            state = 'GLOBE';
             controls.autoRotateSpeed = 2.0;
             setTargetParticles(sphereCoords, COLOR_GLOBE);
             
-            // Wait 3 seconds then show next idea
+            // Only try to switch to text if font is actually loaded
             setTimeout(() => {
-                triggerText();
+                if (isFontLoaded) {
+                    triggerText();
+                } else {
+                    // If font still failing, just stay on globe
+                    triggerGlobe(); 
+                }
             }, 3000);
         }
 
         function triggerText() {
-            if (!loadedFont) return;
-            state = 'TEXT';
-            controls.autoRotateSpeed = 0.5; // Slow down rotation for reading
-            
+            if (!isFontLoaded) return triggerGlobe();
+
+            controls.autoRotateSpeed = 0.5;
             const idea = IDEAS[currentIdeaIndex];
-            const textCoords = getTextCoordinates(idea, loadedFont);
             
+            // Generate text coords
+            const textCoords = getTextCoordinates(idea, loadedFont);
             setTargetParticles(textCoords, COLOR_TEXT);
             
-            // Cycle index
             currentIdeaIndex = (currentIdeaIndex + 1) % IDEAS.length;
             
-            // Wait 5 seconds then go back to globe
             setTimeout(() => {
                 triggerGlobe();
             }, 5000);
         }
 
         // --- INIT & LOOP ---
-        const loader = new FontLoader();
-        // Load standard font
-        loader.load('https://unpkg.com/three@0.160.0/examples/fonts/helvetiker_bold.typeface.json', function (font) {
-            loadedFont = font;
-            // Start the sequence
-            triggerGlobe(); 
-        });
-
+        
+        // 1. Start Animation Immediately (don't wait for font)
         function animate() {
             requestAnimationFrame(animate);
 
-            // Interpolation Logic (The Morph)
             const positionsAttribute = particleGeometry.attributes.position;
             
             for (let i = 0; i < PARTICLE_COUNT; i++) {
@@ -271,29 +251,51 @@
                 const ty = targetPositions[iy];
                 const tz = targetPositions[iz];
 
-                // Simple Lerp
+                // Lerp
                 positionsAttribute.array[ix] += (tx - cx) * TRANSITION_SPEED;
                 positionsAttribute.array[iy] += (ty - cy) * TRANSITION_SPEED;
                 positionsAttribute.array[iz] += (tz - cz) * TRANSITION_SPEED;
             }
             
             positionsAttribute.needsUpdate = true;
-
             controls.update();
             renderer.render(scene, camera);
         }
 
-        // Handle Resize
+        // Start loop
+        animate();
+        // Start globe shape immediately
+        triggerGlobe();
+
+        // 2. Load Font in Background
+        const loader = new FontLoader();
+        statusDiv.innerText = "Downloading Font Data...";
+        
+        loader.load(
+            'https://unpkg.com/three@0.160.0/examples/fonts/helvetiker_bold.typeface.json',
+            function (font) {
+                loadedFont = font;
+                isFontLoaded = true;
+                statusDiv.innerText = "System Active";
+                setTimeout(() => { statusDiv.style.opacity = 0; }, 2000);
+            },
+            function (xhr) {
+                // Progress
+                // statusDiv.innerText = "Loading: " + (xhr.loaded / xhr.total * 100) + "%";
+            },
+            function (err) {
+                console.error(err);
+                statusDiv.innerText = "ERROR: Font load failed. Check Console.";
+                statusDiv.style.color = "red";
+            }
+        );
+
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        animate();
-
     </script>
 </body>
 </html>
-
-```
