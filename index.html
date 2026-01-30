@@ -8,19 +8,9 @@
         #canvas-container { width: 100vw; height: 100vh; }
         #ui {
             position: absolute;
-            top: 20px;
-            left: 20px;
+            top: 20px; left: 20px;
             color: rgba(0, 255, 255, 0.6);
-            pointer-events: none;
-            z-index: 10;
-        }
-        #status {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            color: #ffaa00;
-            font-size: 0.8rem;
-            z-index: 10;
+            pointer-events: none; z-index: 10;
         }
         h1 { margin: 0; font-size: 1.2rem; letter-spacing: 2px; text-transform: uppercase; }
         p { font-size: 0.8rem; opacity: 0.7; }
@@ -39,39 +29,37 @@
         <h1>The Odd Earth Institute</h1>
         <p>Methodology: Materialization</p>
     </div>
-    <div id="status">Initializing Neural Physics...</div>
     <div id="canvas-container"></div>
 
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import { FontLoader } from 'three/addons/loaders/FontLoader.js';
-        import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
         // --- CONFIGURATION ---
-        const PARTICLE_COUNT = 15000; // Reduced slightly for performance on mobile
-        const GLOBE_RADIUS = 60;
-        const PARTICLE_SIZE = 0.6;
+        const PARTICLE_COUNT = 15000;
+        const GLOBE_RADIUS = 50;
+        const PARTICLE_SIZE = 0.5;
         const COLOR_GLOBE = 0x00aaff;
         const COLOR_TEXT = 0xffaa00; 
         const TRANSITION_SPEED = 0.05;
+        const FONT_FAMILY = 'Arial, sans-serif'; // Use any system font
+        const FONT_WEIGHT = '900'; // Boldest possible for good particle density
 
         const IDEAS = [
-            "Emotionally aware GPS",
-            "30-second infection detection",
-            "Caffeine quantifying coffee cups",
-            "Nutrient profiling device",
-            "Vein finders for neonatal patients",
-            "Universal fall detection", 
-            "Desk plants that diagnose cancer",
-            "Bio-secure safes and vaults",
-            "Stick-on parking sensors",
-            "Crop-yield prediction from saplings"
+            "Emotionally Aware\nGPS",
+            "30-Second\nInfection Detection",
+            "Caffeine Quantifying\nCups",
+            "Nutrient Profiling\nDevice",
+            "Vein Finders for\nNeonatal Patients",
+            "Universal\nFall Detection", 
+            "Desk Plants That\nDiagnose Cancer",
+            "Bio-Secure\nSafes and Vaults",
+            "Stick-on\nParking Sensors",
+            "Crop-Yield Prediction\nFrom Saplings"
         ];
 
         // --- SCENE SETUP ---
         const container = document.getElementById('canvas-container');
-        const statusDiv = document.getElementById('status');
         const scene = new THREE.Scene();
         scene.fog = new THREE.FogExp2(0x050505, 0.002);
 
@@ -96,12 +84,11 @@
         const targetPositions = []; 
         const colors = [];
 
-        // Initialize particles
         particleGeometry = new THREE.BufferGeometry();
         
         for (let i = 0; i < PARTICLE_COUNT; i++) {
             currentPositions.push(0, 0, 0);
-            targetPositions.push(0, 0, 0); // Start at center
+            targetPositions.push(0, 0, 0); 
             colors.push(0, 0, 0);
         }
 
@@ -120,8 +107,9 @@
         particles = new THREE.Points(particleGeometry, material);
         scene.add(particles);
 
-        // --- SHAPE GENERATORS ---
+        // --- GENERATORS ---
 
+        // 1. Globe Logic
         function getSphereCoordinates() {
             const coords = [];
             for (let i = 0; i < PARTICLE_COUNT; i++) {
@@ -135,49 +123,83 @@
             return coords;
         }
 
-        function getTextCoordinates(text, font) {
-            const geometry = new TextGeometry(text, {
-                font: font,
-                size: 10,
-                height: 1,
-                curveSegments: 4,
-                bevelEnabled: false
+        // 2. 2D Canvas Text Scanner
+        function getCanvasTextCoordinates(text) {
+            // Create a virtual canvas
+            const width = 1000;
+            const height = 300;
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+
+            // Draw black background
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw white text
+            ctx.font = `${FONT_WEIGHT} 100px ${FONT_FAMILY}`;
+            ctx.fillStyle = '#FFFFFF';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Handle multi-line text (split by \n)
+            const lines = text.split('\n');
+            const lineHeight = 110;
+            const startY = (height / 2) - ((lines.length - 1) * lineHeight / 2);
+
+            lines.forEach((line, index) => {
+                ctx.fillText(line, width / 2, startY + (index * lineHeight));
             });
 
-            geometry.computeBoundingBox();
-            const xOffset = -0.5 * (geometry.boundingBox.max.x - geometry.boundingBox.min.x);
-            const yOffset = -0.5 * (geometry.boundingBox.max.y - geometry.boundingBox.min.y);
-            geometry.translate(xOffset, yOffset, 0);
+            // Scan pixel data
+            const imageData = ctx.getImageData(0, 0, width, height);
+            const data = imageData.data;
+            const validPixels = [];
 
-            const posAttribute = geometry.attributes.position;
-            const vertexCount = posAttribute.count;
-            const coords = [];
-            
-            for (let i = 0; i < PARTICLE_COUNT; i++) {
-                if (i < vertexCount) {
-                    coords.push({
-                        x: posAttribute.getX(i),
-                        y: posAttribute.getY(i),
-                        z: posAttribute.getZ(i)
-                    });
-                } else {
-                    // Random scatter for extra particles (keeps them from bunching at 0,0,0)
-                    const randIndex = Math.floor(Math.random() * vertexCount);
-                    coords.push({
-                        x: posAttribute.getX(randIndex),
-                        y: posAttribute.getY(randIndex),
-                        z: posAttribute.getZ(randIndex)
-                    });
+            // We iterate through pixels (jumping 4 at a time: r,g,b,a)
+            // Step size controls density. 2 = check every 2nd pixel.
+            const step = 2; 
+            for (let y = 0; y < height; y += step) {
+                for (let x = 0; x < width; x += step) {
+                    const index = (y * width + x) * 4;
+                    // If Red channel > 50 (not black), consider it a text pixel
+                    if (data[index] > 50) {
+                        validPixels.push({
+                            x: (x - width / 2) * 0.3, // Scale down to world units
+                            y: -(y - height / 2) * 0.3, // Invert Y for 3D
+                            z: 0
+                        });
+                    }
                 }
             }
-            return coords;
+            
+            // Map valid pixels to particles
+            const finalCoords = [];
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                if (i < validPixels.length) {
+                    finalCoords.push(validPixels[i]);
+                } else {
+                    // If we have more particles than pixels, hide extras or scatter randomly inside text
+                    // Here we scatter them randomly within the valid pixel set for a "glow" effect
+                    const r = validPixels[Math.floor(Math.random() * validPixels.length)];
+                    if(r) {
+                        finalCoords.push({ 
+                            x: r.x + (Math.random()-0.5)*2, 
+                            y: r.y + (Math.random()-0.5)*2, 
+                            z: (Math.random()-0.5)*5 // slight depth
+                        });
+                    } else {
+                        finalCoords.push({x:0, y:0, z:0});
+                    }
+                }
+            }
+            return finalCoords;
         }
 
         // --- STATE MACHINE ---
         let currentIdeaIndex = 0;
         const sphereCoords = getSphereCoordinates();
-        let loadedFont = null;
-        let isFontLoaded = false;
 
         function setTargetParticles(shapeCoords, colorHex) {
             const color = new THREE.Color(colorHex);
@@ -186,10 +208,6 @@
                     targetPositions[i * 3] = shapeCoords[i].x;
                     targetPositions[i * 3 + 1] = shapeCoords[i].y;
                     targetPositions[i * 3 + 2] = shapeCoords[i].z;
-                } else {
-                    targetPositions[i * 3] = 0;
-                    targetPositions[i * 3 + 1] = 0;
-                    targetPositions[i * 3 + 2] = 0;
                 }
                 colors[i * 3] = color.r;
                 colors[i * 3 + 1] = color.g;
@@ -202,25 +220,17 @@
             controls.autoRotateSpeed = 2.0;
             setTargetParticles(sphereCoords, COLOR_GLOBE);
             
-            // Only try to switch to text if font is actually loaded
             setTimeout(() => {
-                if (isFontLoaded) {
-                    triggerText();
-                } else {
-                    // If font still failing, just stay on globe
-                    triggerGlobe(); 
-                }
+                triggerText();
             }, 3000);
         }
 
         function triggerText() {
-            if (!isFontLoaded) return triggerGlobe();
-
-            controls.autoRotateSpeed = 0.5;
+            controls.autoRotateSpeed = 0.2;
             const idea = IDEAS[currentIdeaIndex];
             
-            // Generate text coords
-            const textCoords = getTextCoordinates(idea, loadedFont);
+            // Generate text particles via 2D Canvas scan
+            const textCoords = getCanvasTextCoordinates(idea);
             setTargetParticles(textCoords, COLOR_TEXT);
             
             currentIdeaIndex = (currentIdeaIndex + 1) % IDEAS.length;
@@ -230,9 +240,7 @@
             }, 5000);
         }
 
-        // --- INIT & LOOP ---
-        
-        // 1. Start Animation Immediately (don't wait for font)
+        // --- ANIMATION LOOP ---
         function animate() {
             requestAnimationFrame(animate);
 
@@ -251,7 +259,7 @@
                 const ty = targetPositions[iy];
                 const tz = targetPositions[iz];
 
-                // Lerp
+                // Lerp logic
                 positionsAttribute.array[ix] += (tx - cx) * TRANSITION_SPEED;
                 positionsAttribute.array[iy] += (ty - cy) * TRANSITION_SPEED;
                 positionsAttribute.array[iz] += (tz - cz) * TRANSITION_SPEED;
@@ -262,39 +270,18 @@
             renderer.render(scene, camera);
         }
 
-        // Start loop
-        animate();
-        // Start globe shape immediately
-        triggerGlobe();
-
-        // 2. Load Font in Background
-        const loader = new FontLoader();
-        statusDiv.innerText = "Downloading Font Data...";
-        
-        loader.load(
-            'https://unpkg.com/three@0.160.0/examples/fonts/helvetiker_bold.typeface.json',
-            function (font) {
-                loadedFont = font;
-                isFontLoaded = true;
-                statusDiv.innerText = "System Active";
-                setTimeout(() => { statusDiv.style.opacity = 0; }, 2000);
-            },
-            function (xhr) {
-                // Progress
-                // statusDiv.innerText = "Loading: " + (xhr.loaded / xhr.total * 100) + "%";
-            },
-            function (err) {
-                console.error(err);
-                statusDiv.innerText = "ERROR: Font load failed. Check Console.";
-                statusDiv.style.color = "red";
-            }
-        );
-
+        // --- START ---
+        // Handle Resize
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
+
+        // Start Loop
+        animate();
+        // Start Logic
+        triggerGlobe();
 
     </script>
 </body>
