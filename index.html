@@ -1,419 +1,239 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Things That Should Exist</title>
-  <style>
-    :root{
-      --bg:#05070b;
-      --fg:#e9eef7;
-      --muted:rgba(233,238,247,.65);
-      --soft:rgba(255,255,255,.08);
-    }
-    html,body{
-      height:100%;
-      margin:0;
-      background:var(--bg);
-      overflow:hidden;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-      color:var(--fg);
-    }
-    canvas{ position:fixed; inset:0; }
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Things That Should Exist</title>
 
-    /* Minimal UI (optional). Remove if you want pure visuals. */
-    .ui{
-      position:fixed;
-      inset:0;
-      pointer-events:none;
-      display:flex;
-      flex-direction:column;
-      justify-content:space-between;
-      padding:18px;
-      box-sizing:border-box;
-    }
-    .top{
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-      max-width:min(860px, 92vw);
-    }
-    .kicker{
-      font-size:12px;
-      letter-spacing:.18em;
-      text-transform:uppercase;
-      color:var(--muted);
-    }
-    .headline{
-      font-size:18px;
-      font-weight:650;
-      color:rgba(233,238,247,.92);
-    }
-    .bottom{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      color:var(--muted);
-      font-size:12px;
-    }
-    .badge, .hint{
-      border:1px solid var(--soft);
-      background:rgba(255,255,255,.03);
-      border-radius:999px;
-      padding:10px 12px;
-      backdrop-filter: blur(10px);
-      white-space:nowrap;
-    }
-  </style>
+<style>
+html,body{
+  margin:0;
+  height:100%;
+  background:#05070b;
+  overflow:hidden;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  color:#e9eef7;
+}
+canvas{position:fixed; inset:0;}
+.ui{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  padding:18px;
+}
+.kicker{
+  font-size:12px;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  opacity:.65;
+}
+.headline{
+  font-size:18px;
+  font-weight:650;
+}
+.badge{
+  align-self:flex-end;
+  font-size:12px;
+  opacity:.65;
+}
+</style>
 </head>
+
 <body>
-  <canvas id="c"></canvas>
+<canvas id="c"></canvas>
 
-  <div class="ui">
-    <div class="top">
-      <div class="kicker">Odd Earth Institute</div>
-      <div class="headline">Things that should exist, but don’t:</div>
-    </div>
-    <div class="bottom">
-      <div id="count" class="badge">1 / 10</div>
-      <div class="hint">Scroll / ← → / click to advance</div>
-    </div>
+<div class="ui">
+  <div>
+    <div class="kicker">Odd Earth Institute</div>
+    <div class="headline">Things that should exist, but don’t:</div>
   </div>
+  <div id="count" class="badge">1 / 10</div>
+</div>
 
-  <script type="module">
-    import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+<script type="module">
+import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
-    // ---------------------------
-    // Ideas
-    // ---------------------------
-    const IDEAS = [
-      "Emotionally aware GPS",
-      "30-second infection detection",
-      "Caffeine quantifying coffee cups",
-      "Nutrient profiling device",
-      "Vein finders for neonatal patients",
-      "Universal fall detection for old age homes",
-      "Desk plants that diagnose cancer",
-      "Bio-secure safes and vaults",
-      "Stick-on parking sensors for any vehicle",
-      "Crop-yield prediction from saplings"
-    ];
+const IDEAS = [
+  "Emotionally aware GPS",
+  "30-second infection detection",
+  "Caffeine quantifying coffee cups",
+  "Nutrient profiling device",
+  "Vein finders for neonatal patients",
+  "Universal fall detection for old age homes",
+  "Desk plants that diagnose cancer",
+  "Bio-secure safes and vaults",
+  "Stick-on parking sensors for any vehicle",
+  "Crop-yield prediction from saplings"
+];
 
-    const countEl = document.getElementById("count");
-    let idx = 0;
-    function updateCount(){ countEl.textContent = `${idx+1} / ${IDEAS.length}`; }
-    updateCount();
+let idx = 0;
+const countEl = document.getElementById("count");
+countEl.textContent = `1 / ${IDEAS.length}`;
 
-    // ---------------------------
-    // Three.js setup
-    // ---------------------------
-    const canvas = document.getElementById("c");
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+const renderer = new THREE.WebGLRenderer({
+  canvas: document.getElementById("c"),
+  antialias:true,
+  alpha:true
+});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 
-    const scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0x05070b, 85, 300);
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0x05070b, 90, 320);
 
-    const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 800);
-    camera.position.set(0, 0, 170);
-    camera.lookAt(0,0,0);
+const camera = new THREE.PerspectiveCamera(55,1,0.1,1000);
+camera.position.set(0,0,180);
+camera.lookAt(0,0,0);
 
-    function resize(){
-      renderer.setSize(innerWidth, innerHeight, false);
-      camera.aspect = innerWidth / innerHeight;
-      camera.updateProjectionMatrix();
-    }
-    addEventListener("resize", resize);
-    resize();
+function resize(){
+  renderer.setSize(innerWidth, innerHeight, false);
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+}
+addEventListener("resize", resize);
+resize();
 
-    // Lighting (kept subtle so colors stay “accurate”)
-    scene.add(new THREE.AmbientLight(0xffffff, 0.90));
-    const dir = new THREE.DirectionalLight(0xffffff, 0.35);
-    dir.position.set(1.5, 0.6, 1.2);
-    scene.add(dir);
+scene.add(new THREE.AmbientLight(0xffffff,0.9));
+const sun = new THREE.DirectionalLight(0xffffff,0.35);
+sun.position.set(2,1,1);
+scene.add(sun);
 
-    // ---------------------------
-    // Static Earth (accurate colour)
-    // ---------------------------
-    const globe = new THREE.Group();
-    scene.add(globe);
+/* =========================
+   STATIC EARTH (LOCKED)
+========================= */
+const globe = new THREE.Group();
+scene.add(globe);
 
-    const R = 58;
+const R = 60;
+const earthMat = new THREE.MeshStandardMaterial({ roughness:1, metalness:0 });
+const earth = new THREE.Mesh(
+  new THREE.SphereGeometry(R, 96, 96),
+  earthMat
+);
+globe.add(earth);
 
-    // Good Earth color map (equirectangular). sRGB-correct.
-    // If you want to host locally later, download this and point to your repo path.
-    const earthTexUrl = "https://threejs.org/examples/textures/land_ocean_ice_cloud_2048.jpg";
+new THREE.TextureLoader().load(
+  "https://threejs.org/examples/textures/land_ocean_ice_cloud_2048.jpg",
+  tex=>{
+    tex.colorSpace = THREE.SRGBColorSpace;
+    earthMat.map = tex;
+    earthMat.needsUpdate = true;
+  }
+);
 
-    const texLoader = new THREE.TextureLoader();
-    const earthMat = new THREE.MeshStandardMaterial({
-      metalness: 0.0,
-      roughness: 1.0,
-      transparent: false
-    });
+/* =========================
+   TEXT ORBIT (TRUE CENTER)
+========================= */
+const orbit = new THREE.Group();
+scene.add(orbit);
 
-    const earthMesh = new THREE.Mesh(
-      new THREE.SphereGeometry(R, 96, 96),
-      earthMat
-    );
-    globe.add(earthMesh);
+const orbitRadius = R + 32;
 
-    texLoader.load(
-      earthTexUrl,
-      (tex)=>{
-        tex.colorSpace = THREE.SRGBColorSpace;
-        tex.anisotropy = Math.min(12, renderer.capabilities.getMaxAnisotropy());
-        earthMat.map = tex;
-        earthMat.needsUpdate = true;
-      },
-      undefined,
-      ()=>{ /* ignore */ }
-    );
+const textSprite = createCenteredTextSprite(IDEAS[0]);
+textSprite.position.set(orbitRadius, 0, 0);
+orbit.add(textSprite);
 
-    // Broadcast-ish halo (very subtle)
-    const halo = new THREE.Mesh(
-      new THREE.SphereGeometry(R + 2.0, 64, 64),
-      new THREE.MeshBasicMaterial({
-        color: 0xffffff,
-        transparent: true,
-        opacity: 0.03,
-        depthWrite: false,
-        side: THREE.BackSide
-      })
-    );
-    globe.add(halo);
+function createCenteredTextSprite(text){
+  const c = document.createElement("canvas");
+  c.width = 2048;
+  c.height = 512;
+  const ctx = c.getContext("2d");
 
-    // Grid (optional but Daily-Planet-ish)
-    const gridMat = new THREE.LineBasicMaterial({ color: 0xe9eef7, transparent:true, opacity: 0.12 });
-    function makeLatLine(latDeg, segments=240){
-      const lat = THREE.MathUtils.degToRad(latDeg);
-      const r = Math.cos(lat) * (R + 0.8);
-      const y = Math.sin(lat) * (R + 0.8);
-      const pts = [];
-      for (let i=0;i<=segments;i++){
-        const a = (i/segments) * Math.PI * 2;
-        pts.push(new THREE.Vector3(Math.cos(a)*r, y, Math.sin(a)*r));
-      }
-      const g = new THREE.BufferGeometry().setFromPoints(pts);
-      return new THREE.Line(g, gridMat);
-    }
-    function makeLonLine(lonDeg, segments=240){
-      const lon = THREE.MathUtils.degToRad(lonDeg);
-      const pts = [];
-      for (let i=0;i<=segments;i++){
-        const t = (i/segments) * Math.PI - Math.PI/2;
-        const x = Math.cos(t) * Math.cos(lon) * (R + 0.8);
-        const y = Math.sin(t) * (R + 0.8);
-        const z = Math.cos(t) * Math.sin(lon) * (R + 0.8);
-        pts.push(new THREE.Vector3(x,y,z));
-      }
-      const g = new THREE.BufferGeometry().setFromPoints(pts);
-      return new THREE.Line(g, gridMat);
-    }
-    [-60,-40,-20,0,20,40,60].forEach(lat => globe.add(makeLatLine(lat)));
-    for (let lon=-150; lon<=150; lon+=30) globe.add(makeLonLine(lon));
+  drawText(ctx, c, text);
 
-    // ---------------------------
-    // Orbiting text around globe (Sprite via CanvasTexture)
-    // ---------------------------
-    const textGroup = new THREE.Group();
-    scene.add(textGroup);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
 
-    const orbitRadius = R + 28;
-    const textSprite = makeTextSprite(IDEAS[idx]);
-    textSprite.position.set(orbitRadius, 0, 0); // at +X, then group rotation moves it around
-    textGroup.add(textSprite);
+  const mat = new THREE.SpriteMaterial({
+    map: tex,
+    transparent:true,
+    depthWrite:false
+  });
 
-    // Keep sprite always facing camera (billboard)
-    function billboard(){
-      textSprite.quaternion.copy(camera.quaternion);
-    }
+  const sprite = new THREE.Sprite(mat);
 
-    // Create a sprite from canvas text
-    function makeTextSprite(text){
-      const c = document.createElement("canvas");
-      const ctx = c.getContext("2d");
+  /* 🔑 TRUE CENTERING FIX */
+  sprite.center.set(0.5, 0.5);
 
-      // high-res for crispness
-      c.width = 2048;
-      c.height = 512;
+  const aspect = c.width / c.height;
+  const size = 100;
+  sprite.scale.set(size, size/aspect, 1);
 
-      // Clear
-      ctx.clearRect(0,0,c.width,c.height);
+  sprite.userData.canvas = c;
+  sprite.userData.ctx = ctx;
 
-      // Text styling
-      const padding = 80;
-      const maxW = c.width - padding*2;
+  return sprite;
+}
 
-      // Fit font size
-      let fontSize = 140;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillStyle = "#E9EEF7";
-      ctx.shadowColor = "rgba(0,0,0,0.55)";
-      ctx.shadowBlur = 24;
-      ctx.shadowOffsetY = 14;
+function drawText(ctx, canvas, text){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle="#e9eef7";
+  ctx.textAlign="center";
+  ctx.textBaseline="middle";
+  ctx.shadowColor="rgba(0,0,0,0.6)";
+  ctx.shadowBlur=24;
+  ctx.shadowOffsetY=12;
 
-      function measure(fs){
-        ctx.font = `800 ${fs}px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial`;
-        return ctx.measureText(text).width;
-      }
-      while(measure(fontSize) > maxW && fontSize > 64) fontSize -= 6;
+  let size=140;
+  ctx.font=`800 ${size}px system-ui`;
+  while(ctx.measureText(text).width > canvas.width*0.85 && size>64){
+    size-=6;
+    ctx.font=`800 ${size}px system-ui`;
+  }
+  ctx.fillText(text, canvas.width/2, canvas.height/2);
+}
 
-      ctx.font = `800 ${fontSize}px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial`;
-      ctx.fillText(text, c.width/2, c.height/2);
+function updateText(text){
+  drawText(
+    textSprite.userData.ctx,
+    textSprite.userData.canvas,
+    text
+  );
+  textSprite.material.map.needsUpdate = true;
+}
 
-      const tex = new THREE.CanvasTexture(c);
-      tex.colorSpace = THREE.SRGBColorSpace;
-      tex.minFilter = THREE.LinearFilter;
-      tex.magFilter = THREE.LinearFilter;
-      tex.needsUpdate = true;
+/* =========================
+   SCROLL ROTATION (CLEAN)
+========================= */
+let targetRot = 0;
+let currentRot = 0;
 
-      const mat = new THREE.SpriteMaterial({
-        map: tex,
-        transparent: true,
-        opacity: 1.0,
-        depthWrite: false
-      });
+function next(dir=1){
+  idx = (idx + dir + IDEAS.length) % IDEAS.length;
+  countEl.textContent = `${idx+1} / ${IDEAS.length}`;
+  targetRot += dir * (Math.PI * 2/3);
+  updateText(IDEAS[idx]);
+}
 
-      const spr = new THREE.Sprite(mat);
+addEventListener("wheel", e=>{
+  e.deltaY>0 ? next(1) : next(-1);
+},{passive:true});
 
-      // Scale sprite in world units (tweak if you want bigger/smaller)
-      const baseW = 95;
-      const aspect = c.width / c.height;
-      spr.scale.set(baseW, baseW / aspect, 1);
+addEventListener("pointerdown", ()=>next(1));
 
-      // stash canvas for re-use on updates
-      spr.userData.canvas = c;
-      spr.userData.ctx = ctx;
+addEventListener("keydown", e=>{
+  if(e.key==="ArrowRight"||e.key==="ArrowDown") next(1);
+  if(e.key==="ArrowLeft"||e.key==="ArrowUp") next(-1);
+});
 
-      return spr;
-    }
+/* =========================
+   RENDER LOOP
+========================= */
+function animate(){
+  requestAnimationFrame(animate);
 
-    // Update sprite texture text (no rebuilding objects)
-    function updateSpriteText(sprite, text){
-      const c = sprite.userData.canvas;
-      const ctx = sprite.userData.ctx;
+  /* smooth rotation */
+  currentRot += (targetRot - currentRot)*0.08;
+  orbit.rotation.y = currentRot;
 
-      ctx.clearRect(0,0,c.width,c.height);
+  /* billboard without drift */
+  textSprite.quaternion.copy(camera.quaternion);
 
-      const padding = 80;
-      const maxW = c.width - padding*2;
-
-      let fontSize = 140;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillStyle = "#E9EEF7";
-      ctx.shadowColor = "rgba(0,0,0,0.55)";
-      ctx.shadowBlur = 24;
-      ctx.shadowOffsetY = 14;
-
-      function measure(fs){
-        ctx.font = `800 ${fs}px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial`;
-        return ctx.measureText(text).width;
-      }
-      while(measure(fontSize) > maxW && fontSize > 64) fontSize -= 6;
-
-      ctx.font = `800 ${fontSize}px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial`;
-      ctx.fillText(text, c.width/2, c.height/2);
-
-      sprite.material.map.needsUpdate = true;
-    }
-
-    // ---------------------------
-    // Scroll-driven sequential rotation
-    // The globe is static; we rotate textGroup around Y.
-    // We also swap the text at the “back” of the orbit for a nice reveal.
-    // ---------------------------
-    let anim = null;
-
-    function easeInOutCubic(x){
-      return x < 0.5 ? 4*x*x*x : 1 - Math.pow(-2*x + 2, 3)/2;
-    }
-
-    function rotateToNext(nextIndex, direction){
-      if (anim) anim.cancelled = true;
-
-      const startRot = textGroup.rotation.y;
-      const step = direction * (Math.PI * 2/3); // 120° travel per step (feels “broadcast”)
-      const endRot = startRot + step;
-
-      const duration = 650; // ms
-      const startTime = performance.now();
-
-      // Swap text when it’s behind the globe (midpoint)
-      let swapped = false;
-      const nextText = IDEAS[nextIndex];
-
-      anim = { cancelled:false };
-
-      function frame(now){
-        if (anim.cancelled) return;
-
-        const t = Math.min(1, (now - startTime) / duration);
-        const e = easeInOutCubic(t);
-
-        textGroup.rotation.y = startRot + (endRot - startRot) * e;
-
-        // midpoint swap (when text is roughly at the back)
-        if (!swapped && t > 0.52){
-          updateSpriteText(textSprite, nextText);
-          swapped = true;
-        }
-
-        if (t < 1){
-          requestAnimationFrame(frame);
-        } else {
-          textGroup.rotation.y = endRot;
-          anim = null;
-        }
-      }
-
-      requestAnimationFrame(frame);
-    }
-
-    function next(){
-      const nextIdx = (idx + 1) % IDEAS.length;
-      rotateToNext(nextIdx, +1);
-      idx = nextIdx;
-      updateCount();
-    }
-
-    function prev(){
-      const nextIdx = (idx - 1 + IDEAS.length) % IDEAS.length;
-      rotateToNext(nextIdx, -1);
-      idx = nextIdx;
-      updateCount();
-    }
-
-    // Controls
-    let wheelLock = false;
-    addEventListener("wheel", (e)=>{
-      if (wheelLock) return;
-      wheelLock = true;
-      setTimeout(()=> wheelLock=false, 260);
-      if (e.deltaY > 0) next(); else prev();
-    }, { passive:true });
-
-    addEventListener("keydown", (e)=>{
-      if (e.key === "ArrowRight" || e.key === "ArrowDown") next();
-      if (e.key === "ArrowLeft"  || e.key === "ArrowUp") prev();
-      if (e.key === " ") { e.preventDefault(); updateSpriteText(textSprite, IDEAS[idx]); } // “reassert”
-    });
-
-    addEventListener("pointerdown", ()=> next());
-
-    // ---------------------------
-    // Render loop
-    // Globe stays static: DO NOT rotate globe.
-    // We only billboard the text + render.
-    // ---------------------------
-    function animate(){
-      requestAnimationFrame(animate);
-      billboard();
-      renderer.render(scene, camera);
-    }
-    animate();
-  </script>
+  renderer.render(scene,camera);
+}
+animate();
+</script>
 </body>
 </html>
