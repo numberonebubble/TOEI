@@ -1,239 +1,187 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Things That Should Exist</title>
-
-<style>
-html,body{
-  margin:0;
-  height:100%;
-  background:#05070b;
-  overflow:hidden;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-  color:#e9eef7;
-}
-canvas{position:fixed; inset:0;}
-.ui{
-  position:fixed;
-  inset:0;
-  pointer-events:none;
-  display:flex;
-  flex-direction:column;
-  justify-content:space-between;
-  padding:18px;
-}
-.kicker{
-  font-size:12px;
-  letter-spacing:.18em;
-  text-transform:uppercase;
-  opacity:.65;
-}
-.headline{
-  font-size:18px;
-  font-weight:650;
-}
-.badge{
-  align-self:flex-end;
-  font-size:12px;
-  opacity:.65;
-}
-</style>
+    <meta charset="UTF-8">
+    <title>The Odd Earth Institute | Orbital Ring</title>
+    <style>
+        body { margin: 0; background-color: #000; overflow: hidden; font-family: 'Courier New', Courier, monospace; }
+        
+        #ui {
+            position: absolute;
+            top: 20px; left: 20px;
+            color: #00d2ff;
+            pointer-events: none;
+            z-index: 10;
+            text-shadow: 0 0 15px rgba(0, 210, 255, 0.8);
+        }
+        h1 { margin: 0; font-size: 1.5rem; letter-spacing: 2px; text-transform: uppercase; }
+        p { font-size: 0.8rem; color: #ffaa00; margin-top: 5px; opacity: 0.9; }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
 </head>
-
 <body>
-<canvas id="c"></canvas>
+    <div id="ui">
+        <h1>The Odd Earth Institute</h1>
+        <p>STATUS: EQUATORIAL DATA STREAM</p>
+    </div>
+    
+    <div id="canvas-container"></div>
 
-<div class="ui">
-  <div>
-    <div class="kicker">Odd Earth Institute</div>
-    <div class="headline">Things that should exist, but don’t:</div>
-  </div>
-  <div id="count" class="badge">1 / 10</div>
-</div>
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-<script type="module">
-import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+        // --- CONFIG ---
+        const GLOBE_RADIUS = 45;
+        const ORBIT_RADIUS = 75; // Distance of text from center
+        const ROTATION_SPEED = 0.0005; // Speed of the text train
+        const PARTICLE_COUNT = 15000;
+        
+        const IDEAS = [
+            "1. Emotionally Aware GPS",
+            "2. 30-Second Infection Detection",
+            "3. Caffeine Quantifying Cups",
+            "4. Nutrient Profiling Device",
+            "5. Neonatal Vein Finders",
+            "6. Universal Fall Detection", 
+            "7. Cancer Diagnosing Plants",
+            "8. Bio-Secure Safes",
+            "9. Stick-on Parking Sensors",
+            "10. Crop-Yield Prediction"
+        ];
 
-const IDEAS = [
-  "Emotionally aware GPS",
-  "30-second infection detection",
-  "Caffeine quantifying coffee cups",
-  "Nutrient profiling device",
-  "Vein finders for neonatal patients",
-  "Universal fall detection for old age homes",
-  "Desk plants that diagnose cancer",
-  "Bio-secure safes and vaults",
-  "Stick-on parking sensors for any vehicle",
-  "Crop-yield prediction from saplings"
-];
+        // --- SETUP ---
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x000000, 0.001);
 
-let idx = 0;
-const countEl = document.getElementById("count");
-countEl.textContent = `1 / ${IDEAS.length}`;
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 2000);
+        camera.position.set(0, 30, 220);
 
-const renderer = new THREE.WebGLRenderer({
-  canvas: document.getElementById("c"),
-  antialias:true,
-  alpha:true
-});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0x05070b, 90, 320);
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.autoRotate = false;
 
-const camera = new THREE.PerspectiveCamera(55,1,0.1,1000);
-camera.position.set(0,0,180);
-camera.lookAt(0,0,0);
+        // --- 1. THE PARTICLE GLOBE ---
+        const globeGeo = new THREE.BufferGeometry();
+        const globePos = [];
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+            const phi = Math.acos(-1 + (2 * i) / PARTICLE_COUNT);
+            const theta = Math.sqrt(PARTICLE_COUNT * Math.PI) * phi;
+            globePos.push(
+                GLOBE_RADIUS * Math.cos(theta) * Math.sin(phi),
+                GLOBE_RADIUS * Math.sin(theta) * Math.sin(phi),
+                GLOBE_RADIUS * Math.cos(phi)
+            );
+        }
+        globeGeo.setAttribute('position', new THREE.Float32BufferAttribute(globePos, 3));
+        const globeMat = new THREE.PointsMaterial({
+            color: 0x0088ff,
+            size: 0.6,
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending
+        });
+        const globe = new THREE.Points(globeGeo, globeMat);
+        scene.add(globe);
 
-function resize(){
-  renderer.setSize(innerWidth, innerHeight, false);
-  camera.aspect = innerWidth/innerHeight;
-  camera.updateProjectionMatrix();
-}
-addEventListener("resize", resize);
-resize();
+        // --- 2. THE GUIDELINE RING (Equator) ---
+        const ringGeo = new THREE.BufferGeometry();
+        const ringPos = [];
+        const ringSegments = 200;
+        for(let i=0; i<=ringSegments; i++) {
+            const theta = (i / ringSegments) * Math.PI * 2;
+            ringPos.push(Math.cos(theta) * ORBIT_RADIUS, 0, Math.sin(theta) * ORBIT_RADIUS);
+        }
+        ringGeo.setAttribute('position', new THREE.Float32BufferAttribute(ringPos, 3));
+        const ringLineMat = new THREE.LineBasicMaterial({ color: 0x333333, transparent: true, opacity: 0.3 });
+        const ringLine = new THREE.LineLoop(ringGeo, ringLineMat);
+        scene.add(ringLine);
 
-scene.add(new THREE.AmbientLight(0xffffff,0.9));
-const sun = new THREE.DirectionalLight(0xffffff,0.35);
-sun.position.set(2,1,1);
-scene.add(sun);
+        // --- 3. TEXT SPRITES ---
+        function createTextSprite(text) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const fontSize = 50; 
+            // Measure first
+            ctx.font = `900 ${fontSize}px Courier New`;
+            const metrics = ctx.measureText(text);
+            const w = metrics.width + 40;
+            const h = fontSize + 40;
+            
+            canvas.width = w;
+            canvas.height = h;
 
-/* =========================
-   STATIC EARTH (LOCKED)
-========================= */
-const globe = new THREE.Group();
-scene.add(globe);
+            // Draw
+            ctx.font = `900 ${fontSize}px Courier New`;
+            ctx.fillStyle = "#ffaa00";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.shadowColor = "#ffaa00";
+            ctx.shadowBlur = 15;
+            ctx.fillText(text, w/2, h/2);
 
-const R = 60;
-const earthMat = new THREE.MeshStandardMaterial({ roughness:1, metalness:0 });
-const earth = new THREE.Mesh(
-  new THREE.SphereGeometry(R, 96, 96),
-  earthMat
-);
-globe.add(earth);
+            const tex = new THREE.CanvasTexture(canvas);
+            const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }); // Always on top
+            const sprite = new THREE.Sprite(mat);
+            sprite.scale.set(w * 0.3, h * 0.3, 1);
+            return sprite;
+        }
 
-new THREE.TextureLoader().load(
-  "https://threejs.org/examples/textures/land_ocean_ice_cloud_2048.jpg",
-  tex=>{
-    tex.colorSpace = THREE.SRGBColorSpace;
-    earthMat.map = tex;
-    earthMat.needsUpdate = true;
-  }
-);
+        const sprites = [];
+        IDEAS.forEach((idea, i) => {
+            const s = createTextSprite(idea.toUpperCase());
+            s.userData = { angle: (i / IDEAS.length) * Math.PI * 2 }; // Store starting angle
+            scene.add(s);
+            sprites.push(s);
+        });
 
-/* =========================
-   TEXT ORBIT (TRUE CENTER)
-========================= */
-const orbit = new THREE.Group();
-scene.add(orbit);
+        // --- ANIMATION ---
+        let time = 0;
 
-const orbitRadius = R + 32;
+        function animate() {
+            requestAnimationFrame(animate);
+            time = Date.now();
 
-const textSprite = createCenteredTextSprite(IDEAS[0]);
-textSprite.position.set(orbitRadius, 0, 0);
-orbit.add(textSprite);
+            // Rotate Globe
+            globe.rotation.y += 0.001;
 
-function createCenteredTextSprite(text){
-  const c = document.createElement("canvas");
-  c.width = 2048;
-  c.height = 512;
-  const ctx = c.getContext("2d");
+            // Move Text along Orbit
+            sprites.forEach(sprite => {
+                // Update angle based on time
+                const currentAngle = sprite.userData.angle + (time * ROTATION_SPEED);
+                
+                sprite.position.x = Math.cos(currentAngle) * ORBIT_RADIUS;
+                sprite.position.z = Math.sin(currentAngle) * ORBIT_RADIUS;
+                
+                // Keep Y at 0 for flat equator
+                sprite.position.y = 0; 
+            });
 
-  drawText(ctx, c, text);
+            controls.update();
+            renderer.render(scene, camera);
+        }
 
-  const tex = new THREE.CanvasTexture(c);
-  tex.colorSpace = THREE.SRGBColorSpace;
+        // Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
 
-  const mat = new THREE.SpriteMaterial({
-    map: tex,
-    transparent:true,
-    depthWrite:false
-  });
+        animate();
 
-  const sprite = new THREE.Sprite(mat);
-
-  /* 🔑 TRUE CENTERING FIX */
-  sprite.center.set(0.5, 0.5);
-
-  const aspect = c.width / c.height;
-  const size = 100;
-  sprite.scale.set(size, size/aspect, 1);
-
-  sprite.userData.canvas = c;
-  sprite.userData.ctx = ctx;
-
-  return sprite;
-}
-
-function drawText(ctx, canvas, text){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle="#e9eef7";
-  ctx.textAlign="center";
-  ctx.textBaseline="middle";
-  ctx.shadowColor="rgba(0,0,0,0.6)";
-  ctx.shadowBlur=24;
-  ctx.shadowOffsetY=12;
-
-  let size=140;
-  ctx.font=`800 ${size}px system-ui`;
-  while(ctx.measureText(text).width > canvas.width*0.85 && size>64){
-    size-=6;
-    ctx.font=`800 ${size}px system-ui`;
-  }
-  ctx.fillText(text, canvas.width/2, canvas.height/2);
-}
-
-function updateText(text){
-  drawText(
-    textSprite.userData.ctx,
-    textSprite.userData.canvas,
-    text
-  );
-  textSprite.material.map.needsUpdate = true;
-}
-
-/* =========================
-   SCROLL ROTATION (CLEAN)
-========================= */
-let targetRot = 0;
-let currentRot = 0;
-
-function next(dir=1){
-  idx = (idx + dir + IDEAS.length) % IDEAS.length;
-  countEl.textContent = `${idx+1} / ${IDEAS.length}`;
-  targetRot += dir * (Math.PI * 2/3);
-  updateText(IDEAS[idx]);
-}
-
-addEventListener("wheel", e=>{
-  e.deltaY>0 ? next(1) : next(-1);
-},{passive:true});
-
-addEventListener("pointerdown", ()=>next(1));
-
-addEventListener("keydown", e=>{
-  if(e.key==="ArrowRight"||e.key==="ArrowDown") next(1);
-  if(e.key==="ArrowLeft"||e.key==="ArrowUp") next(-1);
-});
-
-/* =========================
-   RENDER LOOP
-========================= */
-function animate(){
-  requestAnimationFrame(animate);
-
-  /* smooth rotation */
-  currentRot += (targetRot - currentRot)*0.08;
-  orbit.rotation.y = currentRot;
-
-  /* billboard without drift */
-  textSprite.quaternion.copy(camera.quaternion);
-
-  renderer.render(scene,camera);
-}
-animate();
-</script>
+    </script>
 </body>
 </html>
