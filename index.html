@@ -8,7 +8,7 @@
     :root{
       --bg:#05070b;
       --fg:#e9eef7;
-      --muted:rgba(233,238,247,.68);
+      --muted:rgba(233,238,247,.65);
       --soft:rgba(255,255,255,.08);
     }
     html,body{
@@ -21,7 +21,7 @@
     }
     canvas{ position:fixed; inset:0; }
 
-    /* Broadcast-style typography */
+    /* Minimal UI (optional). Remove if you want pure visuals. */
     .ui{
       position:fixed;
       inset:0;
@@ -49,47 +49,15 @@
       font-weight:650;
       color:rgba(233,238,247,.92);
     }
-
-    .centerWrap{
-      width:100%;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      min-height:40vh;
-    }
-    .idea{
-      text-align:center;
-      max-width:min(980px, 94vw);
-      line-height:1.15;
-      font-weight:750;
-      letter-spacing:-0.02em;
-      font-size: clamp(26px, 4vw, 52px);
-      text-shadow: 0 18px 70px rgba(0,0,0,.55);
-      opacity:0;
-      transform: translateY(6px);
-      transition: opacity 420ms ease, transform 420ms ease;
-    }
-    .idea.show{
-      opacity:1;
-      transform: translateY(0);
-    }
-
     .bottom{
       display:flex;
-      gap:10px;
-      align-items:center;
       justify-content:space-between;
+      align-items:center;
+      gap:10px;
       color:var(--muted);
       font-size:12px;
     }
-    .badge{
-      border:1px solid var(--soft);
-      background:rgba(255,255,255,.03);
-      border-radius:999px;
-      padding:10px 12px;
-      backdrop-filter: blur(10px);
-    }
-    .hint{
+    .badge, .hint{
       border:1px solid var(--soft);
       background:rgba(255,255,255,.03);
       border-radius:999px;
@@ -107,11 +75,6 @@
       <div class="kicker">Odd Earth Institute</div>
       <div class="headline">Things that should exist, but don’t:</div>
     </div>
-
-    <div class="centerWrap">
-      <div id="idea" class="idea"></div>
-    </div>
-
     <div class="bottom">
       <div id="count" class="badge">1 / 10</div>
       <div class="hint">Scroll / ← → / click to advance</div>
@@ -122,7 +85,7 @@
     import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
     // ---------------------------
-    // Content
+    // Ideas
     // ---------------------------
     const IDEAS = [
       "Emotionally aware GPS",
@@ -137,65 +100,23 @@
       "Crop-yield prediction from saplings"
     ];
 
-    // ---------------------------
-    // UI logic
-    // ---------------------------
-    const ideaEl = document.getElementById("idea");
     const countEl = document.getElementById("count");
     let idx = 0;
-
-    function setIdea(i, replay=false){
-      idx = (i + IDEAS.length) % IDEAS.length;
-      countEl.textContent = `${idx+1} / ${IDEAS.length}`;
-
-      // fade swap
-      ideaEl.classList.remove("show");
-      const next = IDEAS[idx];
-
-      // slightly stagger so it feels like a broadcast ident
-      const delay = replay ? 0 : 220;
-      setTimeout(() => {
-        ideaEl.textContent = next;
-        requestAnimationFrame(()=> ideaEl.classList.add("show"));
-      }, delay);
-    }
-
-    function next(){ setIdea(idx+1); }
-    function prev(){ setIdea(idx-1); }
-
-    // initial
-    ideaEl.textContent = IDEAS[0];
-    requestAnimationFrame(()=> ideaEl.classList.add("show"));
-
-    // controls
-    let wheelLock = false;
-    addEventListener("wheel", (e)=>{
-      if (wheelLock) return;
-      wheelLock = true;
-      setTimeout(()=> wheelLock=false, 320);
-      if (e.deltaY > 0) next(); else prev();
-    }, { passive:true });
-
-    addEventListener("keydown", (e)=>{
-      if (e.key === "ArrowRight" || e.key === "ArrowDown") next();
-      if (e.key === "ArrowLeft"  || e.key === "ArrowUp") prev();
-      if (e.key === " ") { e.preventDefault(); setIdea(idx, true); }
-    });
-
-    addEventListener("pointerdown", ()=> next());
+    function updateCount(){ countEl.textContent = `${idx+1} / ${IDEAS.length}`; }
+    updateCount();
 
     // ---------------------------
-    // Three.js scene: Daily Planet globe
+    // Three.js setup
     // ---------------------------
     const canvas = document.getElementById("c");
     const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
     renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 
     const scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0x05070b, 80, 260);
+    scene.fog = new THREE.Fog(0x05070b, 85, 300);
 
     const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 800);
-    camera.position.set(0, 0, 160);
+    camera.position.set(0, 0, 170);
     camera.lookAt(0,0,0);
 
     function resize(){
@@ -206,27 +127,33 @@
     addEventListener("resize", resize);
     resize();
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.85));
+    // Lighting (kept subtle so colors stay “accurate”)
+    scene.add(new THREE.AmbientLight(0xffffff, 0.90));
+    const dir = new THREE.DirectionalLight(0xffffff, 0.35);
+    dir.position.set(1.5, 0.6, 1.2);
+    scene.add(dir);
 
-    // Group so we can rotate the whole globe identically
+    // ---------------------------
+    // Static Earth (accurate colour)
+    // ---------------------------
     const globe = new THREE.Group();
     scene.add(globe);
 
-    const R = 56;
+    const R = 58;
 
-    // Subtle Earth texture sphere (very low opacity)
-    // If the texture fails to load, the rest still works.
+    // Good Earth color map (equirectangular). sRGB-correct.
+    // If you want to host locally later, download this and point to your repo path.
+    const earthTexUrl = "https://threejs.org/examples/textures/land_ocean_ice_cloud_2048.jpg";
+
     const texLoader = new THREE.TextureLoader();
-    const earthTexUrl = "https://threejs.org/examples/textures/land_ocean_ice_cloud_1024.jpg";
-
-    const earthMat = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
-      transparent: true,
-      opacity: 0.18,
-      depthWrite: false
+    const earthMat = new THREE.MeshStandardMaterial({
+      metalness: 0.0,
+      roughness: 1.0,
+      transparent: false
     });
+
     const earthMesh = new THREE.Mesh(
-      new THREE.SphereGeometry(R-0.6, 64, 64),
+      new THREE.SphereGeometry(R, 96, 96),
       earthMat
     );
     globe.add(earthMesh);
@@ -235,100 +162,17 @@
       earthTexUrl,
       (tex)=>{
         tex.colorSpace = THREE.SRGBColorSpace;
-        tex.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+        tex.anisotropy = Math.min(12, renderer.capabilities.getMaxAnisotropy());
         earthMat.map = tex;
         earthMat.needsUpdate = true;
       },
       undefined,
-      ()=>{ /* ignore errors; keep faint white sphere */ }
+      ()=>{ /* ignore */ }
     );
 
-    // Latitude/Longitude grid (Lines)
-    function makeLatLine(latDeg, segments=240){
-      const lat = THREE.MathUtils.degToRad(latDeg);
-      const r = Math.cos(lat) * R;
-      const y = Math.sin(lat) * R;
-
-      const pts = [];
-      for (let i=0;i<=segments;i++){
-        const a = (i/segments) * Math.PI * 2;
-        pts.push(new THREE.Vector3(Math.cos(a)*r, y, Math.sin(a)*r));
-      }
-      const geo = new THREE.BufferGeometry().setFromPoints(pts);
-      return new THREE.Line(geo, gridMat);
-    }
-
-    function makeLonLine(lonDeg, segments=240){
-      const lon = THREE.MathUtils.degToRad(lonDeg);
-      const pts = [];
-      for (let i=0;i<=segments;i++){
-        const t = (i/segments) * Math.PI - Math.PI/2; // -90..+90 lat
-        const x = Math.cos(t) * Math.cos(lon) * R;
-        const y = Math.sin(t) * R;
-        const z = Math.cos(t) * Math.sin(lon) * R;
-        pts.push(new THREE.Vector3(x,y,z));
-      }
-      const geo = new THREE.BufferGeometry().setFromPoints(pts);
-      return new THREE.Line(geo, gridMat);
-    }
-
-    const gridMat = new THREE.LineBasicMaterial({
-      color: 0xe9eef7,
-      transparent: true,
-      opacity: 0.14
-    });
-
-    // add grid lines (clean, broadcast-like density)
-    const latSteps = [-60,-40,-20,0,20,40,60];
-    latSteps.forEach(lat=> globe.add(makeLatLine(lat)));
-
-    for (let lon=-150; lon<=150; lon+=30){
-      globe.add(makeLonLine(lon));
-    }
-
-    // Dotted "globe points" for that classic ident shimmer
-    const DOTS = 9000;
-    const dotPos = new Float32Array(DOTS*3);
-
-    function randUnitSphere(){
-      // Marsaglia
-      let x1,x2,s;
-      do { x1=Math.random()*2-1; x2=Math.random()*2-1; s=x1*x1+x2*x2; }
-      while (s>=1 || s===0);
-      const f = Math.sqrt(1-s);
-      const x = 2*x1*f;
-      const y = 2*x2*f;
-      const z = 1 - 2*s;
-      return [x,y,z];
-    }
-
-    for (let i=0;i<DOTS;i++){
-      const i3=i*3;
-      const [x,y,z] = randUnitSphere();
-      const rr = R + (Math.random()-0.5)*0.35;
-      dotPos[i3]   = x*rr;
-      dotPos[i3+1] = y*rr;
-      dotPos[i3+2] = z*rr;
-    }
-
-    const dotGeo = new THREE.BufferGeometry();
-    dotGeo.setAttribute("position", new THREE.BufferAttribute(dotPos, 3));
-
-    const dotMat = new THREE.PointsMaterial({
-      color: 0xe9eef7,
-      size: 0.55,
-      sizeAttenuation: true,
-      transparent: true,
-      opacity: 0.30,
-      depthWrite: false
-    });
-
-    const dotPts = new THREE.Points(dotGeo, dotMat);
-    globe.add(dotPts);
-
-    // Subtle outer halo to make it feel “broadcast”
+    // Broadcast-ish halo (very subtle)
     const halo = new THREE.Mesh(
-      new THREE.SphereGeometry(R+1.8, 64, 64),
+      new THREE.SphereGeometry(R + 2.0, 64, 64),
       new THREE.MeshBasicMaterial({
         color: 0xffffff,
         transparent: true,
@@ -339,19 +183,234 @@
     );
     globe.add(halo);
 
-    // ---------------------------
-    // Animation loop
-    // ---------------------------
-    const clock = new THREE.Clock();
+    // Grid (optional but Daily-Planet-ish)
+    const gridMat = new THREE.LineBasicMaterial({ color: 0xe9eef7, transparent:true, opacity: 0.12 });
+    function makeLatLine(latDeg, segments=240){
+      const lat = THREE.MathUtils.degToRad(latDeg);
+      const r = Math.cos(lat) * (R + 0.8);
+      const y = Math.sin(lat) * (R + 0.8);
+      const pts = [];
+      for (let i=0;i<=segments;i++){
+        const a = (i/segments) * Math.PI * 2;
+        pts.push(new THREE.Vector3(Math.cos(a)*r, y, Math.sin(a)*r));
+      }
+      const g = new THREE.BufferGeometry().setFromPoints(pts);
+      return new THREE.Line(g, gridMat);
+    }
+    function makeLonLine(lonDeg, segments=240){
+      const lon = THREE.MathUtils.degToRad(lonDeg);
+      const pts = [];
+      for (let i=0;i<=segments;i++){
+        const t = (i/segments) * Math.PI - Math.PI/2;
+        const x = Math.cos(t) * Math.cos(lon) * (R + 0.8);
+        const y = Math.sin(t) * (R + 0.8);
+        const z = Math.cos(t) * Math.sin(lon) * (R + 0.8);
+        pts.push(new THREE.Vector3(x,y,z));
+      }
+      const g = new THREE.BufferGeometry().setFromPoints(pts);
+      return new THREE.Line(g, gridMat);
+    }
+    [-60,-40,-20,0,20,40,60].forEach(lat => globe.add(makeLatLine(lat)));
+    for (let lon=-150; lon<=150; lon+=30) globe.add(makeLonLine(lon));
 
+    // ---------------------------
+    // Orbiting text around globe (Sprite via CanvasTexture)
+    // ---------------------------
+    const textGroup = new THREE.Group();
+    scene.add(textGroup);
+
+    const orbitRadius = R + 28;
+    const textSprite = makeTextSprite(IDEAS[idx]);
+    textSprite.position.set(orbitRadius, 0, 0); // at +X, then group rotation moves it around
+    textGroup.add(textSprite);
+
+    // Keep sprite always facing camera (billboard)
+    function billboard(){
+      textSprite.quaternion.copy(camera.quaternion);
+    }
+
+    // Create a sprite from canvas text
+    function makeTextSprite(text){
+      const c = document.createElement("canvas");
+      const ctx = c.getContext("2d");
+
+      // high-res for crispness
+      c.width = 2048;
+      c.height = 512;
+
+      // Clear
+      ctx.clearRect(0,0,c.width,c.height);
+
+      // Text styling
+      const padding = 80;
+      const maxW = c.width - padding*2;
+
+      // Fit font size
+      let fontSize = 140;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "#E9EEF7";
+      ctx.shadowColor = "rgba(0,0,0,0.55)";
+      ctx.shadowBlur = 24;
+      ctx.shadowOffsetY = 14;
+
+      function measure(fs){
+        ctx.font = `800 ${fs}px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial`;
+        return ctx.measureText(text).width;
+      }
+      while(measure(fontSize) > maxW && fontSize > 64) fontSize -= 6;
+
+      ctx.font = `800 ${fontSize}px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial`;
+      ctx.fillText(text, c.width/2, c.height/2);
+
+      const tex = new THREE.CanvasTexture(c);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.minFilter = THREE.LinearFilter;
+      tex.magFilter = THREE.LinearFilter;
+      tex.needsUpdate = true;
+
+      const mat = new THREE.SpriteMaterial({
+        map: tex,
+        transparent: true,
+        opacity: 1.0,
+        depthWrite: false
+      });
+
+      const spr = new THREE.Sprite(mat);
+
+      // Scale sprite in world units (tweak if you want bigger/smaller)
+      const baseW = 95;
+      const aspect = c.width / c.height;
+      spr.scale.set(baseW, baseW / aspect, 1);
+
+      // stash canvas for re-use on updates
+      spr.userData.canvas = c;
+      spr.userData.ctx = ctx;
+
+      return spr;
+    }
+
+    // Update sprite texture text (no rebuilding objects)
+    function updateSpriteText(sprite, text){
+      const c = sprite.userData.canvas;
+      const ctx = sprite.userData.ctx;
+
+      ctx.clearRect(0,0,c.width,c.height);
+
+      const padding = 80;
+      const maxW = c.width - padding*2;
+
+      let fontSize = 140;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "#E9EEF7";
+      ctx.shadowColor = "rgba(0,0,0,0.55)";
+      ctx.shadowBlur = 24;
+      ctx.shadowOffsetY = 14;
+
+      function measure(fs){
+        ctx.font = `800 ${fs}px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial`;
+        return ctx.measureText(text).width;
+      }
+      while(measure(fontSize) > maxW && fontSize > 64) fontSize -= 6;
+
+      ctx.font = `800 ${fontSize}px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial`;
+      ctx.fillText(text, c.width/2, c.height/2);
+
+      sprite.material.map.needsUpdate = true;
+    }
+
+    // ---------------------------
+    // Scroll-driven sequential rotation
+    // The globe is static; we rotate textGroup around Y.
+    // We also swap the text at the “back” of the orbit for a nice reveal.
+    // ---------------------------
+    let anim = null;
+
+    function easeInOutCubic(x){
+      return x < 0.5 ? 4*x*x*x : 1 - Math.pow(-2*x + 2, 3)/2;
+    }
+
+    function rotateToNext(nextIndex, direction){
+      if (anim) anim.cancelled = true;
+
+      const startRot = textGroup.rotation.y;
+      const step = direction * (Math.PI * 2/3); // 120° travel per step (feels “broadcast”)
+      const endRot = startRot + step;
+
+      const duration = 650; // ms
+      const startTime = performance.now();
+
+      // Swap text when it’s behind the globe (midpoint)
+      let swapped = false;
+      const nextText = IDEAS[nextIndex];
+
+      anim = { cancelled:false };
+
+      function frame(now){
+        if (anim.cancelled) return;
+
+        const t = Math.min(1, (now - startTime) / duration);
+        const e = easeInOutCubic(t);
+
+        textGroup.rotation.y = startRot + (endRot - startRot) * e;
+
+        // midpoint swap (when text is roughly at the back)
+        if (!swapped && t > 0.52){
+          updateSpriteText(textSprite, nextText);
+          swapped = true;
+        }
+
+        if (t < 1){
+          requestAnimationFrame(frame);
+        } else {
+          textGroup.rotation.y = endRot;
+          anim = null;
+        }
+      }
+
+      requestAnimationFrame(frame);
+    }
+
+    function next(){
+      const nextIdx = (idx + 1) % IDEAS.length;
+      rotateToNext(nextIdx, +1);
+      idx = nextIdx;
+      updateCount();
+    }
+
+    function prev(){
+      const nextIdx = (idx - 1 + IDEAS.length) % IDEAS.length;
+      rotateToNext(nextIdx, -1);
+      idx = nextIdx;
+      updateCount();
+    }
+
+    // Controls
+    let wheelLock = false;
+    addEventListener("wheel", (e)=>{
+      if (wheelLock) return;
+      wheelLock = true;
+      setTimeout(()=> wheelLock=false, 260);
+      if (e.deltaY > 0) next(); else prev();
+    }, { passive:true });
+
+    addEventListener("keydown", (e)=>{
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") next();
+      if (e.key === "ArrowLeft"  || e.key === "ArrowUp") prev();
+      if (e.key === " ") { e.preventDefault(); updateSpriteText(textSprite, IDEAS[idx]); } // “reassert”
+    });
+
+    addEventListener("pointerdown", ()=> next());
+
+    // ---------------------------
+    // Render loop
+    // Globe stays static: DO NOT rotate globe.
+    // We only billboard the text + render.
+    // ---------------------------
     function animate(){
       requestAnimationFrame(animate);
-      const t = clock.getElapsedTime();
-
-      // Daily Planet: steady, restrained rotation
-      globe.rotation.y = t * 0.22;
-      globe.rotation.x = Math.sin(t * 0.22) * 0.04;
-
+      billboard();
       renderer.render(scene, camera);
     }
     animate();
