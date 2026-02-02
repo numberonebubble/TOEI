@@ -1,187 +1,360 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>The Odd Earth Institute | Orbital Ring</title>
-    <style>
-        body { margin: 0; background-color: #000; overflow: hidden; font-family: 'Courier New', Courier, monospace; }
-        
-        #ui {
-            position: absolute;
-            top: 20px; left: 20px;
-            color: #00d2ff;
-            pointer-events: none;
-            z-index: 10;
-            text-shadow: 0 0 15px rgba(0, 210, 255, 0.8);
-        }
-        h1 { margin: 0; font-size: 1.5rem; letter-spacing: 2px; text-transform: uppercase; }
-        p { font-size: 0.8rem; color: #ffaa00; margin-top: 5px; opacity: 0.9; }
-    </style>
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-            }
-        }
-    </script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Things That Should Exist</title>
+  <style>
+    :root{
+      --bg:#05070b;
+      --fg:#e9eef7;
+      --muted:rgba(233,238,247,.68);
+      --soft:rgba(255,255,255,.08);
+    }
+    html,body{
+      height:100%;
+      margin:0;
+      background:var(--bg);
+      overflow:hidden;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color:var(--fg);
+    }
+    canvas{ position:fixed; inset:0; }
+
+    /* Broadcast-style typography */
+    .ui{
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      padding:18px;
+      box-sizing:border-box;
+    }
+    .top{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      max-width:min(860px, 92vw);
+    }
+    .kicker{
+      font-size:12px;
+      letter-spacing:.18em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+    .headline{
+      font-size:18px;
+      font-weight:650;
+      color:rgba(233,238,247,.92);
+    }
+
+    .centerWrap{
+      width:100%;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      min-height:40vh;
+    }
+    .idea{
+      text-align:center;
+      max-width:min(980px, 94vw);
+      line-height:1.15;
+      font-weight:750;
+      letter-spacing:-0.02em;
+      font-size: clamp(26px, 4vw, 52px);
+      text-shadow: 0 18px 70px rgba(0,0,0,.55);
+      opacity:0;
+      transform: translateY(6px);
+      transition: opacity 420ms ease, transform 420ms ease;
+    }
+    .idea.show{
+      opacity:1;
+      transform: translateY(0);
+    }
+
+    .bottom{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      color:var(--muted);
+      font-size:12px;
+    }
+    .badge{
+      border:1px solid var(--soft);
+      background:rgba(255,255,255,.03);
+      border-radius:999px;
+      padding:10px 12px;
+      backdrop-filter: blur(10px);
+    }
+    .hint{
+      border:1px solid var(--soft);
+      background:rgba(255,255,255,.03);
+      border-radius:999px;
+      padding:10px 12px;
+      backdrop-filter: blur(10px);
+      white-space:nowrap;
+    }
+  </style>
 </head>
 <body>
-    <div id="ui">
-        <h1>The Odd Earth Institute</h1>
-        <p>STATUS: EQUATORIAL DATA STREAM</p>
+  <canvas id="c"></canvas>
+
+  <div class="ui">
+    <div class="top">
+      <div class="kicker">Odd Earth Institute</div>
+      <div class="headline">Things that should exist, but don’t:</div>
     </div>
-    
-    <div id="canvas-container"></div>
 
-    <script type="module">
-        import * as THREE from 'three';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    <div class="centerWrap">
+      <div id="idea" class="idea"></div>
+    </div>
 
-        // --- CONFIG ---
-        const GLOBE_RADIUS = 45;
-        const ORBIT_RADIUS = 75; // Distance of text from center
-        const ROTATION_SPEED = 0.0005; // Speed of the text train
-        const PARTICLE_COUNT = 15000;
-        
-        const IDEAS = [
-            "1. Emotionally Aware GPS",
-            "2. 30-Second Infection Detection",
-            "3. Caffeine Quantifying Cups",
-            "4. Nutrient Profiling Device",
-            "5. Neonatal Vein Finders",
-            "6. Universal Fall Detection", 
-            "7. Cancer Diagnosing Plants",
-            "8. Bio-Secure Safes",
-            "9. Stick-on Parking Sensors",
-            "10. Crop-Yield Prediction"
-        ];
+    <div class="bottom">
+      <div id="count" class="badge">1 / 10</div>
+      <div class="hint">Scroll / ← → / click to advance</div>
+    </div>
+  </div>
 
-        // --- SETUP ---
-        const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x000000, 0.001);
+  <script type="module">
+    import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
-        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 2000);
-        camera.position.set(0, 30, 220);
+    // ---------------------------
+    // Content
+    // ---------------------------
+    const IDEAS = [
+      "Emotionally aware GPS",
+      "30-second infection detection",
+      "Caffeine quantifying coffee cups",
+      "Nutrient profiling device",
+      "Vein finders for neonatal patients",
+      "Universal fall detection for old age homes",
+      "Desk plants that diagnose cancer",
+      "Bio-secure safes and vaults",
+      "Stick-on parking sensors for any vehicle",
+      "Crop-yield prediction from saplings"
+    ];
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
-        document.getElementById('canvas-container').appendChild(renderer.domElement);
+    // ---------------------------
+    // UI logic
+    // ---------------------------
+    const ideaEl = document.getElementById("idea");
+    const countEl = document.getElementById("count");
+    let idx = 0;
 
-        const controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-        controls.autoRotate = false;
+    function setIdea(i, replay=false){
+      idx = (i + IDEAS.length) % IDEAS.length;
+      countEl.textContent = `${idx+1} / ${IDEAS.length}`;
 
-        // --- 1. THE PARTICLE GLOBE ---
-        const globeGeo = new THREE.BufferGeometry();
-        const globePos = [];
-        for (let i = 0; i < PARTICLE_COUNT; i++) {
-            const phi = Math.acos(-1 + (2 * i) / PARTICLE_COUNT);
-            const theta = Math.sqrt(PARTICLE_COUNT * Math.PI) * phi;
-            globePos.push(
-                GLOBE_RADIUS * Math.cos(theta) * Math.sin(phi),
-                GLOBE_RADIUS * Math.sin(theta) * Math.sin(phi),
-                GLOBE_RADIUS * Math.cos(phi)
-            );
-        }
-        globeGeo.setAttribute('position', new THREE.Float32BufferAttribute(globePos, 3));
-        const globeMat = new THREE.PointsMaterial({
-            color: 0x0088ff,
-            size: 0.6,
-            transparent: true,
-            opacity: 0.8,
-            blending: THREE.AdditiveBlending
-        });
-        const globe = new THREE.Points(globeGeo, globeMat);
-        scene.add(globe);
+      // fade swap
+      ideaEl.classList.remove("show");
+      const next = IDEAS[idx];
 
-        // --- 2. THE GUIDELINE RING (Equator) ---
-        const ringGeo = new THREE.BufferGeometry();
-        const ringPos = [];
-        const ringSegments = 200;
-        for(let i=0; i<=ringSegments; i++) {
-            const theta = (i / ringSegments) * Math.PI * 2;
-            ringPos.push(Math.cos(theta) * ORBIT_RADIUS, 0, Math.sin(theta) * ORBIT_RADIUS);
-        }
-        ringGeo.setAttribute('position', new THREE.Float32BufferAttribute(ringPos, 3));
-        const ringLineMat = new THREE.LineBasicMaterial({ color: 0x333333, transparent: true, opacity: 0.3 });
-        const ringLine = new THREE.LineLoop(ringGeo, ringLineMat);
-        scene.add(ringLine);
+      // slightly stagger so it feels like a broadcast ident
+      const delay = replay ? 0 : 220;
+      setTimeout(() => {
+        ideaEl.textContent = next;
+        requestAnimationFrame(()=> ideaEl.classList.add("show"));
+      }, delay);
+    }
 
-        // --- 3. TEXT SPRITES ---
-        function createTextSprite(text) {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            const fontSize = 50; 
-            // Measure first
-            ctx.font = `900 ${fontSize}px Courier New`;
-            const metrics = ctx.measureText(text);
-            const w = metrics.width + 40;
-            const h = fontSize + 40;
-            
-            canvas.width = w;
-            canvas.height = h;
+    function next(){ setIdea(idx+1); }
+    function prev(){ setIdea(idx-1); }
 
-            // Draw
-            ctx.font = `900 ${fontSize}px Courier New`;
-            ctx.fillStyle = "#ffaa00";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.shadowColor = "#ffaa00";
-            ctx.shadowBlur = 15;
-            ctx.fillText(text, w/2, h/2);
+    // initial
+    ideaEl.textContent = IDEAS[0];
+    requestAnimationFrame(()=> ideaEl.classList.add("show"));
 
-            const tex = new THREE.CanvasTexture(canvas);
-            const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }); // Always on top
-            const sprite = new THREE.Sprite(mat);
-            sprite.scale.set(w * 0.3, h * 0.3, 1);
-            return sprite;
-        }
+    // controls
+    let wheelLock = false;
+    addEventListener("wheel", (e)=>{
+      if (wheelLock) return;
+      wheelLock = true;
+      setTimeout(()=> wheelLock=false, 320);
+      if (e.deltaY > 0) next(); else prev();
+    }, { passive:true });
 
-        const sprites = [];
-        IDEAS.forEach((idea, i) => {
-            const s = createTextSprite(idea.toUpperCase());
-            s.userData = { angle: (i / IDEAS.length) * Math.PI * 2 }; // Store starting angle
-            scene.add(s);
-            sprites.push(s);
-        });
+    addEventListener("keydown", (e)=>{
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") next();
+      if (e.key === "ArrowLeft"  || e.key === "ArrowUp") prev();
+      if (e.key === " ") { e.preventDefault(); setIdea(idx, true); }
+    });
 
-        // --- ANIMATION ---
-        let time = 0;
+    addEventListener("pointerdown", ()=> next());
 
-        function animate() {
-            requestAnimationFrame(animate);
-            time = Date.now();
+    // ---------------------------
+    // Three.js scene: Daily Planet globe
+    // ---------------------------
+    const canvas = document.getElementById("c");
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 
-            // Rotate Globe
-            globe.rotation.y += 0.001;
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.Fog(0x05070b, 80, 260);
 
-            // Move Text along Orbit
-            sprites.forEach(sprite => {
-                // Update angle based on time
-                const currentAngle = sprite.userData.angle + (time * ROTATION_SPEED);
-                
-                sprite.position.x = Math.cos(currentAngle) * ORBIT_RADIUS;
-                sprite.position.z = Math.sin(currentAngle) * ORBIT_RADIUS;
-                
-                // Keep Y at 0 for flat equator
-                sprite.position.y = 0; 
-            });
+    const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 800);
+    camera.position.set(0, 0, 160);
+    camera.lookAt(0,0,0);
 
-            controls.update();
-            renderer.render(scene, camera);
-        }
+    function resize(){
+      renderer.setSize(innerWidth, innerHeight, false);
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+    }
+    addEventListener("resize", resize);
+    resize();
 
-        // Resize
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+    scene.add(new THREE.AmbientLight(0xffffff, 0.85));
 
-        animate();
+    // Group so we can rotate the whole globe identically
+    const globe = new THREE.Group();
+    scene.add(globe);
 
-    </script>
+    const R = 56;
+
+    // Subtle Earth texture sphere (very low opacity)
+    // If the texture fails to load, the rest still works.
+    const texLoader = new THREE.TextureLoader();
+    const earthTexUrl = "https://threejs.org/examples/textures/land_ocean_ice_cloud_1024.jpg";
+
+    const earthMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.18,
+      depthWrite: false
+    });
+    const earthMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(R-0.6, 64, 64),
+      earthMat
+    );
+    globe.add(earthMesh);
+
+    texLoader.load(
+      earthTexUrl,
+      (tex)=>{
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+        earthMat.map = tex;
+        earthMat.needsUpdate = true;
+      },
+      undefined,
+      ()=>{ /* ignore errors; keep faint white sphere */ }
+    );
+
+    // Latitude/Longitude grid (Lines)
+    function makeLatLine(latDeg, segments=240){
+      const lat = THREE.MathUtils.degToRad(latDeg);
+      const r = Math.cos(lat) * R;
+      const y = Math.sin(lat) * R;
+
+      const pts = [];
+      for (let i=0;i<=segments;i++){
+        const a = (i/segments) * Math.PI * 2;
+        pts.push(new THREE.Vector3(Math.cos(a)*r, y, Math.sin(a)*r));
+      }
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      return new THREE.Line(geo, gridMat);
+    }
+
+    function makeLonLine(lonDeg, segments=240){
+      const lon = THREE.MathUtils.degToRad(lonDeg);
+      const pts = [];
+      for (let i=0;i<=segments;i++){
+        const t = (i/segments) * Math.PI - Math.PI/2; // -90..+90 lat
+        const x = Math.cos(t) * Math.cos(lon) * R;
+        const y = Math.sin(t) * R;
+        const z = Math.cos(t) * Math.sin(lon) * R;
+        pts.push(new THREE.Vector3(x,y,z));
+      }
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      return new THREE.Line(geo, gridMat);
+    }
+
+    const gridMat = new THREE.LineBasicMaterial({
+      color: 0xe9eef7,
+      transparent: true,
+      opacity: 0.14
+    });
+
+    // add grid lines (clean, broadcast-like density)
+    const latSteps = [-60,-40,-20,0,20,40,60];
+    latSteps.forEach(lat=> globe.add(makeLatLine(lat)));
+
+    for (let lon=-150; lon<=150; lon+=30){
+      globe.add(makeLonLine(lon));
+    }
+
+    // Dotted "globe points" for that classic ident shimmer
+    const DOTS = 9000;
+    const dotPos = new Float32Array(DOTS*3);
+
+    function randUnitSphere(){
+      // Marsaglia
+      let x1,x2,s;
+      do { x1=Math.random()*2-1; x2=Math.random()*2-1; s=x1*x1+x2*x2; }
+      while (s>=1 || s===0);
+      const f = Math.sqrt(1-s);
+      const x = 2*x1*f;
+      const y = 2*x2*f;
+      const z = 1 - 2*s;
+      return [x,y,z];
+    }
+
+    for (let i=0;i<DOTS;i++){
+      const i3=i*3;
+      const [x,y,z] = randUnitSphere();
+      const rr = R + (Math.random()-0.5)*0.35;
+      dotPos[i3]   = x*rr;
+      dotPos[i3+1] = y*rr;
+      dotPos[i3+2] = z*rr;
+    }
+
+    const dotGeo = new THREE.BufferGeometry();
+    dotGeo.setAttribute("position", new THREE.BufferAttribute(dotPos, 3));
+
+    const dotMat = new THREE.PointsMaterial({
+      color: 0xe9eef7,
+      size: 0.55,
+      sizeAttenuation: true,
+      transparent: true,
+      opacity: 0.30,
+      depthWrite: false
+    });
+
+    const dotPts = new THREE.Points(dotGeo, dotMat);
+    globe.add(dotPts);
+
+    // Subtle outer halo to make it feel “broadcast”
+    const halo = new THREE.Mesh(
+      new THREE.SphereGeometry(R+1.8, 64, 64),
+      new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.03,
+        depthWrite: false,
+        side: THREE.BackSide
+      })
+    );
+    globe.add(halo);
+
+    // ---------------------------
+    // Animation loop
+    // ---------------------------
+    const clock = new THREE.Clock();
+
+    function animate(){
+      requestAnimationFrame(animate);
+      const t = clock.getElapsedTime();
+
+      // Daily Planet: steady, restrained rotation
+      globe.rotation.y = t * 0.22;
+      globe.rotation.x = Math.sin(t * 0.22) * 0.04;
+
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
 </body>
 </html>
