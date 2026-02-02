@@ -2,38 +2,20 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>The Odd Earth Institute | Scroll to Materialize</title>
+    <title>The Odd Earth Institute | Planetary Archives</title>
     <style>
-        body { margin: 0; background-color: #050505; color: #fff; font-family: 'Courier New', Courier, monospace; overflow-x: hidden; }
+        body { margin: 0; background-color: #000; overflow: hidden; font-family: 'Courier New', Courier, monospace; }
         
-        #canvas-container { 
-            position: fixed; 
-            top: 0; left: 0; 
-            width: 100vw; height: 100vh; 
-            z-index: 1; 
-        }
-
-        #scroll-proxy { height: 1100vh; } /* Creates scroll length for 10 items + start */
-
-        .ui-layer {
-            position: fixed;
-            top: 30px; left: 30px;
-            z-index: 10;
-            pointer-events: none;
-        }
-
-        h1 { margin: 0; font-size: 1.2rem; letter-spacing: 4px; color: #00d2ff; text-shadow: 0 0 10px rgba(0,210,255,0.5); }
-        .instruction { font-size: 0.8rem; color: #ffaa00; opacity: 0.8; margin-top: 5px; }
-
-        .current-label {
-            position: fixed;
-            bottom: 40px; right: 40px;
-            font-size: 0.7rem;
+        #ui {
+            position: absolute;
+            top: 20px; left: 20px;
             color: #00d2ff;
+            pointer-events: none;
             z-index: 10;
-            text-align: right;
-            text-transform: uppercase;
+            text-shadow: 0 0 15px rgba(0, 210, 255, 0.8);
         }
+        h1 { margin: 0; font-size: 1.5rem; letter-spacing: 2px; text-transform: uppercase; }
+        p { font-size: 0.8rem; color: #ffaa00; margin-top: 5px; opacity: 0.9; }
     </style>
     <script type="importmap">
         {
@@ -45,208 +27,194 @@
     </script>
 </head>
 <body>
-
-    <div class="ui-layer">
-        <h1>THE ODD EARTH INSTITUTE</h1>
-        <div class="instruction">SCROLL TO MATERIALIZE FRONTIER IDEAS</div>
+    <div id="ui">
+        <h1>The Odd Earth Institute</h1>
+        <p>SYSTEM STATUS: ORBITAL ROTATION ACTIVE</p>
     </div>
-
-    <div class="current-label" id="label">SYSTEM STATUS: IDLE</div>
-
+    
     <div id="canvas-container"></div>
-    <div id="scroll-proxy"></div>
 
     <script type="module">
         import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-        // --- CONFIG ---
-        const PARTICLE_COUNT = 25000;
-        const GLOBE_RADIUS = 55;
-        const COLOR_GLOBE = 0x00d2ff;
-        const COLOR_TEXT = 0xffa500;
-        const TRANSITION_SPEED = 0.07; // Snappier for scroll
-
+        // --- CONFIGURATION ---
+        const GLOBE_RADIUS = 40;
+        const ORBIT_RADIUS = 90; // How far out the text floats
+        const PARTICLE_COUNT = 12000;
+        const COLOR_GLOBE = 0x0088ff;
+        const COLOR_RING = 0xffaa00;
+        
         const IDEAS = [
-            "START: THE WORLD",
-            "1. Emotionally Aware GPS",
-            "2. 30-Second Infection Detection",
-            "3. Caffeine Quantifying Cups",
-            "4. Nutrient Profiling Device",
-            "5. Neonatal Vein Finders",
-            "6. Universal Fall Detection",
-            "7. Cancer Diagnosing Plants",
-            "8. Bio-Secure Safes",
-            "9. Stick-on Parking Sensors",
-            "10. Crop-Yield Prediction"
+            "Emotionally Aware GPS",
+            "30-Second Infection Detection",
+            "Caffeine Quantifying Cups",
+            "Nutrient Profiling Device",
+            "Neonatal Vein Finders",
+            "Universal Fall Detection", 
+            "Cancer Diagnosing Plants",
+            "Bio-Secure Safes",
+            "Stick-on Parking Sensors",
+            "Crop-Yield Prediction"
         ];
 
-        // --- SETUP ---
+        // --- SCENE SETUP ---
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
-        camera.position.z = 200;
+        scene.fog = new THREE.FogExp2(0x000000, 0.0015);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 2000);
+        camera.position.set(0, 40, 220); // Elevated view to see the ring better
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setClearColor(0x050505);
+        renderer.setPixelRatio(window.devicePixelRatio);
         document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-        // Rotating group for the globe specifically
-        const globeGroup = new THREE.Group();
-        scene.add(globeGroup);
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.autoRotate = false; // We rotate the object, not the camera
 
-        const geo = new THREE.BufferGeometry();
-        const posArray = new Float32Array(PARTICLE_COUNT * 3);
-        const targetArray = new Float32Array(PARTICLE_COUNT * 3);
-        const colorArray = new Float32Array(PARTICLE_COUNT * 3);
-
-        geo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-        geo.setAttribute('color', new THREE.BufferAttribute(colorArray, 3));
-
-        const mat = new THREE.PointsMaterial({
+        // --- 1. THE PARTICLE GLOBE ---
+        const globeGeo = new THREE.BufferGeometry();
+        const globePos = [];
+        
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+            const phi = Math.acos(-1 + (2 * i) / PARTICLE_COUNT);
+            const theta = Math.sqrt(PARTICLE_COUNT * Math.PI) * phi;
+            
+            const x = GLOBE_RADIUS * Math.cos(theta) * Math.sin(phi);
+            const y = GLOBE_RADIUS * Math.sin(theta) * Math.sin(phi);
+            const z = GLOBE_RADIUS * Math.cos(phi);
+            
+            globePos.push(x, y, z);
+        }
+        
+        globeGeo.setAttribute('position', new THREE.Float32BufferAttribute(globePos, 3));
+        
+        const globeMat = new THREE.PointsMaterial({
+            color: COLOR_GLOBE,
             size: 0.7,
-            vertexColors: true,
             transparent: true,
             opacity: 0.8,
             blending: THREE.AdditiveBlending
         });
+        
+        const globe = new THREE.Points(globeGeo, globeMat);
+        scene.add(globe);
 
-        const points = new THREE.Points(geo, mat);
-        scene.add(points); // Points stay in scene space, we move their targets
-
-        // --- GENERATORS ---
-
-        function getGlobePoints() {
-            const pts = [];
-            for (let i = 0; i < PARTICLE_COUNT; i++) {
-                const phi = Math.acos(-1 + (2 * i) / PARTICLE_COUNT);
-                const theta = Math.sqrt(PARTICLE_COUNT * Math.PI) * phi;
-                pts.push({
-                    x: GLOBE_RADIUS * Math.cos(theta) * Math.sin(phi),
-                    y: GLOBE_RADIUS * Math.sin(theta) * Math.sin(phi),
-                    z: GLOBE_RADIUS * Math.cos(phi)
-                });
-            }
-            return pts;
+        // --- 2. THE ORBITAL RING (PARTICLES) ---
+        const ringGeo = new THREE.BufferGeometry();
+        const ringPos = [];
+        const RING_PARTICLES = 4000;
+        
+        for(let i=0; i<RING_PARTICLES; i++) {
+            // Create a flat ring on XZ plane
+            const angle = Math.random() * Math.PI * 2;
+            // Spread width of the ring slightly
+            const r = ORBIT_RADIUS + (Math.random() - 0.5) * 10; 
+            const x = Math.cos(angle) * r;
+            const z = Math.sin(angle) * r;
+            // Slight height variation
+            const y = (Math.random() - 0.5) * 2; 
+            ringPos.push(x, y, z);
         }
 
-        function getTextPoints(text) {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 1200;
-            canvas.height = 300;
-            ctx.fillStyle = 'black';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = 'white';
-            ctx.font = '900 65px Arial';
-            ctx.textAlign = 'center';
-            
-            // Draw text
-            const words = text.toUpperCase().split(" ");
-            if(words.length > 4) {
-                ctx.fillText(words.slice(0,3).join(" "), 600, 100);
-                ctx.fillText(words.slice(3).join(" "), 600, 180);
-            } else {
-                ctx.fillText(text.toUpperCase(), 600, 150);
-            }
-
-            const data = ctx.getImageData(0, 0, 1200, 300).data;
-            const valid = [];
-            for (let y = 0; y < 300; y += 2) {
-                for (let x = 0; x < 1200; x += 2) {
-                    if (data[(y * 1200 + x) * 4] > 128) {
-                        valid.push({
-                            x: (x - 600) * 0.35,
-                            y: (150 - y) * 0.35,
-                            z: (Math.random() - 0.5) * 5
-                        });
-                    }
-                }
-            }
-            const final = [];
-            for (let i = 0; i < PARTICLE_COUNT; i++) {
-                final.push(valid[i % valid.length] || {x:0, y:0, z:0});
-            }
-            return final;
-        }
-
-        // Pre-calculate all states
-        const globeBaseCoords = getGlobePoints();
-        const textStateCoords = IDEAS.map(text => getTextPoints(text));
-        const labelEl = document.getElementById('label');
-
-        // --- INTERACTION ---
-        let scrollPercent = 0;
-        window.addEventListener('scroll', () => {
-            const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-            scrollPercent = window.scrollY / maxScroll;
+        ringGeo.setAttribute('position', new THREE.Float32BufferAttribute(ringPos, 3));
+        const ringMat = new THREE.PointsMaterial({
+            color: COLOR_RING,
+            size: 0.5,
+            transparent: true,
+            opacity: 0.4,
+            blending: THREE.AdditiveBlending
         });
 
-        function updateParticles() {
-            // Determine which "state" we are in based on scroll
-            const totalStates = IDEAS.length; // 11 states (0 to 10)
-            const exactState = scrollPercent * (totalStates - 1);
-            const stateIdx = Math.floor(exactState);
-            const stateProgress = exactState - stateIdx;
+        const orbitSystem = new THREE.Group();
+        const particleRing = new THREE.Points(ringGeo, ringMat);
+        orbitSystem.add(particleRing);
+        scene.add(orbitSystem);
 
-            labelEl.innerText = `MATERIALIZING: ${IDEAS[stateIdx]}`;
-
-            const colorA = new THREE.Color(stateIdx === 0 ? COLOR_GLOBE : COLOR_TEXT);
-            const colorB = new THREE.Color(stateIdx + 1 < totalStates ? COLOR_TEXT : COLOR_TEXT);
-
-            // Calculate rotation for the globe
-            const globeRotation = Date.now() * 0.0005;
-
-            for (let i = 0; i < PARTICLE_COUNT; i++) {
-                let targetX, targetY, targetZ;
-
-                // Globe state (State 0)
-                if(stateIdx === 0 && stateProgress < 0.1) {
-                    // Manual rotation calculation for target points
-                    const p = globeBaseCoords[i];
-                    targetX = p.x * Math.cos(globeRotation) - p.z * Math.sin(globeRotation);
-                    targetY = p.y;
-                    targetZ = p.x * Math.sin(globeRotation) + p.z * Math.cos(globeRotation);
-                } else {
-                    // Morphing between text states or from globe to text
-                    const p1 = (stateIdx === 0) ? globeBaseCoords[i] : textStateCoords[stateIdx][i];
-                    const p2 = (stateIdx + 1 < totalStates) ? textStateCoords[stateIdx+1][i] : textStateCoords[stateIdx][i];
-
-                    // If p1 is globe, apply rotation to it before lerping
-                    let p1x = p1.x, p1y = p1.y, p1z = p1.z;
-                    if(stateIdx === 0) {
-                        p1x = p1.x * Math.cos(globeRotation) - p1.z * Math.sin(globeRotation);
-                        p1z = p1.x * Math.sin(globeRotation) + p1.z * Math.cos(globeRotation);
-                    }
-
-                    targetX = p1x + (p2.x - p1x) * stateProgress;
-                    targetY = p1y + (p2.y - p1y) * stateProgress;
-                    targetZ = p1z + (p2.z - p1z) * stateProgress;
-                }
-
-                targetArray[i*3] = targetX;
-                targetArray[i*3+1] = targetY;
-                targetArray[i*3+2] = targetZ;
-
-                // Color Lerp
-                colorArray[i*3] = colorA.r + (colorB.r - colorA.r) * stateProgress;
-                colorArray[i*3+1] = colorA.g + (colorB.g - colorA.g) * stateProgress;
-                colorArray[i*3+2] = colorA.b + (colorB.b - colorA.b) * stateProgress;
-            }
-            geo.attributes.color.needsUpdate = true;
+        // --- 3. THE FLOATING TEXT (SPRITES) ---
+        
+        // Helper to create text texture
+        function createTextSprite(text) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const fontSize = 40;
+            const padding = 20;
+            
+            // Measure text
+            ctx.font = `bold ${fontSize}px Courier New`;
+            const metrics = ctx.measureText(text);
+            const textWidth = metrics.width;
+            
+            // Set canvas size
+            canvas.width = textWidth + padding * 2;
+            canvas.height = fontSize + padding * 2;
+            
+            // Style
+            ctx.font = `bold ${fontSize}px Courier New`;
+            ctx.fillStyle = "rgba(255, 170, 0, 1)"; // Text Color
+            ctx.shadowColor = "rgba(255, 170, 0, 1)";
+            ctx.shadowBlur = 10;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            
+            // Draw
+            ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            const material = new THREE.SpriteMaterial({ 
+                map: texture, 
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                depthTest: false // Always show on top of particles
+            });
+            
+            const sprite = new THREE.Sprite(material);
+            // Scale sprite to match aspect ratio
+            const scaleFactor = 0.4;
+            sprite.scale.set(canvas.width * scaleFactor, canvas.height * scaleFactor, 1);
+            
+            return sprite;
         }
 
+        // Add Sprites to Orbit System
+        IDEAS.forEach((idea, index) => {
+            const sprite = createTextSprite(idea.toUpperCase());
+            
+            // Distribute evenly along the circle
+            const angle = (index / IDEAS.length) * Math.PI * 2;
+            const x = Math.cos(angle) * ORBIT_RADIUS;
+            const z = Math.sin(angle) * ORBIT_RADIUS;
+            
+            sprite.position.set(x, 0, z);
+            orbitSystem.add(sprite);
+        });
+
+        // Tilt the whole system slightly for the "Daily Planet" look
+        orbitSystem.rotation.z = 0.2; // Tilt axis
+        orbitSystem.rotation.x = 0.2;
+
+        // --- ANIMATION LOOP ---
         function animate() {
             requestAnimationFrame(animate);
-            updateParticles();
             
-            const pos = geo.attributes.position.array;
-            for (let i = 0; i < PARTICLE_COUNT * 3; i++) {
-                pos[i] += (targetArray[i] - pos[i]) * TRANSITION_SPEED;
-            }
-            geo.attributes.position.needsUpdate = true;
+            // 1. Rotate Globe slowly
+            globe.rotation.y += 0.002;
+            
+            // 2. Rotate Orbit System (Ring + Text)
+            orbitSystem.rotation.y -= 0.005; 
+            
+            // 3. Counter-rotate Sprites? 
+            // Sprites automatically face the camera in Three.js, 
+            // so we don't need to manually rotate them to face us!
+            
+            controls.update();
             renderer.render(scene, camera);
         }
 
+        // Handle Resize
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
@@ -254,6 +222,7 @@
         });
 
         animate();
+
     </script>
 </body>
 </html>
