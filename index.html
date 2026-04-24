@@ -3,214 +3,324 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Odd Earth Institute | Multi-Species Systems</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>Odd Earth Institute | Dynamic Multi-Species Systems</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
     <style>
         :root {
-            --bone: #f9f7f2; /* Off-white background */
-            --ink: #1a1a1a;  /* Sharp black text */
-            --moss: #2d3e2d; /* Muted corporate green */
-            --accent: #d4a373; /* Earthy organic accent */
+            --ink: #101210;  /* Deep, near-black green */
+            --bone: #fefcf5; /* Off-white for text over video */
+            --moss: #4ade80; /* Kinetic green accent */
+            --overlay: rgba(16, 18, 16, 0.85); /* Overlay to ensure text readability */
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
+        html { scroll-behavior: smooth; }
+
         body {
-            background-color: var(--bone);
-            color: var(--ink);
+            background-color: var(--ink);
+            color: var(--bone);
             font-family: 'Inter', sans-serif;
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        /* --- BACKGROUND VIDEO SETUP --- */
+        .fullscreen-bg {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -2; /* Behinds everything */
+            overflow: hidden;
+        }
+
+        .fullscreen-bg video {
+            width: 100%; height: 100%;
+            object-fit: cover; /* Ensures video covers screen */
+            filter: grayscale(0.5) contrast(1.1) brightness(0.7); /* Scientific aesthetic */
+        }
+
+        /* Overlay to darken video for readability */
+        .bg-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: var(--overlay);
+            z-index: -1; /* Above video, below content */
         }
 
         /* --- Typography --- */
-        h1, h2, h3 {
-            font-family: 'Cormorant Garamond', serif;
-            font-weight: 500;
-            letter-spacing: -0.01em;
-        }
+        h1, h2, h3 { font-family: 'Cormorant Garamond', serif; font-weight: 400; letter-spacing: -0.02em; }
 
         .label {
             font-family: 'Inter', sans-serif;
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.15em;
+            letter-spacing: 0.2em;
             color: var(--moss);
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
             display: block;
         }
 
         /* --- Layout --- */
-        .container { max-width: 1200px; margin: 0 auto; padding: 0 4rem; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 0 5vw; position: relative; z-index: 1; }
 
+        /* --- Navigation --- */
+        nav {
+            padding: 2rem 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            position: fixed; /* Nav stays at top */
+            top: 0; left: 0; width: 100%;
+            background: linear-gradient(to bottom, var(--ink) 0%, rgba(16,18,16,0) 100%);
+            z-index: 100;
+        }
+
+        nav .nav-links { display: flex; gap: 2rem; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; }
+        nav a { text-decoration: none; color: var(--bone); opacity: 0.8; transition: opacity 0.3s; }
+        nav a:hover { opacity: 1; color: var(--moss); }
+
+        /* --- Hero Section (Dynamic Spacing) --- */
         header {
-            height: 90vh;
+            height: 100vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            border-bottom: 1px solid rgba(0,0,0,0.1);
+            position: relative;
         }
 
         h1 {
-            font-size: clamp(3.5rem, 10vw, 8rem);
-            line-height: 0.85;
-            margin-left: -5px; /* Aesthetic pull to the left */
+            font-size: clamp(4rem, 12vw, 9rem);
+            line-height: 0.8;
+            margin-left: -0.05em; /* Aesthetic pull */
         }
+
+        h1 span { display: block; will-change: transform; }
 
         .hero-flex {
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
-            margin-top: 4rem;
+            margin-top: clamp(4rem, 10vh, 8rem);
         }
 
         .hero-desc {
-            max-width: 450px;
-            font-size: 1.1rem;
-            color: #444;
+            max-width: 500px;
+            font-size: 1.2rem;
+            color: rgba(254, 252, 245, 0.8);
+            font-weight: 300;
         }
 
-        /* --- Scientific Grid --- */
-        .section { padding: 10rem 0; }
+        /* --- Specimen Grid (tilt effect) --- */
+        .section { padding: 12rem 0; }
         
         .grid {
             display: grid;
             grid-template-columns: repeat(12, 1fr);
-            gap: 2rem;
+            gap: 4rem 2rem;
         }
 
         .grid-item {
             grid-column: span 4;
-            padding-top: 2rem;
-            border-top: 1px solid rgba(0,0,0,0.1);
+            padding: 3rem;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.02);
+            backdrop-filter: blur(10px);
+            transition: border-color 0.4s ease, transform 0.1s ease; /* Smooth hover transition */
+            transform-style: preserve-3d; /* Required for tilt */
+            will-change: transform;
+        }
+
+        .grid-item:hover {
+            border-color: rgba(74, 222, 128, 0.3);
         }
 
         .grid-item h3 {
-            font-size: 2.2rem;
-            margin-bottom: 1.5rem;
+            font-size: 2.8rem;
+            margin-bottom: 2rem;
             font-style: italic;
+            line-height: 1;
+            transform: translateZ(30px); /* Lifts text off card */
         }
 
         .grid-item p {
-            font-size: 0.95rem;
-            color: #555;
-            margin-bottom: 2rem;
+            font-size: 1rem;
+            color: rgba(254, 252, 245, 0.7);
+            margin-bottom: 3rem;
+            font-weight: 300;
+            transform: translateZ(15px);
         }
 
-        /* --- Imagery Placeholder Style --- */
+        /* Scientific imagery placeholder */
         .image-box {
             width: 100%;
-            height: 400px;
-            background: #eee;
-            margin-bottom: 2rem;
+            height: 300px;
+            background: #222;
+            margin-bottom: 3rem;
             overflow: hidden;
-            filter: sepia(0.2) contrast(1.1);
-            transition: filter 0.5s ease;
+            border: 1px solid rgba(255,255,255,0.05);
+            transform: translateZ(10px);
         }
+        
+        .image-box img { width: 100%; height: 100%; object-fit: cover; filter: sepia(0.3) brightness(0.8); }
 
-        .image-box:hover { filter: sepia(0) contrast(1); }
+        /* Asymmetric positioning */
+        .grid-item:nth-child(2) { margin-top: 8rem; }
+        .grid-item:nth-child(3) { margin-top: 16rem; }
 
-        /* --- Manifesto Section --- */
+        /* --- Manifesto --- */
         .manifesto {
             grid-column: 2 / span 10;
             text-align: center;
+            padding: 10rem 0;
         }
 
         .manifesto h2 {
-            font-size: clamp(2rem, 5vw, 4rem);
-            line-height: 1.1;
-            margin-bottom: 3rem;
+            font-size: clamp(2.5rem, 6vw, 5rem);
+            line-height: 1.05;
+            margin-bottom: 4rem;
+            font-style: italic;
         }
 
         /* --- Footer --- */
         footer {
-            padding: 4rem 0;
-            border-top: 1px solid rgba(0,0,0,0.1);
+            padding: 6rem 0;
+            border-top: 1px solid rgba(255,255,255,0.05);
             display: flex;
             justify-content: space-between;
             font-size: 0.8rem;
-            color: #888;
+            color: rgba(254, 252, 245, 0.5);
+            position: relative; z-index: 1;
         }
 
+        /* Mobile adaptation */
+        @media (max-width: 1024px) {
+            .grid-item { grid-column: span 6; margin-top: 0 !important; }
+            nav .nav-links { display: none; } /* Simplified for mobile */
+        }
         @media (max-width: 768px) {
-            .container { padding: 0 2rem; }
-            .grid-item { grid-column: span 12; }
-            .hero-flex { flex-direction: column; align-items: flex-start; }
+            .grid-item { grid-column: span 12; padding: 2rem; }
+            .hero-flex { flex-direction: column; align-items: flex-start; gap: 2rem; }
         }
     </style>
 </head>
 <body>
 
+    <div class="fullscreen-bg">
+        <video autoplay loop muted playsinline>
+            <source src="https://player.vimeo.com/external/494163991.hd.mp4?s=4943f65013b8f60f6ac7ac44c06497f26d2e67f2&profile_id=175" type="video/mp4">
+        </video>
+    </div>
+    <div class="bg-overlay"></div>
+
     <div class="container">
-        <nav style="padding: 2rem 0; display: flex; justify-content: space-between; align-items: baseline;">
-            <span style="font-weight: 600; letter-spacing: 0.05em;">ODD EARTH ©2026</span>
-            <div style="font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase;">
-                Research &nbsp; // &nbsp; Partners &nbsp; // &nbsp; Apply
+        <nav class="container">
+            <span style="font-weight: 600; letter-spacing: 0.1em; color: var(--bone);">ODD EARTH // INSTITUTE</span>
+            <div class="nav-links">
+                <a href="#specimen">Research</a>
+                <a href="#manifesto">Philosophy</a>
+                <a href="#">Apply</a>
             </div>
         </nav>
 
         <header>
-            <span class="label">The Multi-Species Institute</span>
-            <h1>Cyborg<br>Botany &<br>Avian Post.</h1>
-            <div class="hero-flex">
+            <span class="label" data-aos="fade-down">Multi-Species Integration Lab</span>
+            <h1 id="hero-title">
+                <span data-aos="fade-up" data-aos-delay="100">Bionic</span>
+                <span data-aos="fade-up" data-aos-delay="200" style="padding-left: 1.5ch; font-style: italic;">Botany &</span>
+                <span data-aos="fade-up" data-aos-delay="300">Avian Post</span>
+            </h1>
+            <div class="hero-flex" data-aos="fade-in" data-aos-delay="500">
                 <p class="hero-desc">
-                    We develop interfaces for co-existence. By integrating biological intelligence into our daily products, we ensure the survival of the more-than-human world.
+                    We develop interfaces for co-existence. By integrating biological intelligence into our daily technology, we ensure the survival of the more-than-human world.
                 </p>
-                <div style="font-style: italic; font-family: 'Cormorant Garamond'; color: var(--moss);">
+                <div style="font-style: italic; font-family: 'Cormorant Garamond'; color: rgba(254, 252, 245, 0.6); font-size: 1.1rem;">
                     Scroll to explore specimen →
                 </div>
             </div>
         </header>
 
-        <section class="section">
+        <section id="specimen" class="section">
+            <span class="label" data-aos="fade-up">ACTIVE RESEARCH TRACKS</span>
             <div class="grid">
-                <div class="grid-item">
+                
+                <div class="grid-item js-tilt" data-aos="fade-up" data-aos-delay="100">
                     <div class="image-box">
-                        <img src="https://images.unsplash.com/photo-1501004318641-739e828d1751?auto=format&fit=crop&q=80&w=800" alt="Plant" style="width:100%; height:100%; object-fit:cover;">
+                        <img src="https://images.unsplash.com/photo-1501004318641-739e828d1751?auto=format&fit=crop&q=80&w=800" alt="Bionic plant">
                     </div>
-                    <span class="label">Specimen 01 // Sensors</span>
-                    <h3>Sentinel Flora</h3>
-                    <p>Houseplants modified with nano-scale sensors to detect airborne pathogens. A living diagnostic layer for the home.</p>
+                    <span class="label">Specimen 01 // Sentinel Flora</span>
+                    <h3>Sentinel<br>Flora</h3>
+                    <p>Harnessing plant vascular systems as real-time diagnostic sensors. Modified houseplants monitor home air quality and pathogen levels.</p>
                 </div>
 
-                <div class="grid-item">
+                <div class="grid-item js-tilt" data-aos="fade-up" data-aos-delay="300">
                     <div class="image-box">
-                        <img src="https://images.unsplash.com/photo-1520110120385-ad276136e76e?auto=format&fit=crop&q=80&w=800" alt="Pigeon" style="width:100%; height:100%; object-fit:cover;">
+                        <img src="https://images.unsplash.com/photo-1520110120385-ad276136e76e?auto=format&fit=crop&q=80&w=800" alt="Pigeon delivery">
                     </div>
-                    <span class="label">Specimen 02 // Networks</span>
-                    <h3>Avian Sneakernet</h3>
-                    <p>Decentralized data delivery utilizing the homing instincts of urban pigeons. High-bandwidth, off-grid communication.</p>
+                    <span class="label">Specimen 02 // Avian Sneakernet</span>
+                    <h3>Avian<br>Sneakernet</h3>
+                    <p>Decentralized data delivery utilizing the homing instincts of urban pigeons. High-bandwidth, low-energy, off-grid communication networks.</p>
                 </div>
 
-                <div class="grid-item" style="margin-top: 4rem;">
+                <div class="grid-item js-tilt" data-aos="fade-up" data-aos-delay="500">
                     <div class="image-box">
-                        <img src="https://images.unsplash.com/photo-1544568100-847a948585b9?auto=format&fit=crop&q=80&w=800" alt="Animal communication" style="width:100%; height:100%; object-fit:cover;">
+                        <img src="https://images.unsplash.com/photo-1544568100-847a948585b9?auto=format&fit=crop&q=80&w=800" alt="Dog interface">
                     </div>
-                    <span class="label">Specimen 03 // Interfaces</span>
-                    <h3>Interspecies UI</h3>
-                    <p>Machine learning frameworks that translate canine bio-acoustics into environmental triggers for smart architecture.</p>
+                    <span class="label">Specimen 03 // Interspecies UI</span>
+                    <h3>Interspecies<br>UI</h3>
+                    <p>Wearable devices utilizing bio-acoustic machine learning to decode canine intent, translating vocalizations into smart-home triggers.</p>
                 </div>
             </div>
         </section>
 
-        <section class="section">
+        <section id="manifesto" class="section">
             <div class="grid">
                 <div class="manifesto">
-                    <span class="label">Our Approach</span>
-                    <h2>"Nature is not a museum to be guarded, but an infrastructure to be shared."</h2>
-                    <p style="max-width: 600px; margin: 0 auto; color: #666;">
-                        Odd Earth Institute moves beyond the anthropocentric lens. We build products where the 'user' is not just human, but the entire biological network.
+                    <span class="label" data-aos="fade-up">Our Approach</span>
+                    <h2 data-aos="fade-up">"Nature is not a museum to be guarded, but an infrastructure to be shared."</h2>
+                    <p style="max-width: 650px; margin: 0 auto; color: rgba(254, 252, 245, 0.6); font-weight: 300;" data-aos="fade-up">
+                        Odd Earth Institute moves beyond the anthropocentric lens. We build products where the 'user' is not just human, but the entire biological network. Functional integration ensures multi-species survival.
                     </p>
                 </div>
             </div>
         </section>
 
-        <footer>
-            <div>ODD EARTH INSTITUTE / 45.523062° N, 122.676482° W</div>
-            <div>BUILDING THE POST-ANTHROPOCENE</div>
+        <footer class="container">
+            <div>ODD EARTH INSTITUTE // 45.5230° N, 122.6765° W</div>
+            <div style="text-transform: uppercase; letter-spacing: 0.1em;">©2026 // POST-ANTHROPOCENE DESIGN</div>
         </footer>
     </div>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.7.0/vanilla-tilt.min.js"></script>
+    
+    <script>
+        // 1. Initialize Scroll Animations
+        AOS.init({
+            duration: 1000, // Duration of animation
+            easing: 'ease-out-quad', // Smooth easing
+            once: true, // Animates only once while scrolling down
+            offset: 100, // Offset from trigger point
+        });
+
+        // 2. Initialize 3D Tilt Effect on grid items
+        VanillaTilt.init(document.querySelectorAll(".js-tilt"), {
+            max: 8,       // Max tilt rotation (degrees)
+            speed: 1000,  // Speed of the enter/exit transition
+            glare: true,  // Enables glare effect
+            "max-glare": 0.2, // Max opacity of glare
+            scale: 1.02,   // Slight scale on hover
+            gyroscope: true, // Enables device orientation support
+        });
+    </script>
 
 </body>
 </html>
